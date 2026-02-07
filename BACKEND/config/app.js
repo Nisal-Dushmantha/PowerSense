@@ -5,7 +5,7 @@ const connectDB = async () => {
     // Set mongoose options
     mongoose.set('strictQuery', false);
     
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    const conn = await mongoose.connect('mongodb+srv://PowerSense:Powersense@cluster0.s2xc238.mongodb.net/powersense?retryWrites=true&w=majority');
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Database Name: ${conn.connection.name}`);
