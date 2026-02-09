@@ -5,7 +5,7 @@ const Navbar = () => {
   const location = useLocation();
 
   const isActive = (path) => {
-    return location.pathname === path;
+    return location.pathname.startsWith(path);
   };
 
   return (
@@ -17,30 +17,53 @@ const Navbar = () => {
           </Link>
           
           <div className="flex space-x-6">
-            <Link
-              to="/bills"
-              className={`text-white hover:text-primary-200 transition-colors ${
-                isActive('/bills') ? 'text-primary-200 border-b-2 border-primary-200' : ''
-              }`}
-            >
-              Bills
-            </Link>
-            <Link
-              to="/bills/new"
-              className={`text-white hover:text-primary-200 transition-colors ${
-                isActive('/bills/new') ? 'text-primary-200 border-b-2 border-primary-200' : ''
-              }`}
-            >
-              Add New Bill
-            </Link>
-            <Link
-              to="/stats"
-              className={`text-white hover:text-primary-200 transition-colors ${
-                isActive('/stats') ? 'text-primary-200 border-b-2 border-primary-200' : ''
-              }`}
-            >
-              Statistics
-            </Link>
+            <div className="flex items-center space-x-1">
+              <span className="text-white mr-2">Bills</span>
+              <Link
+                to="/bills"
+                className={`text-white hover:text-primary-200 transition-colors px-2 py-1 rounded ${
+                  isActive('/bills') && !isActive('/bills/new') ? 'bg-primary-700' : ''
+                }`}
+              >
+                View All
+              </Link>
+              <Link
+                to="/bills/new"
+                className={`text-white hover:text-primary-200 transition-colors px-2 py-1 rounded ${
+                  isActive('/bills/new') ? 'bg-primary-700' : ''
+                }`}
+              >
+                Add New
+              </Link>
+            </div>
+
+            <div className="flex items-center space-x-1">
+              <span className="text-white mr-2">Energy</span>
+              <Link
+                to="/energy-consumption"
+                className={`text-white hover:text-primary-200 transition-colors px-2 py-1 rounded ${
+                  isActive('/energy-consumption') && !isActive('/energy-consumption/new') ? 'bg-primary-700' : ''
+                }`}
+              >
+                View Records
+              </Link>
+              <Link
+                to="/energy-consumption/new"
+                className={`text-white hover:text-primary-200 transition-colors px-2 py-1 rounded ${
+                  isActive('/energy-consumption/new') ? 'bg-primary-700' : ''
+                }`}
+              >
+                Add Record
+              </Link>
+              <Link
+                to="/energy-consumption/stats"
+                className={`text-white hover:text-primary-200 transition-colors px-2 py-1 rounded ${
+                  isActive('/energy-consumption/stats') ? 'bg-primary-700' : ''
+                }`}
+              >
+                Statistics
+              </Link>
+            </div>
           </div>
         </div>
       </div>
