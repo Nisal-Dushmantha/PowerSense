@@ -1,4 +1,4 @@
-const MonthlyBill = require('../models/MonthlyBill');
+const MonthlyBill = require('../models/monthlyBill');
 
 // @desc    Create a new monthly bill
 // @route   POST /api/bills
