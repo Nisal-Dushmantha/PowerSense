@@ -18,14 +18,24 @@ app.use(express.urlencoded({ extended: true }));
 // Connect to database
 connectDB();
 
+// Import routes
+const monthlyBillRoutes = require('./routes/monthlyBill');
+
 // Basic route
 app.get('/', (req, res) => {
   res.json({ 
     message: 'PowerSense Backend API is running!',
     status: 'Connected to MongoDB',
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting'
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
+    endpoints: {
+      bills: '/api/bills',
+      stats: '/api/bills/stats'
+    }
   });
 });
+
+// API Routes
+app.use('/api/bills', monthlyBillRoutes);
 
 const PORT = process.env.PORT || 5000;
 
