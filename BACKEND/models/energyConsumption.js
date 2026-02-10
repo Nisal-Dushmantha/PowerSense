@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const energyConsumptionSchema = new mongoose.Schema({
-    user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: [true, 'User is required']
+    household_id: {
+        type: String,
+        default: () => new mongoose.Types.ObjectId().toString(),
+        index: true
     },
     consumption_date: {
         type: Date,
@@ -36,7 +36,7 @@ const energyConsumptionSchema = new mongoose.Schema({
 });
 
 // Add compound index for better query performance
-energyConsumptionSchema.index({ user: 1, consumption_date: 1, period_type: 1 });
+energyConsumptionSchema.index({ household_id: 1, consumption_date: 1, period_type: 1 }, { unique: true });
 
 // Pre-save hook to ensure consumption_time is present for hourly period_type
 energyConsumptionSchema.pre('save', function(next) {
@@ -45,6 +45,31 @@ energyConsumptionSchema.pre('save', function(next) {
     }
     next();
 });
+
+// Static method to get total consumption for a household
+energyConsumptionSchema.statics.getTotalConsumption = async function(household_id, startDate, endDate) {
+    const matchQuery = { household_id };
+    
+    if (startDate || endDate) {
+        matchQuery.consumption_date = {};
+        if (startDate) matchQuery.consumption_date.$gte = new Date(startDate);
+        if (endDate) matchQuery.consumption_date.$lte = new Date(endDate);
+    }
+
+    const result = await this.aggregate([
+        { $match: matchQuery },
+        {
+            $group: {
+                _id: null,
+                total_energy_used: { $sum: '$energy_used_kwh' },
+                average_daily_usage: { $avg: '$energy_used_kwh' },
+                record_count: { $sum: 1 }
+            }
+        }
+    ]);
+
+    return result[0] || { total_energy_used: 0, average_daily_usage: 0, record_count: 0 };
+};
 
 const EnergyConsumption = mongoose.model('EnergyConsumption', energyConsumptionSchema);
 

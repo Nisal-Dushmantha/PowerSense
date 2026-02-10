@@ -7,29 +7,25 @@ const {
     updateEnergyConsumption,
     deleteEnergyConsumption
 } = require('../controllers/energyConsumptionController');
-const { protect } = require('../middleware/auth');
-
-// Protect all routes - require authentication
-router.use(protect);
 
 // @route   POST /api/energy-consumption
-// @access  Private
+// @access  Public
 router.post('/', createEnergyConsumption);
 
 // @route   GET /api/energy-consumption
-// @access  Private
+// @access  Public
 router.get('/', getEnergyConsumption);
 
 // @route   GET /api/energy-consumption/total
-// @access  Private
+// @access  Public
 router.get('/total', getTotalConsumption);
 
 // @route   PUT /api/energy-consumption/:id
-// @access  Private
+// @access  Public
 router.put('/:id', updateEnergyConsumption);
 
 // @route   DELETE /api/energy-consumption/:id
-// @access  Private
+// @access  Public
 router.delete('/:id', deleteEnergyConsumption);
 
 module.exports = router;
