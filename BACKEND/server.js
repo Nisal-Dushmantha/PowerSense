@@ -38,9 +38,9 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
-app.use('/api/bills', monthlyBill
-app.use('/api/renewable', renewableRoutes);Routes);
+app.use('/api/bills', monthlyBillRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/renewable', renewableRoutes);
 
 const PORT = process.env.PORT || 5000;
 
