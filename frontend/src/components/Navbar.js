@@ -63,12 +63,9 @@ const Navbar = () => {
                 to="/"
                 className={`${
                   isActivePath('/') ? 'nav-link-active' : 'nav-link'
-                } flex items-center space-x-2`}
+                }`}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                </svg>
-                <span>Home</span>
+                Home
               </Link>
               
               <Link
@@ -77,29 +74,45 @@ const Navbar = () => {
                   isActivePath('/bills') || isActivePath('/bills/new') || location.pathname.includes('/bills/edit')
                     ? 'nav-link-active'
                     : 'nav-link'
-                } flex items-center space-x-2`}
+                }`}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <polyline points="10,9 9,9 8,9"/>
-                </svg>
-                <span>Bills</span>
+                Bills
               </Link>
               
               <Link
                 to="/stats"
                 className={`${
                   isActivePath('/stats') ? 'nav-link-active' : 'nav-link'
-                } flex items-center space-x-2`}
+                }`}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 20V10M6 20V4m12 16V8"/>
-                  <path d="M3 18h18M3 12h18M3 6h18"/>
-                </svg>
-                <span>Statistics</span>
+                Statistics
+              </Link>
+              
+              <Link
+                to="/consumption"
+                className={`${
+                  isActivePath('/consumption') ? 'nav-link-active' : 'nav-link'
+                }`}
+              >
+                Consumption
+              </Link>
+              
+              <Link
+                to="/renewable"
+                className={`${
+                  isActivePath('/renewable') ? 'nav-link-active' : 'nav-link'
+                }`}
+              >
+                Renewable
+              </Link>
+              
+              <Link
+                to="/devices"
+                className={`${
+                  isActivePath('/devices') ? 'nav-link-active' : 'nav-link'
+                }`}
+              >
+                Devices
               </Link>
               
               <Link
@@ -213,12 +226,9 @@ const Navbar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`${
                     isActivePath('/') ? 'nav-link-active' : 'nav-link'
-                  } flex items-center space-x-3 w-full`}
+                  } w-full`}
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                  </svg>
-                  <span>Home</span>
+                  Home
                 </Link>
                 
                 <Link
@@ -228,16 +238,9 @@ const Navbar = () => {
                     isActivePath('/bills') || isActivePath('/bills/new') || location.pathname.includes('/bills/edit')
                       ? 'nav-link-active'
                       : 'nav-link'
-                  } flex items-center space-x-3 w-full`}
+                  } w-full`}
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-                    <polyline points="14,2 14,8 20,8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <polyline points="10,9 9,9 8,9"/>
-                  </svg>
-                  <span>Bills</span>
+                  Bills
                 </Link>
                 
                 <Link
@@ -245,13 +248,39 @@ const Navbar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`${
                     isActivePath('/stats') ? 'nav-link-active' : 'nav-link'
-                  } flex items-center space-x-3 w-full`}
+                  } w-full`}
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 20V10M6 20V4m12 16V8"/>
-                    <path d="M3 18h18M3 12h18M3 6h18"/>
-                  </svg>
-                  <span>Statistics</span>
+                  Statistics
+                </Link>
+                
+                <Link
+                  to="/consumption"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`${
+                    isActivePath('/consumption') ? 'nav-link-active' : 'nav-link'
+                  } w-full`}
+                >
+                  Consumption
+                </Link>
+                
+                <Link
+                  to="/renewable"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`${
+                    isActivePath('/renewable') ? 'nav-link-active' : 'nav-link'
+                  } w-full`}
+                >
+                  Renewable
+                </Link>
+                
+                <Link
+                  to="/devices"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`${
+                    isActivePath('/devices') ? 'nav-link-active' : 'nav-link'
+                  } w-full`}
+                >
+                  Devices
                 </Link>
                 
                 <Link
