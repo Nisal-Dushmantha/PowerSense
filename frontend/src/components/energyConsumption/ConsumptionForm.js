@@ -68,6 +68,13 @@ const ConsumptionForm = () => {
         energy_used_kwh: parseFloat(formData.energy_used_kwh)
       };
 
+      // Convert time from HH:MM to HH:MM:SS format if provided
+      if (formData.consumption_time) {
+        submitData.consumption_time = formData.consumption_time.includes(':') && formData.consumption_time.split(':').length === 2
+          ? formData.consumption_time + ':00'
+          : formData.consumption_time;
+      }
+
       if (isEditMode) {
         await updateEnergyRecord(id, submitData);
       } else {
