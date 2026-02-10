@@ -20,6 +20,7 @@ connectDB();
 
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
+const authRoutes = require('./routes/auth');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/bills', monthlyBillRoutes);
+app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,14 +1,18 @@
 const MonthlyBill = require('../models/monthlyBill');
+const mongoose = require('mongoose');
 
 // @desc    Create a new monthly bill
 // @route   POST /api/bills
-// @access  Public
+// @access  Private
 const createBill = async (req, res) => {
   try {
     const { billNumber, billIssueDate, totalKWh, totalPayment, totalPaid } = req.body;
 
-    // Check if bill number already exists
-    const existingBill = await MonthlyBill.findOne({ billNumber });
+    // Check if bill number already exists for this user
+    const existingBill = await MonthlyBill.findOne({ 
+      user: new mongoose.Types.ObjectId(req.user.id),
+      billNumber 
+    });
     if (existingBill) {
       return res.status(400).json({ 
         success: false,
@@ -17,6 +21,7 @@ const createBill = async (req, res) => {
     }
 
     const bill = new MonthlyBill({
+      user: req.user.id,
       billNumber,
       billIssueDate,
       totalKWh,
@@ -43,15 +48,18 @@ const createBill = async (req, res) => {
 
 // @desc    Get all monthly bills
 // @route   GET /api/bills
-// @access  Public
+// @access  Private
 const getAllBills = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Filter options
-    const filter = {};
+    // Filter options - only show bills for authenticated user
+    // Convert user ID to ObjectId and ensure user field exists and matches
+    const filter = { 
+      user: new mongoose.Types.ObjectId(req.user.id)
+    };
     if (req.query.isPaid) {
       filter.isPaid = req.query.isPaid === 'true';
     }
@@ -92,10 +100,13 @@ const getAllBills = async (req, res) => {
 
 // @desc    Get a single bill by ID
 // @route   GET /api/bills/:id
-// @access  Public
+// @access  Private
 const getBillById = async (req, res) => {
   try {
-    const bill = await MonthlyBill.findById(req.params.id);
+    const bill = await MonthlyBill.findOne({ 
+      _id: req.params.id,
+      user: new mongoose.Types.ObjectId(req.user.id)
+    });
 
     if (!bill) {
       return res.status(404).json({
@@ -127,10 +138,13 @@ const getBillById = async (req, res) => {
 
 // @desc    Get a bill by bill number
 // @route   GET /api/bills/number/:billNumber
-// @access  Public
+// @access  Private
 const getBillByNumber = async (req, res) => {
   try {
-    const bill = await MonthlyBill.findOne({ billNumber: req.params.billNumber.toUpperCase() });
+    const bill = await MonthlyBill.findOne({ 
+      billNumber: req.params.billNumber.toUpperCase(),
+      user: new mongoose.Types.ObjectId(req.user.id)
+    });
 
     if (!bill) {
       return res.status(404).json({
@@ -156,12 +170,15 @@ const getBillByNumber = async (req, res) => {
 
 // @desc    Update a monthly bill
 // @route   PUT /api/bills/:id
-// @access  Public
+// @access  Private
 const updateBill = async (req, res) => {
   try {
     const { billNumber, billIssueDate, totalKWh, totalPayment, totalPaid } = req.body;
 
-    const bill = await MonthlyBill.findById(req.params.id);
+    const bill = await MonthlyBill.findOne({ 
+      _id: req.params.id,
+      user: new mongoose.Types.ObjectId(req.user.id)
+    });
 
     if (!bill) {
       return res.status(404).json({
@@ -170,9 +187,12 @@ const updateBill = async (req, res) => {
       });
     }
 
-    // Check if bill number is being changed and if it already exists
+    // Check if bill number is being changed and if it already exists for this user
     if (billNumber && billNumber !== bill.billNumber) {
-      const existingBill = await MonthlyBill.findOne({ billNumber });
+      const existingBill = await MonthlyBill.findOne({ 
+        billNumber,
+        user: new mongoose.Types.ObjectId(req.user.id)
+      });
       if (existingBill) {
         return res.status(400).json({
           success: false,
@@ -213,10 +233,13 @@ const updateBill = async (req, res) => {
 
 // @desc    Delete a monthly bill
 // @route   DELETE /api/bills/:id
-// @access  Public
+// @access  Private
 const deleteBill = async (req, res) => {
   try {
-    const bill = await MonthlyBill.findById(req.params.id);
+    const bill = await MonthlyBill.findOne({ 
+      _id: req.params.id,
+      user: new mongoose.Types.ObjectId(req.user.id)
+    });
 
     if (!bill) {
       return res.status(404).json({
@@ -249,27 +272,32 @@ const deleteBill = async (req, res) => {
 
 // @desc    Get bill statistics
 // @route   GET /api/bills/stats
-// @access  Public
+// @access  Private
 const getBillStats = async (req, res) => {
   try {
-    const totalBills = await MonthlyBill.countDocuments();
-    const paidBills = await MonthlyBill.countDocuments({ isPaid: true });
-    const unpaidBills = await MonthlyBill.countDocuments({ isPaid: false });
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    
+    const totalBills = await MonthlyBill.countDocuments({ user: userId });
+    const paidBills = await MonthlyBill.countDocuments({ user: userId, isPaid: true });
+    const unpaidBills = await MonthlyBill.countDocuments({ user: userId, isPaid: false });
     
     const totalKWhConsumption = await MonthlyBill.aggregate([
+      { $match: { user: userId } },
       { $group: { _id: null, total: { $sum: '$totalKWh' } } }
     ]);
     
     const totalAmountDue = await MonthlyBill.aggregate([
+      { $match: { user: userId } },
       { $group: { _id: null, total: { $sum: '$totalPayment' } } }
     ]);
     
     const totalAmountPaid = await MonthlyBill.aggregate([
+      { $match: { user: userId } },
       { $group: { _id: null, total: { $sum: '$totalPaid' } } }
     ]);
 
     const totalOutstanding = await MonthlyBill.aggregate([
-      { $match: { isPaid: false } },
+      { $match: { user: userId, isPaid: false } },
       { $group: { _id: null, total: { $sum: '$balance' } } }
     ]);
 
