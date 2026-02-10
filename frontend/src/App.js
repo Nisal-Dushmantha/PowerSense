@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from 'antd';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 
 // Energy Reports Components
 import PrivateRoute from './components/PrivateRoute';
+import Home from './components/Home';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
@@ -53,26 +55,44 @@ function App() {
             <Route path="/" element={<Navigate to="/bills" />} />
             <Route path="/bills" element={
               <PrivateRoute>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Protected Routes */}
+          <Route path="/bills" element={
+            <PrivateRoute>
+              <div className="container mx-auto px-4 py-8">
                 <BillList />
-              </PrivateRoute>
-            } />
-            <Route path="/bills/new" element={
-              <PrivateRoute>
+              </div>
+            </PrivateRoute>
+          } />
+          <Route path="/bills/new" element={
+            <PrivateRoute>
+              <div className="container mx-auto px-4 py-8">
                 <CreateBill />
-              </PrivateRoute>
-            } />
-            <Route path="/bills/edit/:id" element={
-              <PrivateRoute>
+              </div>
+            </PrivateRoute>
+          } />
+          <Route path="/bills/edit/:id" element={
+            <PrivateRoute>
+              <div className="container mx-auto px-4 py-8">
                 <EditBill />
-              </PrivateRoute>
-            } />
-            <Route path="/stats" element={
-              <PrivateRoute>
+              </div>
+            </PrivateRoute>
+          } />
+          <Route path="/stats" element={
+            <PrivateRoute>
+              <div className="container mx-auto px-4 py-8">
                 <BillStats />
-              </PrivateRoute>
-            } />
-          </Routes>
-        </div>
+              </div>
+            </PrivateRoute>
+          } />
+        </Routes>
       </div>
     </Router>
   );
