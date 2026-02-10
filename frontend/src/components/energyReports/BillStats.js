@@ -35,18 +35,18 @@ const BillStats = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded mb-4">
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
         {error}
         <button 
           onClick={fetchStats}
-          className="ml-4 text-danger-600 hover:text-danger-800 underline"
+          className="ml-4 text-red-600 hover:text-red-800 underline"
         >
           Try Again
         </button>
@@ -57,18 +57,18 @@ const BillStats = () => {
   if (!stats) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-xl text-gray-600">No statistics available</h3>
+        <h3 className="text-xl text-textSecondary">No statistics available</h3>
       </div>
     );
   }
 
-  const StatCard = ({ title, value, subtitle, color = 'primary' }) => (
-    <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-primary-500">
+  const StatCard = ({ title, value, subtitle, bgColor = 'bg-primary', textColor = 'text-primary' }) => (
+    <div className={`card border-l-4 ${bgColor === 'bg-primary' ? 'border-primary' : bgColor === 'bg-secondary' ? 'border-secondary' : bgColor === 'bg-accent' ? 'border-accent' : 'border-red-500'}`}>
       <div className="flex items-center">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-          <p className={`text-3xl font-bold text-${color}-600`}>{value}</p>
-          {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+          <h3 className="text-lg font-semibold text-textPrimary mb-2">{title}</h3>
+          <p className={`text-3xl font-bold ${textColor}`}>{value}</p>
+          {subtitle && <p className="text-sm text-textSecondary mt-1">{subtitle}</p>}
         </div>
       </div>
     </div>
@@ -76,35 +76,39 @@ const BillStats = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Bill Statistics</h1>
+      <h1 className="text-3xl font-bold text-textPrimary mb-8">Bill Statistics</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Bills"
           value={stats.totalBills}
           subtitle="All time"
-          color="primary"
+          bgColor="bg-primary"
+          textColor="text-primary"
         />
         
         <StatCard
           title="Paid Bills"
           value={stats.paidBills}
           subtitle={`${((stats.paidBills / stats.totalBills) * 100).toFixed(1)}% of total`}
-          color="success"
+          bgColor="bg-secondary"
+          textColor="text-secondary"
         />
         
         <StatCard
           title="Pending Bills"
           value={stats.pendingBills}
           subtitle={`${((stats.pendingBills / stats.totalBills) * 100).toFixed(1)}% of total`}
-          color="yellow"
+          bgColor="bg-accent"
+          textColor="text-accent"
         />
         
         <StatCard
           title="Total KWh"
           value={stats.totalKWh?.toFixed(1)}
           subtitle="Cumulative usage"
-          color="primary"
+          bgColor="bg-primary"
+          textColor="text-primary"
         />
       </div>
 
@@ -113,42 +117,45 @@ const BillStats = () => {
           title="Total Amount"
           value={formatCurrency(stats.totalAmount)}
           subtitle="All bills combined"
-          color="primary"
+          bgColor="bg-primary"
+          textColor="text-primary"
         />
         
         <StatCard
           title="Amount Paid"
           value={formatCurrency(stats.amountPaid)}
           subtitle="Successfully collected"
-          color="success"
+          bgColor="bg-secondary"
+          textColor="text-secondary"
         />
         
         <StatCard
           title="Outstanding Balance"
           value={formatCurrency(stats.outstandingBalance)}
           subtitle="Pending payments"
-          color={stats.outstandingBalance > 0 ? 'danger' : 'success'}
+          bgColor={stats.outstandingBalance > 0 ? 'bg-red-500' : 'bg-secondary'}
+          textColor={stats.outstandingBalance > 0 ? 'text-red-600' : 'text-secondary'}
         />
       </div>
 
       {stats.totalBills > 0 && (
-        <div className="mt-8 bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary</h2>
-          <div className="space-y-3 text-gray-700">
+        <div className="mt-8 card">
+          <h2 className="text-xl font-semibold text-textPrimary mb-4">Summary</h2>
+          <div className="space-y-3 text-textSecondary">
             <p>
-              <span className="font-medium">Average bill amount:</span>{' '}
+              <span className="font-medium text-textPrimary">Average bill amount:</span>{' '}
               {formatCurrency(stats.totalAmount / stats.totalBills)}
             </p>
             <p>
-              <span className="font-medium">Average KWh per bill:</span>{' '}
+              <span className="font-medium text-textPrimary">Average KWh per bill:</span>{' '}
               {(stats.totalKWh / stats.totalBills).toFixed(1)} KWh
             </p>
             <p>
-              <span className="font-medium">Payment completion rate:</span>{' '}
+              <span className="font-medium text-textPrimary">Payment completion rate:</span>{' '}
               {((stats.paidBills / stats.totalBills) * 100).toFixed(1)}%
             </p>
             {stats.outstandingBalance > 0 && (
-              <p className="text-danger-600">
+              <p className="text-red-600">
                 <span className="font-medium">Action needed:</span>{' '}
                 {stats.pendingBills} bill(s) with {formatCurrency(stats.outstandingBalance)} outstanding balance
               </p>
