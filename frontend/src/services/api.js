@@ -57,4 +57,24 @@ export const billService = {
   getStats: () => api.get('/bills/stats'),
 };
 
+export const renewableService = {
+  // Source operations
+  createSource: (sourceData) => api.post('/renewable/sources', sourceData),
+  getSources: (params) => api.get('/renewable/sources', { params }),
+  getSourceById: (id) => api.get(`/renewable/sources/${id}`),
+  updateSource: (id, sourceData) => api.put(`/renewable/sources/${id}`, sourceData),
+  deleteSource: (id) => api.delete(`/renewable/sources/${id}`),
+  
+  // Record operations
+  createRecord: (recordData) => api.post('/renewable/records', recordData),
+  getRecords: (params) => api.get('/renewable/records', { params }),
+  getRecordById: (id) => api.get(`/renewable/records/${id}`),
+  updateRecord: (id, recordData) => api.put(`/renewable/records/${id}`, recordData),
+  deleteRecord: (id) => api.delete(`/renewable/records/${id}`),
+  
+  // Statistics
+  getStatistics: (params) => api.get('/renewable/stats', { params }),
+  getDashboard: () => api.get('/renewable/dashboard'),
+};
+
 export default api;

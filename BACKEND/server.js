@@ -21,6 +21,7 @@ connectDB();
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
 const authRoutes = require('./routes/auth');
+const renewableRoutes = require('./routes/renewableRoutes');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -30,13 +31,15 @@ app.get('/', (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
     endpoints: {
       bills: '/api/bills',
-      stats: '/api/bills/stats'
+      stats: '/api/bills/stats',
+      renewable: '/api/renewable'
     }
   });
 });
 
 // API Routes
-app.use('/api/bills', monthlyBillRoutes);
+app.use('/api/bills', monthlyBill
+app.use('/api/renewable', renewableRoutes);Routes);
 app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 5000;
