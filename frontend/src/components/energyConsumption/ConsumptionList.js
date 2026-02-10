@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getEnergyRecords, deleteEnergyRecord } from '../../services/energyApi';
+import { getEnergyRecords, deleteEnergyRecord, createEnergyRecord } from '../../services/energyApi';
 
 const ConsumptionList = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState(null);
   const [filters, setFilters] = useState({
     period_type: '',
     startDate: '',
     endDate: '',
     search: ''
+  });
+  const [formData, setFormData] = useState({
+    consumption_date: '',
+    consumption_time: '',
+    energy_used_kwh: '',
+    period_type: 'daily'
   });
 
   const fetchRecords = async () => {
@@ -62,6 +71,64 @@ const ConsumptionList = () => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleOpenModal = () => {
+    setShowModal(true);
+    setFormData({
+      consumption_date: '',
+      consumption_time: '',
+      energy_used_kwh: '',
+      period_type: 'daily'
+    });
+    setFormError(null);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setFormData({
+      consumption_date: '',
+      consumption_time: '',
+      energy_used_kwh: '',
+      period_type: 'daily'
+    });
+    setFormError(null);
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormError(null);
+
+    try {
+      const submitData = {
+        ...formData,
+        energy_used_kwh: parseFloat(formData.energy_used_kwh)
+      };
+
+      if (formData.consumption_time) {
+        submitData.consumption_time = formData.consumption_time.includes(':') && formData.consumption_time.split(':').length === 2
+          ? formData.consumption_time + ':00'
+          : formData.consumption_time;
+      }
+
+      await createEnergyRecord(submitData);
+      handleCloseModal();
+      fetchRecords(); // Refresh the list
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Failed to create record');
+      console.error('Error creating record:', err);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -97,15 +164,15 @@ const ConsumptionList = () => {
           <h1 className="text-3xl font-bold text-textPrimary">Energy Consumption Records</h1>
           <p className="text-textSecondary mt-1">Track and manage your energy usage data</p>
         </div>
-        <Link
-          to="/consumption/new"
+        <button
+          onClick={handleOpenModal}
           className="btn-primary flex items-center"
         >
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
           </svg>
           Add New Record
-        </Link>
+        </button>
       </div>
 
       {/* Filters */}
@@ -166,15 +233,15 @@ const ConsumptionList = () => {
               </div>
               <h3 className="text-xl font-semibold text-textPrimary mb-2">No consumption records found</h3>
               <p className="text-textSecondary mb-6">Start by adding your first energy consumption record</p>
-              <Link
-                to="/consumption/new"
+              <button
+                onClick={handleOpenModal}
                 className="btn-primary inline-flex items-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
                 Add Your First Record
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -270,6 +337,138 @@ const ConsumptionList = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Professional Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="card w-full max-w-md max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white rounded-t-2xl border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-textPrimary">Add New Record</h2>
+              <button
+                onClick={handleCloseModal}
+                className="btn-ghost p-2 rounded-full"
+              >
+                <svg className="w-5 h-5 text-textSecondary" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-6">
+              {formError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <span>{formError}</span>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="modal_consumption_date" className="block text-sm font-medium text-textPrimary mb-2">
+                    Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    id="modal_consumption_date"
+                    name="consumption_date"
+                    value={formData.consumption_date}
+                    onChange={handleFormChange}
+                    required
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="modal_consumption_time" className="block text-sm font-medium text-textPrimary mb-2">
+                    Time (Optional)
+                  </label>
+                  <input
+                    type="time"
+                    id="modal_consumption_time"
+                    name="consumption_time"
+                    value={formData.consumption_time}
+                    onChange={handleFormChange}
+                    className="input-field"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="modal_energy_used_kwh" className="block text-sm font-medium text-textPrimary mb-2">
+                    Energy Used (kWh) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      id="modal_energy_used_kwh"
+                      name="energy_used_kwh"
+                      value={formData.energy_used_kwh}
+                      onChange={handleFormChange}
+                      required
+                      step="0.01"
+                      min="0"
+                      className="input-field pr-12"
+                      placeholder="0.00"
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="text-textSecondary text-sm font-medium">kWh</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="modal_period_type" className="block text-sm font-medium text-textPrimary mb-2">
+                    Period Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="modal_period_type"
+                    name="period_type"
+                    value={formData.period_type}
+                    onChange={handleFormChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="hourly">Hourly</option>
+                    <option value="daily">Daily</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+
+                {/* Modal Actions */}
+                <div className="flex space-x-3 pt-6">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    disabled={formLoading}
+                    className="btn-secondary flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="btn-primary flex-1 flex items-center justify-center"
+                  >
+                    {formLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      <>Create Record</>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
