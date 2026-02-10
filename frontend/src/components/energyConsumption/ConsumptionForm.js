@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, DatePicker, TimePicker, Select, message, Card, Spin, Space } from 'antd';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   createEnergyRecord, 
   updateEnergyRecord, 
   getEnergyRecords 
 } from '../../services/energyApi';
-import dayjs from 'dayjs';
-
-const { Option } = Select;
 
 const ConsumptionForm = () => {
-  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
+  
+  const [formData, setFormData] = useState({
+    consumption_date: '',
+    consumption_time: '',
+    energy_used_kwh: '',
+    period_type: 'daily'
+  });
 
   useEffect(() => {
     if (id) {
@@ -31,138 +33,174 @@ const ConsumptionForm = () => {
       const response = await getEnergyRecords({ id: recordId });
       if (response.data && response.data.length > 0) {
         const record = response.data[0];
-        form.setFieldsValue({
-          ...record,
-          consumption_date: dayjs(record.consumption_date),
-          consumption_time: record.consumption_time ? dayjs(record.consumption_time, 'HH:mm:ss') : null,
+        setFormData({
+          consumption_date: record.consumption_date ? record.consumption_date.split('T')[0] : '',
+          consumption_time: record.consumption_time || '',
+          energy_used_kwh: record.energy_used_kwh || '',
+          period_type: record.period_type || 'daily'
         });
       }
-    } catch (error) {
-      message.error('Failed to fetch record details');
-      console.error('Error fetching record:', error);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch record details');
+      console.error('Error fetching record:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const onFinish = async (values) => {
-    setSubmitting(true);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
     try {
-      const formattedValues = {
-        ...values,
-        consumption_date: values.consumption_date.format('YYYY-MM-DD'),
-        consumption_time: values.consumption_time ? values.consumption_time.format('HH:mm:ss') : null,
-        energy_used_kwh: parseFloat(values.energy_used_kwh),
+      const submitData = {
+        ...formData,
+        energy_used_kwh: parseFloat(formData.energy_used_kwh)
       };
 
       if (isEditMode) {
-        await updateEnergyRecord(id, formattedValues);
-        message.success('Record updated successfully');
+        await updateEnergyRecord(id, submitData);
       } else {
-        await createEnergyRecord(formattedValues);
-        message.success('Record created successfully');
+        await createEnergyRecord(submitData);
       }
       
-      navigate('/energy-consumption');
-    } catch (error) {
+      navigate('/consumption');
+    } catch (err) {
       const errorMessage = isEditMode 
         ? 'Failed to update record' 
         : 'Failed to create record';
-      message.error(errorMessage);
-      console.error('Error:', error);
+      setError(err.response?.data?.message || errorMessage);
+      console.error('Error:', err);
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const handlePeriodTypeChange = (value) => {
-    form.setFieldsValue({ consumption_time: null });
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="loading-spinner w-12 h-12"></div>
+      </div>
+    );
+  }
 
   return (
-    <Card 
-      title={isEditMode ? 'Edit Energy Consumption Record' : 'Add New Energy Consumption Record'}
-      style={{ maxWidth: 800, margin: '0 auto' }}
-    >
-      <Spin spinning={loading}>
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{
-            period_type: 'daily',
-          }}
-        >
-          <Form.Item
-            name="consumption_date"
-            label="Date"
-            rules={[{ required: true, message: 'Please select a date' }]}
-          >
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
+    <div className="max-w-2xl mx-auto">
+      <div className="card">
+        <h1 className="text-3xl font-bold text-textPrimary mb-6">
+          {isEditMode ? 'Edit Energy Consumption Record' : 'Add New Energy Consumption Record'}
+        </h1>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
-          <Form.Item
-            name="period_type"
-            label="Period Type"
-            rules={[{ required: true, message: 'Please select period type' }]}
-          >
-            <Select onChange={handlePeriodTypeChange}>
-              <Option value="hourly">Hourly</Option>
-              <Option value="daily">Daily</Option>
-              <Option value="monthly">Monthly</Option>
-            </Select>
-          </Form.Item>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="consumption_date" className="block text-sm font-medium text-textPrimary mb-2">
+              Date *
+            </label>
+            <input
+              type="date"
+              id="consumption_date"
+              name="consumption_date"
+              value={formData.consumption_date}
+              onChange={handleChange}
+              required
+              className="input-field"
+            />
+          </div>
 
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) => 
-              prevValues.period_type !== currentValues.period_type
-            }
-          >
-            {({ getFieldValue }) =>
-              getFieldValue('period_type') === 'hourly' ? (
-                <Form.Item
-                  name="consumption_time"
-                  label="Time"
-                  rules={[{ required: true, message: 'Please select time' }]}
-                >
-                  <TimePicker format="HH:mm" style={{ width: '100%' }} />
-                </Form.Item>
-              ) : null
-            }
-          </Form.Item>
+          <div>
+            <label htmlFor="consumption_time" className="block text-sm font-medium text-textPrimary mb-2">
+              Time (Optional)
+            </label>
+            <input
+              type="time"
+              id="consumption_time"
+              name="consumption_time"
+              value={formData.consumption_time}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="HH:MM"
+            />
+          </div>
 
-          <Form.Item
-            name="energy_used_kwh"
-            label="Energy Used (kWh)"
-            rules={[
-              { required: true, message: 'Please enter energy used' },
-              {
-                pattern: /^\d+(\.\d{1,2})?$/,
-                message: 'Please enter a valid number',
-              },
-            ]}
-          >
-            <Input type="number" step="0.01" min="0" />
-          </Form.Item>
+          <div>
+            <label htmlFor="energy_used_kwh" className="block text-sm font-medium text-textPrimary mb-2">
+              Energy Used (kWh) *
+            </label>
+            <input
+              type="number"
+              id="energy_used_kwh"
+              name="energy_used_kwh"
+              value={formData.energy_used_kwh}
+              onChange={handleChange}
+              required
+              step="0.01"
+              min="0"
+              className="input-field"
+              placeholder="Enter energy consumption"
+            />
+          </div>
 
-          <Form.Item style={{ marginTop: 24 }}>
-            <Space>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                loading={submitting}
-              >
-                {isEditMode ? 'Update' : 'Create'}
-              </Button>
-              <Button onClick={() => navigate('/energy-consumption')}>
-                Cancel
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Spin>
-    </Card>
+          <div>
+            <label htmlFor="period_type" className="block text-sm font-medium text-textPrimary mb-2">
+              Period Type *
+            </label>
+            <select
+              id="period_type"
+              name="period_type"
+              value={formData.period_type}
+              onChange={handleChange}
+              required
+              className="input-field"
+            >
+              <option value="hourly">Hourly</option>
+              <option value="daily">Daily</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              onClick={() => navigate('/consumption')}
+              className="btn-secondary flex-1"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary flex-1"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="flex items-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  {isEditMode ? 'Updating...' : 'Creating...'}
+                </span>
+              ) : (
+                isEditMode ? 'Update Record' : 'Create Record'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

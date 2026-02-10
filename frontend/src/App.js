@@ -11,6 +11,7 @@ import BillList from './components/energyReports/BillList';
 import CreateBill from './components/energyReports/CreateBill';
 import EditBill from './components/energyReports/EditBill';
 import BillStats from './components/energyReports/BillStats';
+import EnergyConsumption from './components/energyConsumption';
 
 function App() {
   return (
@@ -54,14 +55,9 @@ function App() {
           } />
           
           {/* Placeholder routes for new nav items */}
-          <Route path="/consumption" element={
+          <Route path="/consumption/*" element={
             <PrivateRoute>
-              <div className="container mx-auto px-4 py-8">
-                <div className="text-center">
-                  <h1 className="text-2xl font-bold text-textPrimary mb-4">Energy Consumption</h1>
-                  <p className="text-textSecondary">Coming soon...</p>
-                </div>
-              </div>
+              <EnergyConsumption />
             </PrivateRoute>
           } />
           <Route path="/renewable" element={
