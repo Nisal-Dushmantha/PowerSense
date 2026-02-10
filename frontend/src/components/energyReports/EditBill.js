@@ -84,25 +84,25 @@ const EditBill = () => {
   if (fetchLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Edit Bill</h1>
+      <div className="card">
+        <h1 className="text-3xl font-bold text-textPrimary mb-6">Edit Bill</h1>
         
         {error && (
-          <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded mb-4">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="billNumber" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="billNumber" className="block text-sm font-medium text-textPrimary mb-2">
               Bill Number *
             </label>
             <input
@@ -112,13 +112,13 @@ const EditBill = () => {
               value={formData.billNumber}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              className="input-field"
               placeholder="Enter unique bill number"
             />
           </div>
 
           <div>
-            <label htmlFor="billIssueDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="billIssueDate" className="block text-sm font-medium text-textPrimary mb-2">
               Bill Issue Date *
             </label>
             <input
@@ -128,12 +128,12 @@ const EditBill = () => {
               value={formData.billIssueDate}
               onChange={handleChange}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              className="input-field"
             />
           </div>
 
           <div>
-            <label htmlFor="totalKWh" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="totalKWh" className="block text-sm font-medium text-textPrimary mb-2">
               Total KWh *
             </label>
             <input
@@ -145,13 +145,13 @@ const EditBill = () => {
               required
               min="0"
               step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              className="input-field"
               placeholder="Enter total kilowatt hours"
             />
           </div>
 
           <div>
-            <label htmlFor="totalPayment" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="totalPayment" className="block text-sm font-medium text-textPrimary mb-2">
               Total Payment *
             </label>
             <input
@@ -163,13 +163,13 @@ const EditBill = () => {
               required
               min="0"
               step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              className="input-field"
               placeholder="Enter total payment amount"
             />
           </div>
 
           <div>
-            <label htmlFor="totalPaid" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="totalPaid" className="block text-sm font-medium text-textPrimary mb-2">
               Total Paid
             </label>
             <input
@@ -180,7 +180,7 @@ const EditBill = () => {
               onChange={handleChange}
               min="0"
               step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              className="input-field"
               placeholder="Enter amount paid (optional)"
             />
           </div>
@@ -192,9 +192,9 @@ const EditBill = () => {
               name="isPaid"
               checked={formData.isPaid}
               onChange={handleChange}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-primary focus:ring-secondary border-gray-300 rounded"
             />
-            <label htmlFor="isPaid" className="ml-2 block text-sm text-gray-700">
+            <label htmlFor="isPaid" className="ml-2 block text-sm text-textPrimary">
               Mark as paid
             </label>
           </div>
@@ -203,14 +203,14 @@ const EditBill = () => {
             <button
               type="button"
               onClick={() => navigate('/bills')}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+              className="btn-primary disabled:opacity-50"
             >
               {loading ? 'Updating...' : 'Update Bill'}
             </button>
