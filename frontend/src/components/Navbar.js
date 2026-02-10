@@ -115,19 +115,6 @@ const Navbar = () => {
                 Devices
               </Link>
               
-              <Link
-                to="/renewable"
-                className={`${
-                  isActivePath('/renewable') || location.pathname.includes('/renewable')
-                    ? 'nav-link-active'
-                    : 'nav-link'
-                } flex items-center space-x-2`}
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                <span>Renewable</span>
-              </Link>
             </div>
           )}
 
