@@ -26,12 +26,28 @@ const Navbar = () => {
               Bills
             </Link>
             <Link
+              to="/devices"
+              className={`text-white hover:text-primary-200 transition-colors ${
+                isActive('/devices') ? 'text-primary-200 border-b-2 border-primary-200' : ''
+              }`}
+            >
+              Devices
+            </Link>
+            <Link
               to="/bills/new"
               className={`text-white hover:text-primary-200 transition-colors ${
                 isActive('/bills/new') ? 'text-primary-200 border-b-2 border-primary-200' : ''
               }`}
             >
               Add New Bill
+            </Link>
+            <Link
+              to="/devices/new"
+              className={`text-white hover:text-primary-200 transition-colors ${
+                isActive('/devices/new') ? 'text-primary-200 border-b-2 border-primary-200' : ''
+              }`}
+            >
+              Add Device
             </Link>
             <Link
               to="/stats"

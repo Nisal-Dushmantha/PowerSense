@@ -52,7 +52,7 @@ monthlyBillSchema.pre('save', function(next) {
 });
 
 // Index for faster queries
-monthlyBillSchema.index({ billNumber: 1 });
+// Only one index for billNumber is needed (unique: true already creates it)
 monthlyBillSchema.index({ billIssueDate: -1 });
 
 module.exports = mongoose.model('MonthlyBill', monthlyBillSchema);
