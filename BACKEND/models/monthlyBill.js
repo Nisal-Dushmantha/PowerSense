@@ -1,10 +1,14 @@
 const mongoose = require('mongoose');
 
 const monthlyBillSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User is required']
+  },
   billNumber: {
     type: String,
     required: [true, 'Bill Number is required'],
-    unique: true,
     trim: true,
     uppercase: true
   },
@@ -52,7 +56,7 @@ monthlyBillSchema.pre('save', function(next) {
 });
 
 // Index for faster queries
-// Only one index for billNumber is needed (unique: true already creates it)
-monthlyBillSchema.index({ billIssueDate: -1 });
+monthlyBillSchema.index({ user: 1, billNumber: 1 }, { unique: true });
+monthlyBillSchema.index({ user: 1, billIssueDate: -1 });
 
 module.exports = mongoose.model('MonthlyBill', monthlyBillSchema);

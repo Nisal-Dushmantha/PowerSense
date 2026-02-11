@@ -5,45 +5,43 @@ const {
   getBillById,
   getBillByNumber,
   updateBill,
-  deleteBill,
-  getBillStats
+  deleteBill
 } = require('../controllers/monthlyBill');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
-// @route   GET /api/bills/stats
-// @desc    Get bill statistics
-// @access  Public
-router.get('/stats', getBillStats);
+// Protect all routes - require authentication
+router.use(protect);
 
 // @route   GET /api/bills/number/:billNumber
 // @desc    Get bill by bill number
-// @access  Public
+// @access  Private
 router.get('/number/:billNumber', getBillByNumber);
 
 // @route   GET /api/bills
 // @desc    Get all bills with pagination and filtering
-// @access  Public
+// @access  Private
 router.get('/', getAllBills);
 
 // @route   GET /api/bills/:id
 // @desc    Get a single bill by ID
-// @access  Public
+// @access  Private
 router.get('/:id', getBillById);
 
 // @route   POST /api/bills
 // @desc    Create a new bill
-// @access  Public
+// @access  Private
 router.post('/', createBill);
 
 // @route   PUT /api/bills/:id
 // @desc    Update a bill
-// @access  Public
+// @access  Private
 router.put('/:id', updateBill);
 
 // @route   DELETE /api/bills/:id
 // @desc    Delete a bill
-// @access  Public
+// @access  Private
 router.delete('/:id', deleteBill);
 
 module.exports = router;
