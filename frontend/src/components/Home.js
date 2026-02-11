@@ -22,14 +22,14 @@ const Home = () => {
   // If user is authenticated, show dashboard-style homepage
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-white to-background/50">
+      <div className="min-h-screen bg-gradient-to-br from-background via-white to-background/50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto container-padding py-12">
           {/* Welcome Section */}
           <div className="text-center mb-12 fade-in">
-            <h1 className="text-4xl lg:text-6xl font-bold text-textPrimary mb-4">
+            <h1 className="text-4xl lg:text-6xl font-bold text-textPrimary dark:text-gray-100 mb-4">
               Welcome back, <span className="text-gradient">{user?.firstName}</span>
             </h1>
-            <p className="text-xl text-textSecondary max-w-2xl mx-auto">
+            <p className="text-xl text-textSecondary dark:text-gray-300 max-w-2xl mx-auto">
               Your energy management dashboard is ready. Track your bills, monitor consumption patterns, and optimize your electricity usage.
             </p>
           </div>
@@ -38,7 +38,7 @@ const Home = () => {
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             <Link
               to="/bills"
-              className="group bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 hover:bg-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+              className="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 dark:border-gray-600/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
             >
               <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 transition-transform">
                 <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -46,54 +46,54 @@ const Home = () => {
                   <polyline points="14,2 14,8 20,8"/>
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-textPrimary mb-3">Manage Bills</h3>
-              <p className="text-textSecondary">Add, edit, and track your electricity bills with ease.</p>
+              <h3 className="text-2xl font-bold text-textPrimary dark:text-gray-100 mb-3">Manage Bills</h3>
+              <p className="text-textSecondary dark:text-gray-300">Add, edit, and track your electricity bills with ease.</p>
             </Link>
 
             <Link
               to="/bills/new"
-              className="group bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 hover:bg-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+              className="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 dark:border-gray-600/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
             >
               <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 transition-transform">
                 <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 5v14m-7-7h14"/>
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-textPrimary mb-3">Add New Bill</h3>
-              <p className="text-textSecondary">Record your latest electricity bill quickly.</p>
+              <h3 className="text-2xl font-bold text-textPrimary dark:text-gray-100 mb-3">Add New Bill</h3>
+              <p className="text-textSecondary dark:text-gray-300">Record your latest electricity bill quickly.</p>
             </Link>
 
             <Link
-              to="/stats"
-              className="group bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 hover:bg-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+              to="/consumption"
+              className="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 dark:border-gray-600/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
             >
               <div className="w-16 h-16 bg-gradient-to-r from-secondary to-accent rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 transition-transform">
                 <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 20V10M6 20V4m12 16V8"/>
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-textPrimary mb-3">View Statistics</h3>
-              <p className="text-textSecondary">Analyze your energy consumption patterns.</p>
+              <h3 className="text-2xl font-bold text-textPrimary dark:text-gray-100 mb-3">Energy Consumption</h3>
+              <p className="text-textSecondary dark:text-gray-300">Monitor your energy usage patterns.</p>
             </Link>
           </div>
 
           {/* Energy Tips Section */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50">
-            <h2 className="text-3xl font-bold text-textPrimary mb-8 text-center">
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 dark:border-gray-600/50">
+            <h2 className="text-3xl font-bold text-textPrimary dark:text-gray-100 mb-8 text-center">
               💡 Energy Saving Tips
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                 </div>
-                <h4 className="font-semibold text-textPrimary mb-2">LED Lighting</h4>
-                <p className="text-sm text-textSecondary">Switch to LED bulbs to reduce energy consumption by up to 80%</p>
+                <h4 className="font-semibold text-textPrimary dark:text-gray-100 mb-2">LED Lighting</h4>
+                <p className="text-sm text-textSecondary dark:text-gray-300">Switch to LED bulbs to reduce energy consumption by up to 80%</p>
               </div>
               <div className="text-center">
-                <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 bg-secondary/10 dark:bg-secondary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-secondary" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/>
                   </svg>

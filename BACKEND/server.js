@@ -33,6 +33,7 @@ app.get('/', (req, res) => {
       bills: '/api/bills',
       stats: '/api/bills/stats',
       energy: '/api/energy-consumption'
+      
     }
   });
 });
