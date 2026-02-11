@@ -5,8 +5,7 @@ const {
   getBillById,
   getBillByNumber,
   updateBill,
-  deleteBill,
-  getBillStats
+  deleteBill
 } = require('../controllers/monthlyBill');
 const { protect } = require('../middleware/auth');
 
@@ -14,11 +13,6 @@ const router = express.Router();
 
 // Protect all routes - require authentication
 router.use(protect);
-
-// @route   GET /api/bills/stats
-// @desc    Get bill statistics
-// @access  Private
-router.get('/stats', getBillStats);
 
 // @route   GET /api/bills/number/:billNumber
 // @desc    Get bill by bill number

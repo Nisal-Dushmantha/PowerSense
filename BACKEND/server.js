@@ -20,6 +20,7 @@ connectDB();
 
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
+//const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
 
 // Basic route
@@ -29,14 +30,15 @@ app.get('/', (req, res) => {
     status: 'Connected to MongoDB',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
     endpoints: {
-      bills: '/api/bills',
-      stats: '/api/bills/stats'
+      bills: '/api/bills'
+      //energy: '/api/energy-consumption'
     }
   });
 });
 
 // API Routes
 app.use('/api/bills', monthlyBillRoutes);
+//app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 5000;

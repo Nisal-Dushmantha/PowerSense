@@ -21,6 +21,11 @@
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.6;
   }
+
+  /* Dark mode styles */
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
   
   /* Custom scrollbar */
   ::-webkit-scrollbar {
@@ -29,15 +34,15 @@
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    @apply bg-gray-100 dark:bg-gray-800;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    @apply bg-gray-400 dark:bg-gray-500;
   }
 }
 
@@ -64,7 +69,7 @@
   }
   
   .btn-ghost {
-    @apply btn bg-transparent text-textSecondary hover:bg-gray-100 hover:text-textPrimary focus:ring-gray-300;
+    @apply btn bg-transparent text-textSecondary dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-textPrimary dark:hover:text-gray-200 focus:ring-gray-300 dark:focus:ring-gray-600;
   }
   
   .btn-sm {
@@ -77,19 +82,19 @@
   
   /* Card Components */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 backdrop-blur-sm transition-all duration-200 hover:shadow-md;
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 backdrop-blur-sm transition-all duration-200 hover:shadow-md;
   }
   
   .card-hover {
-    @apply card hover:shadow-lg hover:border-gray-200 hover:-translate-y-1;
+    @apply card hover:shadow-lg hover:border-gray-200 dark:hover:border-gray-600 hover:-translate-y-1;
   }
   
   .card-gradient {
-    @apply bg-gradient-to-br from-white via-background to-white border-transparent shadow-lg;
+    @apply bg-gradient-to-br from-white via-background to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 border-transparent shadow-lg;
   }
   
   .card-header {
-    @apply p-6 border-b border-gray-100;
+    @apply p-6 border-b border-gray-100 dark:border-gray-700;
   }
   
   .card-body {
@@ -97,16 +102,16 @@
   }
   
   .card-footer {
-    @apply p-6 border-t border-gray-100 bg-gray-50/50 rounded-b-2xl;
+    @apply p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 rounded-b-2xl;
   }
   
   /* Input Components */
   .input-field {
-    @apply w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all duration-200 placeholder:text-gray-400;
+    @apply w-full px-4 py-3 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-gray-100;
   }
   
   .input-field:hover {
-    @apply border-gray-300;
+    @apply border-gray-300 dark:border-gray-500;
   }
   
   .input-error {
@@ -123,7 +128,7 @@
   }
   
   .form-label {
-    @apply block text-sm font-semibold text-textPrimary mb-2;
+    @apply block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2;
   }
   
   .form-error {
@@ -140,23 +145,23 @@
   }
   
   .table-header {
-    @apply bg-gradient-to-r from-gray-50 to-background border-b border-gray-200;
+    @apply bg-gradient-to-r from-gray-50 to-background dark:from-gray-800 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600;
   }
   
   .table-header th {
-    @apply px-6 py-4 text-left text-xs font-semibold text-textSecondary uppercase tracking-wide;
+    @apply px-6 py-4 text-left text-xs font-semibold text-textSecondary dark:text-gray-300 uppercase tracking-wide;
   }
   
   .table-row {
-    @apply border-b border-gray-100 transition-colors duration-150;
+    @apply border-b border-gray-100 dark:border-gray-700 transition-colors duration-150;
   }
   
   .table-row:hover {
-    @apply bg-gradient-to-r from-background/50 to-transparent;
+    @apply bg-gradient-to-r from-background/50 to-transparent dark:from-gray-800/50 dark:to-transparent;
   }
   
   .table-cell {
-    @apply px-6 py-4 text-sm text-textSecondary;
+    @apply px-6 py-4 text-sm text-textSecondary dark:text-gray-300;
   }
   
   /* Badge Components */
@@ -165,19 +170,19 @@
   }
   
   .badge-success {
-    @apply badge bg-green-100 text-green-800;
+    @apply badge bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 border border-green-200 dark:border-green-800;
   }
   
   .badge-warning {
-    @apply badge bg-yellow-100 text-yellow-800;
+    @apply badge bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800;
   }
   
   .badge-danger {
-    @apply badge bg-red-100 text-red-800;
+    @apply badge bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800;
   }
   
   .badge-primary {
-    @apply badge bg-primary/10 text-primary;
+    @apply badge bg-primary/10 dark:bg-primary/20 text-primary border border-primary/20 dark:border-primary/30;
   }
   
   /* Loading Components */
@@ -196,11 +201,11 @@
   
   /* Navigation Components */
   .nav-link {
-    @apply px-4 py-2 text-sm font-medium text-textSecondary hover:text-textPrimary transition-colors duration-200 rounded-lg hover:bg-background;
+    @apply px-4 py-2 text-sm font-medium text-textSecondary dark:text-gray-400 hover:text-textPrimary dark:hover:text-gray-200 transition-colors duration-200 rounded-lg hover:bg-background dark:hover:bg-gray-800;
   }
   
   .nav-link-active {
-    @apply nav-link text-primary bg-primary/5;
+    @apply nav-link text-primary bg-primary/5 dark:bg-primary/10;
   }
   
   /* Utility Classes */
@@ -228,6 +233,14 @@
   .scale-in {
     animation: scaleIn 0.2s ease-out;
   }
+
+  .animate-modal-enter {
+    animation: modalEnter 0.3s ease-out;
+  }
+
+  .animate-modal-exit {
+    animation: modalExit 0.2s ease-in;
+  }
 }
 
 @keyframes fadeIn {
@@ -254,5 +267,27 @@
   to { 
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes modalEnter {
+  from { 
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalExit {
+  from { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to { 
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
   }
 }

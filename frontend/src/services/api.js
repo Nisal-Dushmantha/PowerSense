@@ -51,10 +51,7 @@ export const billService = {
   updateBill: (id, billData) => api.put(`/bills/${id}`, billData),
   
   // Delete bill
-  deleteBill: (id) => api.delete(`/bills/${id}`),
-  
-  // Get statistics
-  getStats: () => api.get('/bills/stats'),
+  deleteBill: (id) => api.delete(`/bills/${id}`)
 };
 
 export default api;
