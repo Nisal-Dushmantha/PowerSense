@@ -104,20 +104,25 @@ const ConsumptionForm = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="card">
-        <h1 className="text-3xl font-bold text-textPrimary mb-6">
+        <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100 mb-6">
           {isEditMode ? 'Edit Energy Consumption Record' : 'Add New Energy Consumption Record'}
         </h1>
         
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="consumption_date" className="block text-sm font-medium text-textPrimary mb-2">
-              Date *
+            <label htmlFor="consumption_date" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
+              Date <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
@@ -131,7 +136,7 @@ const ConsumptionForm = () => {
           </div>
 
           <div>
-            <label htmlFor="consumption_time" className="block text-sm font-medium text-textPrimary mb-2">
+            <label htmlFor="consumption_time" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
               Time (Optional)
             </label>
             <input
@@ -146,26 +151,31 @@ const ConsumptionForm = () => {
           </div>
 
           <div>
-            <label htmlFor="energy_used_kwh" className="block text-sm font-medium text-textPrimary mb-2">
-              Energy Used (kWh) *
+            <label htmlFor="energy_used_kwh" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
+              Energy Used (kWh) <span className="text-red-500">*</span>
             </label>
-            <input
-              type="number"
-              id="energy_used_kwh"
-              name="energy_used_kwh"
-              value={formData.energy_used_kwh}
-              onChange={handleChange}
-              required
-              step="0.01"
-              min="0"
-              className="input-field"
-              placeholder="Enter energy consumption"
-            />
+            <div className="relative">
+              <input
+                type="number"
+                id="energy_used_kwh"
+                name="energy_used_kwh"
+                value={formData.energy_used_kwh}
+                onChange={handleChange}
+                required
+                step="0.01"
+                min="0"
+                className="input-field pr-16"
+                placeholder="Enter energy consumption"
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span className="text-textSecondary dark:text-gray-400 text-sm font-medium">kWh</span>
+              </div>
+            </div>
           </div>
 
           <div>
-            <label htmlFor="period_type" className="block text-sm font-medium text-textPrimary mb-2">
-              Period Type *
+            <label htmlFor="period_type" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
+              Period Type <span className="text-red-500">*</span>
             </label>
             <select
               id="period_type"
