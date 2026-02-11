@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ConsumptionList from './ConsumptionList';
-import ConsumptionForm from './ConsumptionForm';
 import ConsumptionStats from './ConsumptionStats';
 
 const EnergyConsumption = () => {
@@ -11,8 +10,6 @@ const EnergyConsumption = () => {
         <Route path="/" element={<ConsumptionList />} />
         <Route path="/list" element={<ConsumptionList />} />
         <Route path="/stats" element={<ConsumptionStats />} />
-        <Route path="/new" element={<ConsumptionForm />} />
-        <Route path="/edit/:id" element={<ConsumptionForm />} />
       </Routes>
     </div>
   );

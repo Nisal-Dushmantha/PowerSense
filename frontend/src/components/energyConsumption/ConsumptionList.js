@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { getEnergyRecords, deleteEnergyRecord } from '../../services/energyApi';
 import CreateConsumptionModal from './CreateConsumptionModal';
+import EditConsumptionModal from './EditConsumptionModal';
 
 const ConsumptionList = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedRecordId, setSelectedRecordId] = useState(null);
   const [filters, setFilters] = useState({
     period_type: '',
     startDate: '',
@@ -66,6 +68,20 @@ const ConsumptionList = () => {
 
   const handleRecordCreated = (newRecord) => {
     setRecords(prevRecords => [newRecord, ...prevRecords]);
+  };
+
+  const handleRecordUpdated = (updatedRecord) => {
+    fetchRecords();
+  };
+
+  const handleEditClick = (recordId) => {
+    setSelectedRecordId(recordId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedRecordId(null);
   };
 
   if (loading) {
@@ -221,14 +237,14 @@ const ConsumptionList = () => {
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">
-                        <Link
-                          to={`/consumption/edit/${record._id}`}
+                        <button
+                          onClick={() => handleEditClick(record._id)}
                           className="btn-ghost btn-sm text-secondary hover:text-primary dark:text-secondary dark:hover:text-primary-light"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                           </svg>
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDelete(record._id)}
                           className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
@@ -269,15 +285,15 @@ const ConsumptionList = () => {
                 </div>
 
                 <div className="flex justify-end space-x-2">
-                  <Link
-                    to={`/consumption/edit/${record._id}`}
+                  <button
+                    onClick={() => handleEditClick(record._id)}
                     className="btn-secondary btn-sm"
                   >
                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
                     Edit
-                  </Link>
+                  </button>
                   <button
                     onClick={() => handleDelete(record._id)}
                     className="btn-danger btn-sm"
@@ -298,6 +314,13 @@ const ConsumptionList = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onRecordCreated={handleRecordCreated}
+      />
+      
+      <EditConsumptionModal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onRecordUpdated={handleRecordUpdated}
+        recordId={selectedRecordId}
       />
     </div>
   );
