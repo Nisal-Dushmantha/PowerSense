@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 // Components
 import PrivateRoute from './components/PrivateRoute';
 import Home from './components/Home';
+import Profile from './components/Profile';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
@@ -51,6 +52,12 @@ function App() {
               <div className="container mx-auto px-4 py-8">
                 <BillStats />
               </div>
+            </PrivateRoute>
+          } />
+          
+          <Route path="/profile" element={
+            <PrivateRoute>
+              <Profile />
             </PrivateRoute>
           } />
           
