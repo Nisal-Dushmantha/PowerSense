@@ -238,21 +238,6 @@ const Navbar = () => {
                       <path d="M7 10l5 5 5-5z"/>
                     </svg>
                   </button>
-              <>
-                {/* User Info - Desktop */}
-                <div className="hidden md:flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-textPrimary dark:text-gray-200">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-textSecondary dark:text-gray-400">{user?.email}</p>
-                  </div>
-                  <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </span>
-                  </div>
-                </div>
 
                   {/* Dropdown Menu */}
                   {isProfileDropdownOpen && (
@@ -364,8 +349,6 @@ const Navbar = () => {
                     setIsMobileMenuOpen(!isMobileMenuOpen);
                     setIsProfileDropdownOpen(false);
                   }}
-                  className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
                   aria-label="Toggle menu"
                 >
@@ -473,6 +456,9 @@ const Navbar = () => {
                     </svg>
                     Settings
                   </button>
+                </div>
+              </div>
+
               {/* User Info - Mobile */}
               <div className="flex items-center space-x-3 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl">
                 <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
