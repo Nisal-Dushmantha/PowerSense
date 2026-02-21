@@ -3,454 +3,253 @@ import { Link } from 'react-router-dom';
 import { renewableService } from '../../services/api';
 
 const RenewableDashboard = () => {
-  const [dashboard, setDashboard] = useState(null);
-  const [stats, setStats] = useState(null);
+  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('all');
 
-  const getTimeRangeParams = React.useCallback(() => {
-    const params = {};
-    const now = new Date();
-    
-    switch (timeRange) {
-      case '7days':
-        params.startDate = new Date(now.setDate(now.getDate() - 7)).toISOString();
-        break;
-      case '30days':
-        params.startDate = new Date(now.setDate(now.getDate() - 30)).toISOString();
-        break;
-      case '90days':
-        params.startDate = new Date(now.setDate(now.getDate() - 90)).toISOString();
-        break;
-      default:
-        break;
-    }
-    
-    return params;
-  }, [timeRange]);
+  useEffect(() => {
+    fetchRecords();
+  }, []);
 
-  const fetchDashboardData = React.useCallback(async () => {
+  const fetchRecords = async () => {
     try {
       setLoading(true);
-      
-      console.log('Fetching dashboard data...');
-      let dashboardData = null;
-      let statsData = null;
-
-      try {
-        const dashboardRes = await renewableService.getDashboard();
-        dashboardData = dashboardRes.data.data;
-      } catch (err) {
-        console.error('Error fetching dashboard summary:', err);
-        if (err.response && err.response.status === 404) {
-             setError('API endpoint not found (404). Please ensure server is running.');
-        }
-        throw err;
-      }
-
-      try {
-        const statsRes = await renewableService.getStatistics(getTimeRangeParams());
-        statsData = statsRes.data.data;
-      } catch (err) {
-        console.error('Error fetching statistics:', err);
-        throw err;
-      }
-      
-      setDashboard(dashboardData);
-      setStats(statsData);
+      const response = await renewableService.getRecords();
+      setRecords(response.data.data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch dashboard data. Check console for details.');
-      console.error('Error in fetchDashboardData:', err);
+      setError('Failed to fetch energy records');
+      console.error('Error fetching records:', err);
     } finally {
       setLoading(false);
     }
-  }, [getTimeRangeParams]);
+  };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this energy record?')) {
+      try {
+        await renewableService.deleteRecord(id);
+        setRecords(records.filter(record => record._id !== id));
+      } catch (err) {
+        setError('Failed to delete record');
+        console.error('Error deleting record:', err);
+      }
+    }
+  };
 
   const formatNumber = (num) => {
     if (!num) return '0';
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
   };
 
-  const formatCurrency = (amount) => {
-    if (!amount) return 'Rs. 0';
-    return new Intl.NumberFormat('en-LK', {
-      style: 'currency',
-      currency: 'LKR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const getSourceTypeIcon = (type) => {
-    const icons = {
-      Solar: '☀️',
-      Wind: '🌪️',
-      Hydro: '💧',
-      Biomass: '🌿',
-      Geothermal: '🌋',
-      Other: '⚡'
-    };
-    return icons[type] || '⚡';
-  };
-
-  const getSourceTypeColor = (type) => {
-    const colors = {
-      Solar: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      Wind: 'bg-blue-100 text-blue-800 border-blue-200',
-      Hydro: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-      Biomass: 'bg-green-100 text-green-800 border-green-200',
-      Geothermal: 'bg-orange-100 text-orange-800 border-orange-200',
-      Other: 'bg-purple-100 text-purple-800 border-purple-200'
-    };
-    return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return new Date(dateString).toLocaleDateString();
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-600"></div>
+        <div className="loading-spinner w-12 h-12"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-6">
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4">
         <div className="flex items-center">
-          <span className="text-2xl mr-3">⚠️</span>
-          <div>
-            <p className="font-semibold">{error}</p>
-            <button 
-              onClick={fetchDashboardData}
-              className="mt-2 text-red-600 hover:text-red-800 underline text-sm"
-            >
-              Try Again
-            </button>
-          </div>
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <span>{error}</span>
         </div>
+        <button 
+          onClick={fetchRecords}
+          className="ml-4 text-red-600 hover:text-red-800 underline font-medium"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 flex items-center">
-            <span className="text-5xl mr-3">🌱</span>
-            Renewable Energy Dashboard
-          </h1>
-          <p className="text-gray-600 mt-2">Monitor your sustainable energy production</p>
+          <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100">Renewable Energy Records</h1>
+          <p className="text-textSecondary dark:text-gray-300 mt-1">Track your renewable energy production</p>
         </div>
         <div className="flex gap-3">
           <Link
             to="/renewable/sources"
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            className="btn-secondary flex items-center"
           >
-            ⚡ Manage Sources
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+            </svg>
+            Manage Sources
           </Link>
           <Link
             to="/renewable/records/new"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            className="btn-primary flex items-center"
           >
-            📊 Add Record
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add New Record
           </Link>
         </div>
       </div>
 
-      {/* Time Range Filter */}
-      <div className="bg-white rounded-lg shadow-md p-4">
-        <div className="flex items-center gap-4">
-          <span className="text-gray-700 font-medium">Time Range:</span>
-          <div className="flex gap-2">
-            {[
-              { value: 'all', label: 'All Time' },
-              { value: '7days', label: 'Last 7 Days' },
-              { value: '30days', label: 'Last 30 Days' },
-              { value: '90days', label: 'Last 90 Days' }
-            ].map(range => (
-              <button
-                key={range.value}
-                onClick={() => setTimeRange(range.value)}
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  timeRange === range.value
-                    ? 'bg-green-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {range.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Active Sources */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm font-medium">Active Sources</p>
-              <p className="text-4xl font-bold mt-2">{dashboard?.sources?.active || 0}</p>
-              <p className="text-green-100 text-xs mt-1">of {dashboard?.sources?.total || 0} total</p>
-            </div>
-            <div className="text-6xl opacity-80">⚡</div>
-          </div>
-        </div>
-
-        {/* Total Energy */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm font-medium">Total Energy Generated</p>
-              <p className="text-4xl font-bold mt-2">{formatNumber(dashboard?.allTime?.totalEnergy || 0)}</p>
-              <p className="text-blue-100 text-xs mt-1">kWh</p>
-            </div>
-            <div className="text-6xl opacity-80">🔋</div>
-          </div>
-        </div>
-
-        {/* Carbon Offset */}
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-emerald-100 text-sm font-medium">Carbon Offset</p>
-              <p className="text-4xl font-bold mt-2">{formatNumber(dashboard?.allTime?.totalCarbonOffset || 0)}</p>
-              <p className="text-emerald-100 text-xs mt-1">kg CO₂</p>
-            </div>
-            <div className="text-6xl opacity-80">🌍</div>
-          </div>
-        </div>
-
-        {/* Cost Savings */}
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-amber-100 text-sm font-medium">Cost Savings</p>
-              <p className="text-3xl font-bold mt-2">{formatCurrency(dashboard?.allTime?.totalCostSavings || 0)}</p>
-              <p className="text-amber-100 text-xs mt-1">All time</p>
-            </div>
-            <div className="text-6xl opacity-80">💰</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Last 30 Days Performance */}
-      {dashboard?.last30Days && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl shadow-md p-6 border border-purple-100">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-            <span className="text-3xl mr-2">📈</span>
-            Last 30 Days Performance
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg p-4 shadow">
-              <p className="text-gray-600 text-sm">Energy Generated</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">
-                {formatNumber(dashboard.last30Days.totalEnergy)} kWh
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow">
-              <p className="text-gray-600 text-sm">Average Efficiency</p>
-              <p className="text-3xl font-bold text-pink-600 mt-2">
-                {formatNumber(dashboard.last30Days.avgEfficiency)}%
-              </p>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow">
-              <p className="text-gray-600 text-sm">Carbon Offset</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">
-                {formatNumber(dashboard.last30Days.totalCarbonOffset)} kg
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Energy by Source Type */}
-      {stats?.energyByType && stats.energyByType.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="text-3xl mr-2">🔌</span>
-            Energy Production by Source Type
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stats.energyByType.map((type, index) => (
-              <div 
-                key={index}
-                className={`border-2 rounded-lg p-4 ${getSourceTypeColor(type._id)}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-4xl mr-3">{getSourceTypeIcon(type._id)}</span>
-                    <div>
-                      <p className="font-bold text-lg">{type._id}</p>
-                      <p className="text-sm opacity-75">{type.recordCount} records</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">{formatNumber(type.totalEnergy)}</p>
-                    <p className="text-xs opacity-75">kWh</p>
-                  </div>
-                </div>
+      {records.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="card card-gradient max-w-md mx-auto">
+            <div className="card-body text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+                </svg>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Top Performing Sources */}
-      {stats?.topSources && stats.topSources.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="text-3xl mr-2">🏆</span>
-            Top Performing Sources
-          </h2>
-          <div className="space-y-4">
-            {stats.topSources.map((source, index) => (
-              <div 
-                key={source._id}
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
+              <h3 className="text-xl font-semibold text-textPrimary dark:text-gray-100 mb-2">No energy records found</h3>
+              <p className="text-textSecondary dark:text-gray-300 mb-6">Start by creating your first energy record</p>
+              <Link
+                to="/renewable/records/new"
+                className="btn-primary inline-flex items-center"
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full text-white font-bold text-xl">
-                    #{index + 1}
-                  </div>
-                  <div>
-                    <p className="font-bold text-lg text-gray-800">{source.sourceName}</p>
-                    <p className="text-sm text-gray-600 flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs ${getSourceTypeColor(source.sourceType)}`}>
-                        {getSourceTypeIcon(source.sourceType)} {source.sourceType}
-                      </span>
-                      <span>{source.recordCount} records</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">{formatNumber(source.totalEnergy)} kWh</p>
-                  <p className="text-sm text-gray-600">Avg Efficiency: {formatNumber(source.avgEfficiency)}%</p>
-                </div>
-              </div>
-            ))}
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Create Your First Record
+              </Link>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Monthly Trends */}
-      {stats?.monthlyTrends && stats.monthlyTrends.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="text-3xl mr-2">📊</span>
-            Monthly Energy Trends
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Month</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Energy (kWh)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Carbon Offset (kg)</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Avg Efficiency</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Records</th>
+      ) : (
+        <div className="card overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th>Source</th>
+                  <th>Date</th>
+                  <th>Energy Generated</th>
+                  <th>Efficiency</th>
+                  <th>Cost Savings</th>
+                  <th>Weather</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {stats.monthlyTrends.map((trend, index) => {
-                  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                  return (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {monthNames[trend._id.month - 1]} {trend._id.year}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                        {formatNumber(trend.totalEnergy)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-semibold">
-                        {formatNumber(trend.totalCarbonOffset)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-semibold">
-                        {formatNumber(trend.avgEfficiency)}%
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {trend.recordCount}
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody>
+                {records.map((record) => (
+                  <tr key={record._id} className="table-row">
+                    <td className="table-cell font-medium text-textPrimary dark:text-gray-100">
+                      {record.source?.sourceName || 'N/A'}
+                      <span className="block text-xs text-textSecondary dark:text-gray-400">
+                        {record.source?.sourceType}
+                      </span>
+                    </td>
+                    <td className="table-cell">
+                      {formatDate(record.recordDate)}
+                    </td>
+                    <td className="table-cell">
+                      <span className="font-semibold text-textPrimary dark:text-gray-200">{formatNumber(record.energyGenerated)}</span> 
+                      <span className="text-textSecondary dark:text-gray-400"> {record.energyUnit || 'kWh'}</span>
+                    </td>
+                    <td className="table-cell font-semibold text-textPrimary dark:text-gray-200">
+                      {record.efficiency ? `${formatNumber(record.efficiency)}%` : 'N/A'}
+                    </td>
+                    <td className="table-cell">
+                      <span className="font-semibold text-green-600 dark:text-green-400">
+                        {record.costSavings ? `Rs. ${formatNumber(record.costSavings)}` : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="table-cell">
+                      <span className="badge badge-secondary">
+                        {record.weatherCondition || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="table-cell">
+                      <div className="flex items-center space-x-2">
+                        <Link
+                          to={`/renewable/records/edit/${record._id}`}
+                          className="btn-ghost btn-sm text-secondary hover:text-primary dark:text-secondary dark:hover:text-primary-light"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                          </svg>
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(record._id)}
+                          className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
 
-      {/* Latest Records */}
-      {dashboard?.latestRecords && dashboard.latestRecords.length > 0 && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-              <span className="text-3xl mr-2">📝</span>
-              Latest Energy Records
-            </h2>
-            <Link 
-              to="/renewable/records"
-              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-            >
-              View All →
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {dashboard.latestRecords.map((record) => (
-              <div 
-                key={record._id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`px-3 py-2 rounded-lg ${getSourceTypeColor(record.source?.sourceType)}`}>
-                    <span className="text-2xl">{getSourceTypeIcon(record.source?.sourceType)}</span>
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4 p-4">
+            {records.map((record) => (
+              <div key={record._id} className="card-hover p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-semibold text-textPrimary dark:text-gray-100">
+                      {record.source?.sourceName || 'N/A'}
+                    </h3>
+                    <p className="text-sm text-textSecondary dark:text-gray-400">{formatDate(record.recordDate)}</p>
+                  </div>
+                  <span className="badge badge-secondary">
+                    {record.weatherCondition || 'N/A'}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                  <div>
+                    <span className="text-textSecondary dark:text-gray-400">Energy</span>
+                    <p className="font-semibold text-textPrimary dark:text-gray-200">
+                      {formatNumber(record.energyGenerated)} {record.energyUnit || 'kWh'}
+                    </p>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">{record.source?.sourceName}</p>
-                    <p className="text-sm text-gray-600">{formatDate(record.recordDate)}</p>
+                    <span className="text-textSecondary dark:text-gray-400">Efficiency</span>
+                    <p className="font-semibold text-textPrimary dark:text-gray-200">
+                      {record.efficiency ? `${formatNumber(record.efficiency)}%` : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-textSecondary dark:text-gray-400">Cost Savings</span>
+                    <p className="font-semibold text-green-600 dark:text-green-400">
+                      {record.costSavings ? `Rs. ${formatNumber(record.costSavings)}` : 'N/A'}
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-gray-800">{formatNumber(record.energyGenerated)} kWh</p>
-                  {record.efficiency && (
-                    <p className="text-sm text-gray-600">Efficiency: {formatNumber(record.efficiency)}%</p>
-                  )}
+
+                <div className="flex justify-end space-x-2">
+                  <Link
+                    to={`/renewable/records/edit/${record._id}`}
+                    className="btn-secondary btn-sm"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(record._id)}
+                    className="btn-danger btn-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {(!dashboard || dashboard.records === 0) && (
-        <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-xl shadow-lg p-12 text-center border-2 border-dashed border-gray-300">
-          <div className="text-8xl mb-4">🌱</div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">Start Your Renewable Energy Journey!</h3>
-          <p className="text-gray-600 mb-6">Add your first renewable energy source and start tracking your impact.</p>
-          <div className="flex gap-4 justify-center">
-            <Link
-              to="/renewable/sources"
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              Add Energy Source
-            </Link>
           </div>
         </div>
       )}
