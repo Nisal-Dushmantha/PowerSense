@@ -77,14 +77,14 @@ router.delete('/records/:id', protect, deleteRecord);
 
 // ============ STATISTICS ROUTES ============
 
-// @route   GET /api/renewable/stats
-// @desc    Get renewable energy statistics
-// @access  Private
-router.get('/stats', protect, getStatistics);
-
 // @route   GET /api/renewable/dashboard
 // @desc    Get dashboard summary
 // @access  Private
 router.get('/dashboard', protect, getDashboardSummary);
+
+// @route   GET /api/renewable/stats
+// @desc    Get renewable energy statistics
+// @access  Private
+router.get('/stats', protect, getStatistics);
 
 module.exports = router;

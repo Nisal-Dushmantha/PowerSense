@@ -336,13 +336,19 @@ const getStatistics = async (req, res) => {
     const matchQuery = { user: req.user._id };
     
     if (sourceId) {
-      matchQuery.source = new mongoose.Types.ObjectId(sourceId);
+      if (mongoose.Types.ObjectId.isValid(sourceId)) {
+        matchQuery.source = new mongoose.Types.ObjectId(sourceId);
+      }
     }
     
     if (startDate || endDate) {
       matchQuery.recordDate = {};
-      if (startDate) matchQuery.recordDate.$gte = new Date(startDate);
-      if (endDate) matchQuery.recordDate.$lte = new Date(endDate);
+      if (startDate && !isNaN(Date.parse(startDate))) {
+        matchQuery.recordDate.$gte = new Date(startDate);
+      }
+      if (endDate && !isNaN(Date.parse(endDate))) {
+        matchQuery.recordDate.$lte = new Date(endDate);
+      }
     }
 
     // Total energy statistics

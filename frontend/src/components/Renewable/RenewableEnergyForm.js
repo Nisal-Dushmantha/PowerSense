@@ -10,7 +10,6 @@ const RenewableEnergyForm = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [selectedSource, setSelectedSource] = useState('');
   const [editingRecord, setEditingRecord] = useState(null);
 
   const weatherOptions = ['Sunny', 'Cloudy', 'Rainy', 'Windy', 'Stormy', 'Foggy', 'Mixed', 'Other'];
@@ -34,19 +33,7 @@ const RenewableEnergyForm = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  useEffect(() => {
-    fetchSources();
-    fetchRecords();
-    
-    // Check if source ID is in URL params
-    const sourceParam = searchParams.get('source');
-    if (sourceParam) {
-      setSelectedSource(sourceParam);
-      setFormData(prev => ({ ...prev, source: sourceParam }));
-    }
-  }, [searchParams]);
-
-  const fetchSources = async () => {
+  const fetchSources = React.useCallback(async () => {
     try {
       const response = await renewableService.getSources({ status: 'Active' });
       setSources(response.data.data);
@@ -56,9 +43,9 @@ const RenewableEnergyForm = () => {
       console.error('Error fetching sources:', err);
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchRecords = async () => {
+  const fetchRecords = React.useCallback(async () => {
     try {
       const params = {};
       const sourceParam = searchParams.get('source');
@@ -69,7 +56,18 @@ const RenewableEnergyForm = () => {
     } catch (err) {
       console.error('Error fetching records:', err);
     }
-  };
+  }, [searchParams]);
+
+  useEffect(() => {
+    fetchSources();
+    fetchRecords();
+    
+    // Check if source ID is in URL params
+    const sourceParam = searchParams.get('source');
+    if (sourceParam) {
+      setFormData(prev => ({ ...prev, source: sourceParam }));
+    }
+  }, [fetchSources, fetchRecords, searchParams]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;

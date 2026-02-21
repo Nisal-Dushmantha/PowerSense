@@ -9,30 +9,7 @@ const RenewableDashboard = () => {
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('all');
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [timeRange]);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const [dashboardRes, statsRes] = await Promise.all([
-        renewableService.getDashboard(),
-        renewableService.getStatistics(getTimeRangeParams())
-      ]);
-      
-      setDashboard(dashboardRes.data.data);
-      setStats(statsRes.data.data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch dashboard data');
-      console.error('Error fetching dashboard:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getTimeRangeParams = () => {
+  const getTimeRangeParams = React.useCallback(() => {
     const params = {};
     const now = new Date();
     
@@ -51,7 +28,49 @@ const RenewableDashboard = () => {
     }
     
     return params;
-  };
+  }, [timeRange]);
+
+  const fetchDashboardData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      console.log('Fetching dashboard data...');
+      let dashboardData = null;
+      let statsData = null;
+
+      try {
+        const dashboardRes = await renewableService.getDashboard();
+        dashboardData = dashboardRes.data.data;
+      } catch (err) {
+        console.error('Error fetching dashboard summary:', err);
+        if (err.response && err.response.status === 404) {
+             setError('API endpoint not found (404). Please ensure server is running.');
+        }
+        throw err;
+      }
+
+      try {
+        const statsRes = await renewableService.getStatistics(getTimeRangeParams());
+        statsData = statsRes.data.data;
+      } catch (err) {
+        console.error('Error fetching statistics:', err);
+        throw err;
+      }
+      
+      setDashboard(dashboardData);
+      setStats(statsData);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch dashboard data. Check console for details.');
+      console.error('Error in fetchDashboardData:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [getTimeRangeParams]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const formatNumber = (num) => {
     if (!num) return '0';

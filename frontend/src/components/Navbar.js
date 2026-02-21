@@ -93,7 +93,7 @@ const Navbar = () => {
               <Link
                 to="/renewable"
                 className={`${
-                  isActivePath('/renewable') ? 'nav-link-active' : 'nav-link'
+                  location.pathname.startsWith('/renewable') ? 'nav-link-active' : 'nav-link'
                 }`}
               >
                 Renewable
@@ -278,7 +278,7 @@ const Navbar = () => {
                   to="/renewable"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`${
-                    isActivePath('/renewable') ? 'nav-link-active' : 'nav-link'
+                    location.pathname.startsWith('/renewable') ? 'nav-link-active' : 'nav-link'
                   } w-full`}
                 >
                   Renewable
@@ -292,21 +292,6 @@ const Navbar = () => {
                   } w-full`}
                 >
                   Devices
-                </Link>
-                
-                <Link
-                  to="/renewable"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`${
-                    isActivePath('/renewable') || location.pathname.includes('/renewable')
-                      ? 'nav-link-active'
-                      : 'nav-link'
-                  } flex items-center space-x-3 w-full`}
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                  <span>Renewable Energy</span>
                 </Link>
               </div>
 

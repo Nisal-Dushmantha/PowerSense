@@ -30,11 +30,7 @@ const RenewableSource = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  useEffect(() => {
-    fetchSources();
-  }, [filterStatus, filterType]);
-
-  const fetchSources = async () => {
+  const fetchSources = React.useCallback(async () => {
     try {
       setLoading(true);
       const params = {};
@@ -50,7 +46,11 @@ const RenewableSource = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filterStatus, filterType]);
+
+  useEffect(() => {
+    fetchSources();
+  }, [fetchSources]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
