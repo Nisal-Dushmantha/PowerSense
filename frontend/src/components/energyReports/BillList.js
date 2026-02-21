@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { billService } from '../../services/api';
+import CreateBillModal from './CreateBillModal';
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBills();
@@ -36,6 +38,10 @@ const BillList = () => {
         console.error('Error deleting bill:', err);
       }
     }
+  };
+
+  const handleBillCreated = (newBill) => {
+    setBills(prevBills => [newBill, ...prevBills]);
   };
 
   const formatCurrency = (amount) => {
@@ -81,18 +87,18 @@ const BillList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-textPrimary">Electricity Bills</h1>
-          <p className="text-textSecondary mt-1">Manage your monthly electricity bills</p>
+          <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100">Electricity Bills</h1>
+          <p className="text-textSecondary dark:text-gray-300 mt-1">Manage your monthly electricity bills</p>
         </div>
-        <Link
-          to="/bills/new"
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
           className="btn-primary flex items-center"
         >
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
           </svg>
           Add New Bill
-        </Link>
+        </button>
       </div>
 
       {bills.length === 0 ? (
@@ -108,17 +114,17 @@ const BillList = () => {
                   <polyline points="10,9 9,9 8,9"/>
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-textPrimary mb-2">No bills found</h3>
-              <p className="text-textSecondary mb-6">Start by creating your first electricity bill</p>
-              <Link
-                to="/bills/new"
+              <h3 className="text-xl font-semibold text-textPrimary dark:text-gray-100 mb-2">No bills found</h3>
+              <p className="text-textSecondary dark:text-gray-300 mb-6">Start by creating your first electricity bill</p>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
                 className="btn-primary inline-flex items-center"
               >
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
                 </svg>
                 Create Your First Bill
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -141,20 +147,25 @@ const BillList = () => {
               <tbody>
                 {bills.map((bill) => (
                   <tr key={bill._id} className="table-row">
-                    <td className="table-cell font-medium text-textPrimary">
+                    <td className="table-cell font-medium text-textPrimary dark:text-gray-100">
                       #{bill.billNumber}
                     </td>
                     <td className="table-cell">
                       {formatDate(bill.billIssueDate)}
                     </td>
                     <td className="table-cell">
-                      <span className="font-semibold">{bill.totalKWh}</span> KWh
+                      <span className="font-semibold text-textPrimary dark:text-gray-200">{bill.totalKWh}</span> 
+                      <span className="text-textSecondary dark:text-gray-400"> KWh</span>
                     </td>
-                    <td className="table-cell font-semibold">
+                    <td className="table-cell font-semibold text-textPrimary dark:text-gray-200">
                       {formatCurrency(bill.totalPayment)}
                     </td>
                     <td className="table-cell">
-                      <span className={`font-semibold ${bill.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <span className={`font-semibold ${
+                        bill.balance > 0 
+                          ? 'text-red-600 dark:text-red-400' 
+                          : 'text-green-600 dark:text-green-400'
+                      }`}>
                         {formatCurrency(bill.balance)}
                       </span>
                     </td>
@@ -183,7 +194,7 @@ const BillList = () => {
                       <div className="flex items-center space-x-2">
                         <Link
                           to={`/bills/edit/${bill._id}`}
-                          className="btn-ghost btn-sm text-secondary hover:text-primary"
+                          className="btn-ghost btn-sm text-secondary hover:text-primary dark:text-secondary dark:hover:text-primary-light"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -191,7 +202,7 @@ const BillList = () => {
                         </Link>
                         <button
                           onClick={() => handleDelete(bill._id)}
-                          className="btn-ghost btn-sm text-red-500 hover:text-red-700"
+                          className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -211,8 +222,8 @@ const BillList = () => {
               <div key={bill._id} className="card-hover p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <h3 className="font-semibold text-textPrimary">#{bill.billNumber}</h3>
-                    <p className="text-sm text-textSecondary">{formatDate(bill.billIssueDate)}</p>
+                    <h3 className="font-semibold text-textPrimary dark:text-gray-100">#{bill.billNumber}</h3>
+                    <p className="text-sm text-textSecondary dark:text-gray-400">{formatDate(bill.billIssueDate)}</p>
                   </div>
                   <span className={`badge ${
                     bill.isPaid ? 'badge-success' : 'badge-warning'
@@ -223,16 +234,20 @@ const BillList = () => {
                 
                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                   <div>
-                    <span className="text-textSecondary">Usage</span>
-                    <p className="font-semibold">{bill.totalKWh} KWh</p>
+                    <span className="text-textSecondary dark:text-gray-400">Usage</span>
+                    <p className="font-semibold text-textPrimary dark:text-gray-200">{bill.totalKWh} KWh</p>
                   </div>
                   <div>
-                    <span className="text-textSecondary">Total</span>
-                    <p className="font-semibold">{formatCurrency(bill.totalPayment)}</p>
+                    <span className="text-textSecondary dark:text-gray-400">Total</span>
+                    <p className="font-semibold text-textPrimary dark:text-gray-200">{formatCurrency(bill.totalPayment)}</p>
                   </div>
                   <div>
-                    <span className="text-textSecondary">Balance</span>
-                    <p className={`font-semibold ${bill.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <span className="text-textSecondary dark:text-gray-400">Balance</span>
+                    <p className={`font-semibold ${
+                      bill.balance > 0 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : 'text-green-600 dark:text-green-400'
+                    }`}>
                       {formatCurrency(bill.balance)}
                     </p>
                   </div>
@@ -257,6 +272,13 @@ const BillList = () => {
           </div>
         </div>
       )}
+
+      {/* Create Bill Modal */}
+      <CreateBillModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onBillCreated={handleBillCreated}
+      />
     </div>
   );
 };

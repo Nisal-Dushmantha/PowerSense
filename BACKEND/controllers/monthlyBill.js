@@ -270,66 +270,11 @@ const deleteBill = async (req, res) => {
   }
 };
 
-// @desc    Get bill statistics
-// @route   GET /api/bills/stats
-// @access  Private
-const getBillStats = async (req, res) => {
-  try {
-    const userId = new mongoose.Types.ObjectId(req.user.id);
-    
-    const totalBills = await MonthlyBill.countDocuments({ user: userId });
-    const paidBills = await MonthlyBill.countDocuments({ user: userId, isPaid: true });
-    const unpaidBills = await MonthlyBill.countDocuments({ user: userId, isPaid: false });
-    
-    const totalKWhConsumption = await MonthlyBill.aggregate([
-      { $match: { user: userId } },
-      { $group: { _id: null, total: { $sum: '$totalKWh' } } }
-    ]);
-    
-    const totalAmountDue = await MonthlyBill.aggregate([
-      { $match: { user: userId } },
-      { $group: { _id: null, total: { $sum: '$totalPayment' } } }
-    ]);
-    
-    const totalAmountPaid = await MonthlyBill.aggregate([
-      { $match: { user: userId } },
-      { $group: { _id: null, total: { $sum: '$totalPaid' } } }
-    ]);
-
-    const totalOutstanding = await MonthlyBill.aggregate([
-      { $match: { user: userId, isPaid: false } },
-      { $group: { _id: null, total: { $sum: '$balance' } } }
-    ]);
-
-    res.json({
-      success: true,
-      message: 'Statistics retrieved successfully',
-      data: {
-        totalBills,
-        paidBills,
-        unpaidBills,
-        totalKWhConsumption: totalKWhConsumption[0]?.total || 0,
-        totalAmountDue: totalAmountDue[0]?.total || 0,
-        totalAmountPaid: totalAmountPaid[0]?.total || 0,
-        totalOutstanding: totalOutstanding[0]?.total || 0
-      }
-    });
-  } catch (error) {
-    console.error('Get stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while retrieving statistics',
-      error: error.message
-    });
-  }
-};
-
 module.exports = {
   createBill,
   getAllBills,
   getBillById,
   getBillByNumber,
   updateBill,
-  deleteBill,
-  getBillStats
+  deleteBill
 };

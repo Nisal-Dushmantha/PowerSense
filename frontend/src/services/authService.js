@@ -24,6 +24,14 @@ authAPI.interceptors.request.use(
 );
 
 export const authService = {
+  // Initialize - clear tokens in development mode
+  init: () => {
+    if (process.env.NODE_ENV === 'development') {
+      // Uncomment the line below if you want to always start logged out in development
+      // authService.logout();
+    }
+  },
+
   // Register new user
   register: (userData) => authAPI.post('/auth/register', userData),
   
@@ -41,7 +49,26 @@ export const authService = {
   
   // Check if user is logged in
   isAuthenticated: () => {
-    return !!localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    
+    try {
+      // Decode JWT token to check expiration
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      
+      if (payload.exp < currentTime) {
+        // Token is expired, clear storage
+        authService.logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      // Invalid token, clear storage
+      authService.logout();
+      return false;
+    }
   },
   
   // Get stored user
