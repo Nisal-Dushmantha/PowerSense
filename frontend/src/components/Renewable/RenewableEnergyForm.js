@@ -225,7 +225,7 @@ const RenewableEnergyForm = () => {
           <p className="text-gray-600 mt-2">Track daily energy generation and performance</p>
         </div>
         <button
-          onClick={() => navigate('/renewable/dashboard')}
+          onClick={() => navigate('/renewable')}
           className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-all"
         >
           ← Back to Dashboard
