@@ -6,8 +6,6 @@ import Home from './components/Home';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
-import CreateBill from './components/energyReports/CreateBill';
-import EditBill from './components/energyReports/EditBill';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -31,20 +29,6 @@ function App() {
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
                   <BillList />
-                </div>
-              </PrivateRoute>
-            } />
-            <Route path="/bills/new" element={
-              <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <CreateBill />
-                </div>
-              </PrivateRoute>
-            } />
-            <Route path="/bills/edit/:id" element={
-              <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <EditBill />
                 </div>
               </PrivateRoute>
             } />

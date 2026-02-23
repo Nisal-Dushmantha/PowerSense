@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { billService } from '../../services/api';
 import CreateBillModal from './CreateBillModal';
+import EditBillModal from './EditBill';
+import InsightsModal from './InsightsModal';
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isInsightsModalOpen, setIsInsightsModalOpen] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [editBillData, setEditBillData] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchBills();
@@ -42,6 +48,36 @@ const BillList = () => {
 
   const handleBillCreated = (newBill) => {
     setBills(prevBills => [newBill, ...prevBills]);
+  };
+
+  const handleViewPhoto = (bill) => {
+    if (bill.billPhoto) {
+      setSelectedPhoto(bill.billPhoto);
+      setIsPhotoModalOpen(true);
+    }
+  };
+
+  const handleClosePhotoModal = () => {
+    setIsPhotoModalOpen(false);
+    setSelectedPhoto(null);
+  };
+
+  const handleEditBill = (bill) => {
+    setEditBillData(bill);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditBillData(null);
+  };
+
+  const handleBillUpdated = (updatedBill) => {
+    setBills(prevBills => 
+      prevBills.map(bill => 
+        bill._id === updatedBill._id ? updatedBill : bill
+      )
+    );
   };
 
   const formatCurrency = (amount) => {
@@ -90,15 +126,26 @@ const BillList = () => {
           <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100">Electricity Bills</h1>
           <p className="text-textSecondary dark:text-gray-300 mt-1">Manage your monthly electricity bills</p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn-primary flex items-center"
-        >
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          Add New Bill
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsInsightsModalOpen(true)}
+            className="btn-secondary flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 17h2V7H7v10zm4-6h2v6h-2v-6zm4-4h2v10h-2V7z"/>
+            </svg>
+            Insights
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="btn-primary flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add New Bill
+          </button>
+        </div>
       </div>
 
       {bills.length === 0 ? (
@@ -141,6 +188,7 @@ const BillList = () => {
                   <th>Total Payment</th>
                   <th>Balance</th>
                   <th>Status</th>
+                  <th>Photo</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -191,15 +239,32 @@ const BillList = () => {
                       </span>
                     </td>
                     <td className="table-cell">
+                      {bill.billPhoto ? (
+                        <button
+                          onClick={() => handleViewPhoto(bill)}
+                          className="btn-secondary btn-sm flex items-center"
+                          title="View bill photo"
+                        >
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                          </svg>
+                          View
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500 text-sm">No photo</span>
+                      )}
+                    </td>
+                    <td className="table-cell">
                       <div className="flex items-center space-x-2">
-                        <Link
-                          to={`/bills/edit/${bill._id}`}
+                        <button
+                          onClick={() => handleEditBill(bill)}
                           className="btn-ghost btn-sm text-secondary hover:text-primary dark:text-secondary dark:hover:text-primary-light"
+                          title="Edit bill"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                           </svg>
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDelete(bill._id)}
                           className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
@@ -254,12 +319,23 @@ const BillList = () => {
                 </div>
 
                 <div className="flex justify-end space-x-2">
-                  <Link
-                    to={`/bills/edit/${bill._id}`}
+                  {bill.billPhoto && (
+                    <button
+                      onClick={() => handleViewPhoto(bill)}
+                      className="btn-secondary btn-sm flex items-center"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                      </svg>
+                      View Photo
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleEditBill(bill)}
                     className="btn-secondary btn-sm"
                   >
                     Edit
-                  </Link>
+                  </button>
                   <button
                     onClick={() => handleDelete(bill._id)}
                     className="btn-danger btn-sm"
@@ -279,6 +355,71 @@ const BillList = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onBillCreated={handleBillCreated}
       />
+
+      {/* Insights Modal */}
+      <InsightsModal
+        isOpen={isInsightsModalOpen}
+        onClose={() => setIsInsightsModalOpen(false)}
+      />
+
+      {/* Edit Bill Modal */}
+      <EditBillModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        billData={editBillData}
+        onBillUpdated={handleBillUpdated}
+      />
+
+      {/* Photo View Modal */}
+      {selectedPhoto && (
+        <div
+          className={`fixed inset-0 z-50 overflow-y-auto ${
+            isPhotoModalOpen ? 'block' : 'hidden'
+          }`}
+        >
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            {/* Background overlay */}
+            <div
+              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75"
+              onClick={handleClosePhotoModal}
+            />
+
+            {/* Modal content */}
+            <div className="relative inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white dark:bg-gray-800 rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full sm:p-6">
+              {/* Close button */}
+              <button
+                onClick={handleClosePhotoModal}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.3 5.71a.996.996 0 00-1.41 0L12 10.59 7.11 5.7A.996.996 0 105.7 7.11L10.59 12 5.7 16.89a.996.996 0 101.41 1.41L12 13.41l4.89 4.89a.996.996 0 101.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/>
+                </svg>
+              </button>
+
+              {/* Photo content */}
+              <div className="mt-3 text-center">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                  Bill Photo
+                </h3>
+                <div className="mt-2">
+                  <img
+                    src={`http://localhost:5000/uploads/bills/${selectedPhoto}`}
+                    alt="Bill"
+                    className="max-w-full max-h-[70vh] mx-auto rounded-lg shadow-lg"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'block';
+                    }}
+                  />
+                  <div className="hidden text-gray-500 dark:text-gray-400 py-8">
+                    Failed to load image
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
