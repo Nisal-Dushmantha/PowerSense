@@ -43,6 +43,10 @@ const monthlyBillSchema = new mongoose.Schema({
     default: function() {
       return this.totalPaid >= this.totalPayment;
     }
+  },
+  billPhoto: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

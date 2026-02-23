@@ -8,6 +8,7 @@ const {
   deleteBill
 } = require('../controllers/monthlyBill');
 const { protect } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -32,12 +33,12 @@ router.get('/:id', getBillById);
 // @route   POST /api/bills
 // @desc    Create a new bill
 // @access  Private
-router.post('/', createBill);
+router.post('/', upload.single('billPhoto'), createBill);
 
 // @route   PUT /api/bills/:id
 // @desc    Update a bill
 // @access  Private
-router.put('/:id', updateBill);
+router.put('/:id', upload.single('billPhoto'), updateBill);
 
 // @route   DELETE /api/bills/:id
 // @desc    Delete a bill
