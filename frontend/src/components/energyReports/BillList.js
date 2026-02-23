@@ -14,6 +14,7 @@ const BillList = () => {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [editBillData, setEditBillData] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchBills();
@@ -91,6 +92,11 @@ const BillList = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  // Filter bills based on search term
+  const filteredBills = bills.filter(bill => 
+    bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -121,34 +127,93 @@ const BillList = () => {
   return (
     <div className="space-y-6 fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100">Electricity Bills</h1>
-          <p className="text-textSecondary dark:text-gray-300 mt-1">Manage your monthly electricity bills</p>
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100">Electricity Bills</h1>
+            <p className="text-textSecondary dark:text-gray-300 mt-1">Manage your monthly electricity bills</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsInsightsModalOpen(true)}
+              className="btn-secondary flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 17h2V7H7v10zm4-6h2v6h-2v-6zm4-4h2v10h-2V7z"/>
+              </svg>
+              Insights
+            </button>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="btn-primary flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              Add New Bill
+            </button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setIsInsightsModalOpen(true)}
-            className="btn-secondary flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 17h2V7H7v10zm4-6h2v6h-2v-6zm4-4h2v10h-2V7z"/>
-            </svg>
-            Insights
-          </button>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn-primary flex items-center"
-          >
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-            Add New Bill
-          </button>
+
+        {/* Search Bar */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search by bill number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="input-field pl-10 pr-4"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.3 5.71a.996.996 0 00-1.41 0L12 10.59 7.11 5.7A.996.996 0 105.7 7.11L10.59 12 5.7 16.89a.996.996 0 101.41 1.41L12 13.41l4.89 4.89a.996.996 0 101.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/>
+                </svg>
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <div className="text-sm text-textSecondary dark:text-gray-400">
+              {filteredBills.length} of {bills.length} bills found
+            </div>
+          )}
         </div>
       </div>
 
-      {bills.length === 0 ? (
+      {/* Empty State or Bills Display */}
+      {filteredBills.length === 0 && searchTerm ? (
+        <div className="text-center py-12">
+          <div className="card card-gradient max-w-md mx-auto">
+            <div className="card-body text-center">
+              <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8c1.66 0 3.19-.5 4.47-1.35l3.54 3.54 1.41-1.41-3.54-3.54C18.5 13.19 19 11.66 19 10c0-4.42-3.58-8-8-8zm0 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-textPrimary dark:text-gray-100 mb-2">No bills found for "{searchTerm}"</h3>
+              <p className="text-textSecondary dark:text-gray-300 mb-6">Try searching with a different bill number or clear the search to see all bills</p>
+              <button
+                onClick={() => setSearchTerm('')}
+                className="btn-secondary inline-flex items-center"
+              >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.3 5.71a.996.996 0 00-1.41 0L12 10.59 7.11 5.7A.996.996 0 105.7 7.11L10.59 12 5.7 16.89a.996.996 0 101.41 1.41L12 13.41l4.89 4.89a.996.996 0 101.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"/>
+                </svg>
+                Clear Search
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : filteredBills.length === 0 ? (
         <div className="text-center py-12">
           <div className="card card-gradient max-w-md mx-auto">
             <div className="card-body text-center">
@@ -193,7 +258,7 @@ const BillList = () => {
                 </tr>
               </thead>
               <tbody>
-                {bills.map((bill) => (
+                {filteredBills.map((bill) => (
                   <tr key={bill._id} className="table-row">
                     <td className="table-cell font-medium text-textPrimary dark:text-gray-100">
                       #{bill.billNumber}
@@ -283,7 +348,7 @@ const BillList = () => {
 
           {/* Mobile Card View */}
           <div className="lg:hidden space-y-4 p-4">
-            {bills.map((bill) => (
+            {filteredBills.map((bill) => (
               <div key={bill._id} className="card-hover p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
