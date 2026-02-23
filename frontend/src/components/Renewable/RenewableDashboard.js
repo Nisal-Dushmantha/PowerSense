@@ -6,6 +6,8 @@ const RenewableDashboard = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingRecord, setDeletingRecord] = useState(null);
 
   useEffect(() => {
     fetchRecords();
@@ -25,16 +27,30 @@ const RenewableDashboard = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this energy record?')) {
-      try {
-        await renewableService.deleteRecord(id);
-        setRecords(records.filter(record => record._id !== id));
-      } catch (err) {
-        setError('Failed to delete record');
-        console.error('Error deleting record:', err);
-      }
+  const handleDelete = (record) => {
+    setDeletingRecord(record);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingRecord) return;
+    
+    try {
+      await renewableService.deleteRecord(deletingRecord._id);
+      setRecords(records.filter(record => record._id !== deletingRecord._id));
+      setShowDeleteModal(false);
+      setDeletingRecord(null);
+    } catch (err) {
+      setError('Failed to delete record');
+      console.error('Error deleting record:', err);
+      setShowDeleteModal(false);
+      setDeletingRecord(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeletingRecord(null);
   };
 
   const formatNumber = (num) => {
@@ -182,7 +198,7 @@ const RenewableDashboard = () => {
                           </svg>
                         </Link>
                         <button
-                          onClick={() => handleDelete(record._id)}
+                          onClick={() => handleDelete(record)}
                           className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -242,7 +258,7 @@ const RenewableDashboard = () => {
                     Edit
                   </Link>
                   <button
-                    onClick={() => handleDelete(record._id)}
+                    onClick={() => handleDelete(record)}
                     className="btn-danger btn-sm"
                   >
                     Delete
@@ -250,6 +266,65 @@ const RenewableDashboard = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Creative Delete Confirmation Modal */}
+      {showDeleteModal && deletingRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-scale-in">
+            {/* Warning Icon with Animation */}
+            <div className="flex justify-center pt-8 pb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-red-500 rounded-full opacity-20 animate-ping"></div>
+                <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-full p-4">
+                  <svg className="w-12 h-12 text-white animate-shake" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-8 pb-6 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                ⚡ Delete This Energy Record?
+              </h3>
+              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+                <p className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
+                  {deletingRecord.source?.sourceName || 'Energy Record'}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Date: <span className="font-medium">{formatDate(deletingRecord.date)}</span>
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Energy: <span className="font-medium">{formatNumber(deletingRecord.energyGenerated)} kWh</span>
+                </p>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300 mb-2">
+                This action cannot be undone! 🚨
+              </p>
+              <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                This record will be permanently deleted from your history.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 px-8 pb-8">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl transition-all duration-200 font-semibold transform hover:scale-105 active:scale-95"
+              >
+                🛡️ Keep It
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+              >
+                🗑️ Delete Forever
+              </button>
+            </div>
           </div>
         </div>
       )}
