@@ -11,8 +11,15 @@ import Profile from './components/Profile';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
-import { authService } from './services/authService';
-import { ThemeProvider } from './contexts/ThemeContext';
+import CreateBillModal from './components/energyReports/CreateBillModal';
+import EditBillModal from './components/energyReports/EditBill';
+import EnergyConsumption from './components/energyConsumption';
+import RenewableDashboard from './components/Renewable/RenewableDashboard';
+import RenewableSource from './components/Renewable/RenewableSource';
+import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
+import DevicesList from './components/Devices/DevicesList';
+import DeviceChartsPage from './components/Devices/DeviceChartsPage';
+import EditDevice from './components/Devices/EditDevice';
 
 // Initialize auth service
 authService.init();
@@ -40,24 +47,22 @@ function App() {
             <Route path="/bills/new" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <CreateBill />
+                  <CreateBillModal />
                 </div>
               </PrivateRoute>
             } />
             <Route path="/bills/edit/:id" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <EditBill />
+                  <EditBillModal />
                 </div>
               </PrivateRoute>
             } />
             
             {/* Placeholder routes for new nav items */}
-            <Route path="/consumption" element={
+            <Route path="/consumption/*" element={
               <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <BillStats />
-                </div>
+                <EnergyConsumption />
               </PrivateRoute>
             } />
             <Route path="/renewable" element={
