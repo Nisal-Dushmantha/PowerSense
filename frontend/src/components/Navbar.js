@@ -173,7 +173,7 @@ const Navbar = () => {
               <Link
                 to="/renewable"
                 className={`${
-                  isActivePath('/renewable') ? 'nav-link-active' : 'nav-link'
+                  location.pathname.startsWith('/renewable') ? 'nav-link-active' : 'nav-link'
                 }`}
               >
                 Renewable
@@ -187,6 +187,7 @@ const Navbar = () => {
               >
                 Devices
               </Link>
+              
             </div>
           )}
 
@@ -534,7 +535,7 @@ const Navbar = () => {
                   to="/renewable"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`${
-                    isActivePath('/renewable') ? 'nav-link-active' : 'nav-link'
+                    location.pathname.startsWith('/renewable') ? 'nav-link-active' : 'nav-link'
                   } w-full`}
                 >
                   Renewable
