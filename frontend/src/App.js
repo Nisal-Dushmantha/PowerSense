@@ -13,11 +13,8 @@ import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
 import CreateBill from './components/energyReports/CreateBill';
 import EditBill from './components/energyReports/EditBill';
-import BillStats from './components/energyReports/BillStats';
-import DevicesList from './components/Devices/DevicesList';
-import CreateDevice from './components/Devices/CreateDevice';
-import EditDevice from './components/Devices/EditDevice';
-import EnergyConsumption from './components/energyConsumption';
+import { authService } from './services/authService';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Initialize auth service
 authService.init();
@@ -56,7 +53,9 @@ function App() {
                 </div>
               </PrivateRoute>
             } />
-            <Route path="/stats" element={
+            
+            {/* Placeholder routes for new nav items */}
+            <Route path="/consumption" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
                   <BillStats />

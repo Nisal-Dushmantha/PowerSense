@@ -20,15 +20,21 @@ const createBill = async (req, res) => {
       });
     }
 
-    const bill = new MonthlyBill({
+    const billData = {
       user: req.user.id,
       billNumber,
       billIssueDate,
       totalKWh,
       totalPayment,
       totalPaid: totalPaid || 0
-    });
+    };
 
+    // Add photo path if file was uploaded
+    if (req.file) {
+      billData.billPhoto = req.file.filename;
+    }
+
+    const bill = new MonthlyBill(billData);
     const savedBill = await bill.save();
 
     res.status(201).json({
@@ -207,6 +213,11 @@ const updateBill = async (req, res) => {
     if (totalKWh !== undefined) bill.totalKWh = totalKWh;
     if (totalPayment !== undefined) bill.totalPayment = totalPayment;
     if (totalPaid !== undefined) bill.totalPaid = totalPaid;
+    
+    // Update photo if new file uploaded
+    if (req.file) {
+      bill.billPhoto = req.file.filename;
+    }
 
     const updatedBill = await bill.save();
 

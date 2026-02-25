@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { getEnergyRecords } from '../services/energyApi';
 import { useTheme } from '../contexts/ThemeContext';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -125,11 +126,11 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center transform group-hover:scale-105 transition-transform">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-              </div>
+              <img 
+                src={logo} 
+                alt="PowerSense Logo" 
+                className="w-16 h-16 transform group-hover:scale-105 transition-transform"
+              />
               <div>
                 <h1 className="text-xl font-bold text-gradient">PowerSense</h1>
                 <p className="text-xs text-textSecondary dark:text-gray-400 -mt-1">Energy Management</p>
