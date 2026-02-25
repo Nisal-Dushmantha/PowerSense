@@ -17,6 +17,7 @@ import BillStats from './components/energyReports/BillStats';
 import DevicesList from './components/Devices/DevicesList';
 import CreateDevice from './components/Devices/CreateDevice';
 import EditDevice from './components/Devices/EditDevice';
+import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import EnergyConsumption from './components/energyConsumption';
 
 // Initialize auth service
@@ -91,6 +92,11 @@ function App() {
                   <div className="container mx-auto px-4 py-8">
                     <DevicesList />
                   </div>
+              </PrivateRoute>
+            } />
+            <Route path="/devices/charts" element={
+              <PrivateRoute>
+                <DeviceChartsPage />
               </PrivateRoute>
             } />
               <Route path="/devices/edit/:id" element={
