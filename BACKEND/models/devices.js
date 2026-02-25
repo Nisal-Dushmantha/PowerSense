@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+const CounterSchema = new mongoose.Schema({ _id: String, seq: Number });
+const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
+
 const DeviceSchema = new mongoose.Schema({
 	deviceId: {
 		type: String,
@@ -37,18 +40,17 @@ const DeviceSchema = new mongoose.Schema({
 // Auto-increment deviceId as DVC-001, DVC-002, ...
 DeviceSchema.pre('validate', async function (next) {
 	if (this.isNew && (!this.deviceId || this.deviceId === '')) {
-		try {
-			const Counter = mongoose.model('Counter', new mongoose.Schema({ _id: String, seq: Number }));
-			const counter = await Counter.findByIdAndUpdate(
-				{ _id: 'deviceId' },
-				{ $inc: { seq: 1 } },
-				{ new: true, upsert: true }
-			);
-			const num = counter.seq;
-			this.deviceId = `DVC-${String(num).padStart(3, '0')}`;
-		} catch (err) {
-			return next(err);
-		}
+		   try {
+			   const counter = await Counter.findByIdAndUpdate(
+				   { _id: 'deviceId' },
+				   { $inc: { seq: 1 } },
+				   { new: true, upsert: true }
+			   );
+			   const num = counter.seq;
+			   this.deviceId = `DVC-${String(num).padStart(3, '0')}`;
+		   } catch (err) {
+			   return next(err);
+		   }
 	}
 	next();
 });

@@ -13,8 +13,11 @@ import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
 import CreateBill from './components/energyReports/CreateBill';
 import EditBill from './components/energyReports/EditBill';
-import { authService } from './services/authService';
-import { ThemeProvider } from './contexts/ThemeContext';
+import BillStats from './components/energyReports/BillStats';
+import DevicesList from './components/Devices/DevicesList';
+import CreateDevice from './components/Devices/CreateDevice';
+import EditDevice from './components/Devices/EditDevice';
+import EnergyConsumption from './components/energyConsumption';
 
 // Initialize auth service
 authService.init();
@@ -87,14 +90,23 @@ function App() {
             } />
             <Route path="/devices" element={
               <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Device Management</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
+                  <div className="container mx-auto px-4 py-8">
+                    <DevicesList />
                   </div>
-                </div>
               </PrivateRoute>
             } />
+            <Route path="/devices/charts" element={
+              <PrivateRoute>
+                <DeviceChartsPage />
+              </PrivateRoute>
+            } />
+              <Route path="/devices/edit/:id" element={
+                <PrivateRoute>
+                  <div className="container mx-auto px-4 py-8">
+                    <EditDevice />
+                  </div>
+                </PrivateRoute>
+              } />
           </Routes>
         </div>
       </Router>
