@@ -190,20 +190,19 @@ const RenewableEnergyForm = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
   if (sources.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl shadow-lg p-12 text-center border-2 border-dashed border-orange-300">
-        <div className="text-8xl mb-4">⚠️</div>
-        <h3 className="text-2xl font-bold text-gray-800 mb-2">No Active Renewable Sources</h3>
-        <p className="text-gray-600 mb-6">You need to add at least one active renewable energy source before recording energy data.</p>
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No Active Renewable Sources</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">You need to add at least one active renewable energy source before recording energy data.</p>
         <button
           onClick={() => navigate('/renewable/sources')}
-          className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition-all shadow-lg"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded transition-colors"
         >
           Go to Sources
         </button>
@@ -216,11 +215,10 @@ const RenewableEnergyForm = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 flex items-center">
-            <span className="text-5xl mr-3">📊</span>
+          <h1 className="text-3xl font-bold text-gray-900">
             {editingRecord ? 'Edit Energy Record' : 'Record Energy Production'}
           </h1>
-          <p className="text-gray-600 mt-2">Track daily energy generation and performance</p>
+          <p className="text-sm text-gray-600 mt-1">Track daily energy generation and performance</p>
         </div>
         <button
           onClick={() => navigate('/renewable')}
@@ -232,16 +230,14 @@ const RenewableEnergyForm = () => {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 rounded-lg flex items-center">
-          <span className="text-2xl mr-3">✅</span>
-          <p className="font-semibold">{success}</p>
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded flex items-center">
+          <p className="text-sm font-medium">{success}</p>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg flex items-center">
-          <span className="text-2xl mr-3">⚠️</span>
-          <p className="font-semibold">{error}</p>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
@@ -250,7 +246,7 @@ const RenewableEnergyForm = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="border-b border-gray-200 pb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">📝 Basic Information</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -291,7 +287,7 @@ const RenewableEnergyForm = () => {
 
           {/* Energy Production */}
           <div className="border-b border-gray-200 pb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">⚡ Energy Production</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Energy Production</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -354,7 +350,7 @@ const RenewableEnergyForm = () => {
 
           {/* Performance Metrics */}
           <div className="border-b border-gray-200 pb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">📈 Performance Metrics</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Metrics</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Operating Hours</label>
@@ -404,7 +400,7 @@ const RenewableEnergyForm = () => {
 
           {/* Environmental Conditions */}
           <div className="border-b border-gray-200 pb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">🌤️ Environmental Conditions</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Environmental Conditions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Weather Condition</label>
@@ -439,7 +435,7 @@ const RenewableEnergyForm = () => {
 
           {/* Maintenance & Notes */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">🔧 Maintenance & Notes</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Maintenance & Notes</h2>
             <div className="space-y-4">
               <div className="flex items-center">
                 <input

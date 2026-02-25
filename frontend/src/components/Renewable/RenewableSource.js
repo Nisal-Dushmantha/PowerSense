@@ -222,25 +222,23 @@ const RenewableSource = () => {
 
       {sources.length === 0 ? (
         <div className="text-center py-12">
-          <div className="card card-gradient max-w-md mx-auto">
-            <div className="card-body text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-textPrimary dark:text-gray-100 mb-2">No sources found</h3>
-              <p className="text-textSecondary dark:text-gray-300 mb-6">Start by creating your first renewable energy source</p>
-              <button
-                onClick={handleAddNew}
-                className="btn-primary inline-flex items-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-                Create Your First Source
-              </button>
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 max-w-md mx-auto">
+            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+              </svg>
             </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No sources found</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Start by creating your first renewable energy source</p>
+            <button
+              onClick={handleAddNew}
+              className="btn-primary inline-flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              Create Your First Source
+            </button>
           </div>
         </div>
       ) : (
@@ -390,9 +388,9 @@ const RenewableSource = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-gradient-to-r from-green-500 to-blue-500 text-white p-6 rounded-t-xl">
-              <h2 className="text-2xl font-bold">
+          <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gray-100 border-b border-gray-200 p-4">
+              <h2 className="text-xl font-semibold text-gray-900">
                 {editingSource ? 'Edit Renewable Source' : 'Add New Renewable Source'}
               </h2>
             </div>
@@ -575,56 +573,36 @@ const RenewableSource = () => {
         </div>
       )}
 
-      {/* Creative Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && deletingSource && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-scale-in">
-            {/* Warning Icon with Animation */}
-            <div className="flex justify-center pt-8 pb-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-red-500 rounded-full opacity-20 animate-ping"></div>
-                <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-full p-4">
-                  <svg className="w-12 h-12 text-white animate-shake" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="px-8 pb-6 text-center">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                ⚡ Power Down This Source?
-              </h3>
-              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
-                <p className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
-                  {deletingSource.sourceName}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">{deletingSource.sourceType}</span> • {deletingSource.capacity} {deletingSource.capacityUnit}
-                </p>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-2">
-                This action cannot be undone! 🚨
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Delete Renewable Source?
+            </h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 mb-4">
+              <p className="font-medium text-gray-900 dark:text-white">
+                {deletingSource.sourceName}
               </p>
-              <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                All associated energy records will be permanently deleted.
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {deletingSource.sourceType} - {deletingSource.capacity} {deletingSource.capacityUnit}
               </p>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 px-8 pb-8">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              This will permanently delete this source and all related energy records. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
               <button
                 onClick={cancelDelete}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl transition-all duration-200 font-semibold transform hover:scale-105 active:scale-95"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                🛡️ Keep It Safe
+                Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                🗑️ Delete Forever
+                Delete
               </button>
             </div>
           </div>
@@ -633,27 +611,17 @@ const RenewableSource = () => {
 
       {/* Report Generation Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all animate-scale-in">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-md w-full">
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-t-2xl">
+            <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="bg-white bg-opacity-20 rounded-xl p-3 mr-4">
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">Generate Sources Report</h3>
-                    <p className="text-green-100 text-sm">Export all renewable sources</p>
-                  </div>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generate Sources Report</h3>
                 <button
                   onClick={() => setShowReportModal(false)}
-                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -661,74 +629,44 @@ const RenewableSource = () => {
             </div>
 
             {/* Body */}
-            <div className="p-6 space-y-4">
-              <p className="text-gray-600 dark:text-gray-400">
-                Choose your preferred format to export all renewable energy sources with their details and statistics.
+            <div className="p-6 space-y-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Export renewable energy sources data
               </p>
 
               {/* Report Options */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <button
                   onClick={() => handleGenerateReport('pdf')}
                   disabled={reportLoading}
-                  className="w-full bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white p-4 rounded-xl transition-colors font-medium flex items-center justify-center group"
+                  className="w-full bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded transition-colors"
                 >
-                  <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                  </svg>
-                  <span>📄 Generate PDF Report</span>
-                  <svg className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
+                  Generate PDF Report
                 </button>
 
                 <button
                   onClick={() => handleGenerateReport('csv')}
                   disabled={reportLoading}
-                  className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white p-4 rounded-xl transition-colors font-medium flex items-center justify-center group"
+                  className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded transition-colors"
                 >
-                  <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                  </svg>
-                  <span>📊 Export as CSV</span>
-                  <svg className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
+                  Export as CSV
                 </button>
               </div>
 
               {reportLoading && (
-                <div className="flex items-center justify-center py-4">
-                  <div className="loading-spinner w-8 h-8 mr-3"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Generating report...</span>
+                <div className="flex items-center justify-center py-3">
+                  <div className="loading-spinner w-6 h-6 mr-2"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Generating...</span>
                 </div>
               )}
-
-              {/* Info Box */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                <div className="flex items-start">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                  </svg>
-                  <div className="text-sm text-blue-800 dark:text-blue-300">
-                    <p className="font-semibold mb-1">Report Contents:</p>
-                    <ul className="list-disc list-inside space-y-1 text-xs">
-                      <li>All renewable energy sources</li>
-                      <li>Source details and specifications</li>
-                      <li>Performance statistics</li>
-                      <li>Installation and warranty information</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Footer */}
-            <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end">
+            <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-end">
               <button
                 onClick={() => setShowReportModal(false)}
                 disabled={reportLoading}
-                className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg transition-colors font-medium disabled:opacity-50"
+                className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded disabled:opacity-50"
               >
                 Cancel
               </button>

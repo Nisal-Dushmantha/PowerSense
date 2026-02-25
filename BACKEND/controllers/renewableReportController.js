@@ -4,47 +4,28 @@ const RenewableSource = require('../models/RenewableSource');
 const RenewableEnergyRecord = require('../models/RenewableEnergyRecord');
 const mongoose = require('mongoose');
 
-// Helper function to add header to PDF
+// Add simple header to PDF
 const addPDFHeader = (doc, title) => {
-  doc.fontSize(24)
-     .fillColor('#2563eb')
-     .text(title, { align: 'center' })
-     .moveDown();
+  doc.fontSize(18)
+     .fillColor('#000000')
+     .text(title, { align: 'center' });
   
-  doc.fontSize(10)
-     .fillColor('#6b7280')
-     .text(`Generated on: ${new Date().toLocaleDateString('en-US', { 
-       year: 'numeric', 
-       month: 'long', 
-       day: 'numeric',
-       hour: '2-digit',
-       minute: '2-digit'
-     })}`, { align: 'center' })
-     .moveDown(2);
-  
-  doc.strokeColor('#e5e7eb')
-     .lineWidth(1)
-     .moveTo(50, doc.y)
-     .lineTo(550, doc.y)
-     .stroke()
+  doc.fontSize(8)
+     .fillColor('#666666')
+     .text(`Report Date: ${new Date().toLocaleDateString()}`, { align: 'center' })
      .moveDown();
 };
 
-// Helper function to add footer to PDF
+// Add footer
 const addPDFFooter = (doc) => {
-  const pageCount = doc.bufferedPageRange().count;
-  
-  for (let i = 0; i < pageCount; i++) {
-    doc.switchToPage(i);
-    doc.fontSize(8)
-       .fillColor('#9ca3af')
-       .text(
-         `PowerSense - Renewable Energy Management | Page ${i + 1} of ${pageCount}`,
-         50,
-         doc.page.height - 50,
-         { align: 'center' }
-       );
-  }
+  doc.fontSize(7)
+     .fillColor('#999999')
+     .text(
+       'PowerSense Energy Report',
+       50,
+       doc.page.height - 30,
+       { align: 'center' }
+     );
 };
 
 // @desc    Generate comprehensive PDF report for energy records
@@ -108,84 +89,60 @@ const generatePDFReport = async (req, res) => {
     // Add header
     addPDFHeader(doc, 'Renewable Energy Report');
 
-    // Report Period
-    doc.fontSize(12).fillColor('#374151').text('Report Period:', { underline: true });
-    doc.fontSize(10).fillColor('#6b7280');
+    // Period
+    doc.fontSize(9).fillColor('#333333');
     if (startDate || endDate) {
       const start = startDate ? new Date(startDate).toLocaleDateString() : 'Beginning';
       const end = endDate ? new Date(endDate).toLocaleDateString() : 'Present';
-      doc.text(`${start} to ${end}`);
+      doc.text(`Period: ${start} to ${end}`, { align: 'center' });
     } else {
-      doc.text('All Time');
+      doc.text('Period: All Time', { align: 'center' });
     }
-    doc.moveDown();
-
-    // Summary Statistics
-    doc.fontSize(14).fillColor('#1f2937').text('Summary Statistics', { underline: true });
     doc.moveDown(0.5);
-    
-    const summaryData = [
-      ['Total Records:', records.length],
-      ['Total Energy Generated:', `${totalEnergy.toFixed(2)} kWh`],
-      ['Total Carbon Offset:', `${totalCarbonOffset.toFixed(2)} kg CO₂`],
-      ['Total Cost Savings:', `Rs. ${totalCostSavings.toFixed(2)}`],
-      ['Average Efficiency:', `${avgEfficiency.toFixed(2)}%`]
-    ];
 
-    doc.fontSize(10).fillColor('#374151');
-    summaryData.forEach(([label, value]) => {
-      doc.text(label, 60, doc.y, { continued: true, width: 250 })
-         .fillColor('#2563eb')
-         .text(value, { align: 'right' })
-         .fillColor('#374151');
-    });
-    doc.moveDown(2);
+    // Summary in compact format
+    doc.fontSize(11).fillColor('#000000').text('Summary', { underline: true });
+    doc.moveDown(0.3);
+    
+    doc.fontSize(9).fillColor('#333333');
+    doc.text(`Total Records: ${records.length}`);
+    doc.text(`Energy Generated: ${totalEnergy.toFixed(2)} kWh`);
+    doc.text(`Carbon Offset: ${totalCarbonOffset.toFixed(2)} kg CO₂`);
+    doc.text(`Cost Savings: Rs. ${totalCostSavings.toFixed(2)}`);
+    doc.text(`Average Efficiency: ${avgEfficiency.toFixed(2)}%`);
+    doc.moveDown(0.5);
 
     // Energy by Source Type
     if (Object.keys(sourceTypeStats).length > 0) {
-      doc.fontSize(14).fillColor('#1f2937').text('Energy Generation by Source Type', { underline: true });
-      doc.moveDown(0.5);
-      doc.fontSize(10).fillColor('#374151');
+      doc.fontSize(11).fillColor('#000000').text('Energy by Source Type', { underline: true });
+      doc.moveDown(0.3);
+      doc.fontSize(9).fillColor('#333333');
 
       Object.entries(sourceTypeStats).forEach(([type, stats]) => {
         const percentage = ((stats.energy / totalEnergy) * 100).toFixed(1);
-        doc.text(`${type}:`, 60, doc.y, { continued: true, width: 200 })
-           .fillColor('#2563eb')
-           .text(`${stats.energy.toFixed(2)} kWh (${percentage}%)`, { align: 'right' })
-           .fillColor('#374151');
+        doc.text(`${type}: ${stats.energy.toFixed(2)} kWh (${percentage}%)`);
       });
-      doc.moveDown(2);
+      doc.moveDown(0.5);
     }
 
-    // Detailed Records
-    if (reportType === 'comprehensive' || reportType === 'detailed') {
-      doc.addPage();
-      doc.fontSize(14).fillColor('#1f2937').text('Detailed Energy Records', { underline: true });
-      doc.moveDown();
+    // Recent entries (compact list)
+    if (records.length > 0) {
+      doc.fontSize(11).fillColor('#000000').text('Recent Entries', { underline: true });
+      doc.moveDown(0.3);
+      doc.fontSize(8).fillColor('#333333');
 
-      records.slice(0, 50).forEach((record, index) => {
-        if (doc.y > 700) {
-          doc.addPage();
-        }
-
-        doc.fontSize(11).fillColor('#1f2937')
-           .text(`${index + 1}. ${record.source?.sourceName || 'N/A'} (${record.source?.sourceType || 'N/A'})`);
-        
-        doc.fontSize(9).fillColor('#6b7280');
-        doc.text(`Date: ${new Date(record.recordDate).toLocaleDateString()}`, 70);
-        doc.text(`Energy: ${record.energyGenerated} ${record.energyUnit || 'kWh'} | Efficiency: ${record.efficiency || 'N/A'}%`, 70);
-        if (record.weatherCondition) {
-          doc.text(`Weather: ${record.weatherCondition}`, 70);
-        }
-        if (record.costSavings) {
-          doc.text(`Cost Savings: Rs. ${record.costSavings.toFixed(2)}`, 70);
-        }
-        doc.moveDown(0.8);
+      const recentRecords = records.slice(0, 10);
+      recentRecords.forEach((record, index) => {
+        const date = new Date(record.recordDate).toLocaleDateString();
+        const source = record.source?.sourceName || 'N/A';
+        const energy = record.energyGenerated;
+        doc.text(`${index + 1}. ${date} - ${source}: ${energy} kWh`);
       });
 
-      if (records.length > 50) {
-        doc.fontSize(9).fillColor('#9ca3af')
-           .text(`... and ${records.length - 50} more records`, { align: 'center' });
+      if (records.length > 10) {
+        doc.moveDown(0.3);
+        doc.fontSize(8).fillColor('#666666')
+           .text(`... and ${records.length - 10} more entries`);
       }
     }
 
@@ -353,48 +310,28 @@ const generateSourcesPDFReport = async (req, res) => {
     doc.pipe(res);
 
     // Add header
-    addPDFHeader(doc, 'Renewable Energy Sources Report');
+    addPDFHeader(doc, 'Renewable Sources Report');
 
     // Summary
-    doc.fontSize(12).fillColor('#374151').text('Summary:', { underline: true });
-    doc.fontSize(10).fillColor('#6b7280');
-    doc.text(`Total Sources: ${sources.length}`);
+    doc.fontSize(9).fillColor('#333333');
+    doc.text(`Total Sources: ${sources.length}`, { align: 'center' });
     const activeCount = sources.filter(s => s.status === 'Active').length;
-    doc.text(`Active Sources: ${activeCount}`);
-    doc.moveDown(2);
+    doc.text(`Active: ${activeCount}`, { align: 'center' });
+    doc.moveDown(0.5);
 
-    // Sources Details
-    doc.fontSize(14).fillColor('#1f2937').text('Source Details', { underline: true });
-    doc.moveDown();
+    // Sources list
+    doc.fontSize(11).fillColor('#000000').text('Source List', { underline: true });
+    doc.moveDown(0.3);
 
     sourcesWithStats.forEach((source, index) => {
-      if (doc.y > 650) {
-        doc.addPage();
-      }
-
-      // Source header
-      doc.fontSize(12).fillColor('#2563eb')
-         .text(`${index + 1}. ${source.sourceName}`, { underline: true });
+      doc.fontSize(9).fillColor('#000000')
+         .text(`${index + 1}. ${source.sourceName} (${source.sourceType})`);
       
-      doc.fontSize(10).fillColor('#374151');
-      doc.text(`Type: ${source.sourceType}`, 60);
-      doc.text(`Capacity: ${source.capacity} ${source.capacityUnit || 'kW'}`, 60);
-      doc.text(`Status: ${source.status}`, 60);
-      doc.text(`Installation Date: ${new Date(source.installationDate).toLocaleDateString()}`, 60);
-      
-      if (source.location) {
-        doc.text(`Location: ${source.location}`, 60);
-      }
-
-      // Statistics
-      doc.fillColor('#6b7280');
-      doc.text(`Total Energy Generated: ${source.stats.totalEnergy.toFixed(2)} kWh`, 60);
-      doc.text(`Total Records: ${source.stats.totalRecords}`, 60);
-      if (source.stats.avgEfficiency > 0) {
-        doc.text(`Average Efficiency: ${source.stats.avgEfficiency.toFixed(2)}%`, 60);
-      }
-
-      doc.moveDown(1.5);
+      doc.fontSize(8).fillColor('#333333');
+      doc.text(`   Capacity: ${source.capacity} ${source.capacityUnit || 'kW'} | Status: ${source.status}`);
+      doc.text(`   Installed: ${new Date(source.installationDate).toLocaleDateString()}`);
+      doc.text(`   Energy: ${source.stats.totalEnergy.toFixed(2)} kWh | Records: ${source.stats.totalRecords}`);
+      doc.moveDown(0.3);
     });
 
     // Add footer
@@ -537,78 +474,61 @@ const generateSummaryPDFReport = async (req, res) => {
     doc.pipe(res);
 
     // Add header
-    addPDFHeader(doc, 'Renewable Energy Summary Report');
+    addPDFHeader(doc, 'Energy Summary Report');
 
-    // Report Period
-    doc.fontSize(12).fillColor('#374151').text('Report Period:', { underline: true });
-    doc.fontSize(10).fillColor('#6b7280');
+    // Period
+    doc.fontSize(9).fillColor('#333333');
     if (startDate || endDate) {
       const start = startDate ? new Date(startDate).toLocaleDateString() : 'Beginning';
       const end = endDate ? new Date(endDate).toLocaleDateString() : 'Present';
-      doc.text(`${start} to ${end}`);
+      doc.text(`Period: ${start} to ${end}`, { align: 'center' });
     } else {
-      doc.text('All Time');
+      doc.text('Period: All Time', { align: 'center' });
     }
-    doc.moveDown(2);
+    doc.moveDown(0.5);
 
-    // Overall Statistics
-    doc.fontSize(16).fillColor('#1f2937').text('Overall Statistics', { underline: true });
-    doc.moveDown();
+    // Overall stats
+    doc.fontSize(11).fillColor('#000000').text('Overall Statistics', { underline: true });
+    doc.moveDown(0.3);
+    
+    doc.fontSize(9).fillColor('#333333');
+    doc.text(`Total Sources: ${sources.length} (${activeSources} active)`);
+    doc.text(`Total Records: ${records.length}`);
+    doc.text(`Energy Generated: ${totalEnergy.toFixed(2)} kWh`);
+    doc.text(`Carbon Offset: ${totalCarbonOffset.toFixed(2)} kg CO₂`);
+    doc.text(`Cost Savings: Rs. ${totalCostSavings.toFixed(2)}`);
+    doc.text(`Average Efficiency: ${avgEfficiency.toFixed(2)}%`);
+    doc.moveDown(0.5);
 
-    const overallStats = [
-      ['Total Sources:', sources.length],
-      ['Active Sources:', activeSources],
-      ['Total Energy Records:', records.length],
-      ['Total Energy Generated:', `${totalEnergy.toFixed(2)} kWh`],
-      ['Total Carbon Offset:', `${totalCarbonOffset.toFixed(2)} kg CO₂`],
-      ['Total Cost Savings:', `Rs. ${totalCostSavings.toFixed(2)}`],
-      ['Average Efficiency:', `${avgEfficiency.toFixed(2)}%`]
-    ];
-
-    doc.fontSize(11).fillColor('#374151');
-    overallStats.forEach(([label, value]) => {
-      doc.text(label, 60, doc.y, { continued: true, width: 300 })
-         .fillColor('#2563eb')
-         .text(String(value), { align: 'right' })
-         .fillColor('#374151');
-    });
-    doc.moveDown(2);
-
-    // Energy Distribution
+    // Energy by type
     if (Object.keys(energyByType).length > 0) {
-      doc.fontSize(14).fillColor('#1f2937').text('Energy Distribution by Type', { underline: true });
-      doc.moveDown();
-      doc.fontSize(10).fillColor('#374151');
+      doc.fontSize(11).fillColor('#000000').text('Energy Distribution', { underline: true });
+      doc.moveDown(0.3);
+      doc.fontSize(9).fillColor('#333333');
 
       Object.entries(energyByType).forEach(([type, energy]) => {
         const percentage = ((energy / totalEnergy) * 100).toFixed(1);
-        doc.text(`${type}:`, 60, doc.y, { continued: true, width: 200 })
-           .fillColor('#2563eb')
-           .text(`${energy.toFixed(2)} kWh (${percentage}%)`, { align: 'right' })
-           .fillColor('#374151');
+        doc.text(`${type}: ${energy.toFixed(2)} kWh (${percentage}%)`);
       });
-      doc.moveDown(2);
+      doc.moveDown(0.5);
     }
 
-    // Source Type Breakdown
-    doc.fontSize(14).fillColor('#1f2937').text('Installed Sources by Type', { underline: true });
-    doc.moveDown();
+    // Sources breakdown
+    doc.fontSize(11).fillColor('#000000').text('Installed Sources', { underline: true });
+    doc.moveDown(0.3);
     
     const sourcesByType = {};
     sources.forEach(source => {
       sourcesByType[source.sourceType] = (sourcesByType[source.sourceType] || 0) + 1;
     });
 
-    doc.fontSize(10).fillColor('#374151');
+    doc.fontSize(9).fillColor('#333333');
     Object.entries(sourcesByType).forEach(([type, count]) => {
       const totalCapacity = sources
         .filter(s => s.sourceType === type)
         .reduce((sum, s) => sum + (s.capacity || 0), 0);
       
-      doc.text(`${type}:`, 60, doc.y, { continued: true, width: 200 })
-         .fillColor('#2563eb')
-         .text(`${count} sources (${totalCapacity.toFixed(2)} kW)`, { align: 'right' })
-         .fillColor('#374151');
+      doc.text(`${type}: ${count} sources (${totalCapacity.toFixed(2)} kW)`);
     });
 
     // Add footer

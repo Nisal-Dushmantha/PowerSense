@@ -192,25 +192,23 @@ const RenewableDashboard = () => {
 
       {records.length === 0 ? (
         <div className="text-center py-12">
-          <div className="card card-gradient max-w-md mx-auto">
-            <div className="card-body text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-textPrimary dark:text-gray-100 mb-2">No energy records found</h3>
-              <p className="text-textSecondary dark:text-gray-300 mb-6">Start by creating your first energy record</p>
-              <Link
-                to="/renewable/records/new"
-                className="btn-primary inline-flex items-center"
-              >
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-                Create Your First Record
-              </Link>
+          <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 max-w-md mx-auto">
+            <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+              </svg>
             </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No energy records found</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Start by creating your first energy record</p>
+            <Link
+              to="/renewable/records/new"
+              className="btn-primary inline-flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              Create Your First Record
+            </Link>
           </div>
         </div>
       ) : (
@@ -341,59 +339,36 @@ const RenewableDashboard = () => {
         </div>
       )}
 
-      {/* Creative Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && deletingRecord && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-scale-in">
-            {/* Warning Icon with Animation */}
-            <div className="flex justify-center pt-8 pb-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-red-500 rounded-full opacity-20 animate-ping"></div>
-                <div className="relative bg-gradient-to-br from-red-500 to-red-600 rounded-full p-4">
-                  <svg className="w-12 h-12 text-white animate-shake" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="px-8 pb-6 text-center">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                ⚡ Delete This Energy Record?
-              </h3>
-              <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
-                <p className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
-                  {deletingRecord.source?.sourceName || 'Energy Record'}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Date: <span className="font-medium">{formatDate(deletingRecord.date)}</span>
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Energy: <span className="font-medium">{formatNumber(deletingRecord.energyGenerated)} kWh</span>
-                </p>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 mb-2">
-                This action cannot be undone! 🚨
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Delete Energy Record?
+            </h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 mb-4">
+              <p className="font-medium text-gray-900 dark:text-white">
+                {deletingRecord.source?.sourceName || 'N/A'}
               </p>
-              <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                This record will be permanently deleted from your history.
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {formatDate(deletingRecord.recordDate)} - {formatNumber(deletingRecord.energyGenerated)} kWh
               </p>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 px-8 pb-8">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to delete this record? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
               <button
                 onClick={cancelDelete}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-xl transition-all duration-200 font-semibold transform hover:scale-105 active:scale-95"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                🛡️ Keep It
+                Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
-                🗑️ Delete Forever
+                Delete
               </button>
             </div>
           </div>
@@ -402,176 +377,117 @@ const RenewableDashboard = () => {
 
       {/* Report Generation Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all animate-scale-in max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="bg-white bg-opacity-20 rounded-xl p-3 mr-4">
-                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">Generate Reports</h3>
-                    <p className="text-green-100 text-sm">Export your renewable energy data</p>
-                  </div>
-                </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Generate Report</h3>
                 <button
                   onClick={() => setShowReportModal(false)}
-                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-            </div>
 
-            {/* Body */}
-            <div className="p-6 space-y-6">
-              {/* Filters */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 space-y-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
-                  </svg>
-                  Report Filters (Optional)
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Date Filters */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filter by Date Range</h4>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Start Date
-                    </label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
                     <input
                       type="date"
                       value={reportFilter.startDate}
-                      onChange={(e) => setReportFilter({ ...reportFilter, startDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-white"
+                      onChange={(e) =>setReportFilter({ ...reportFilter, startDate: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      End Date
-                    </label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">End Date</label>
                     <input
                       type="date"
                       value={reportFilter.endDate}
                       onChange={(e) => setReportFilter({ ...reportFilter, endDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 dark:bg-gray-800 dark:text-white"
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Report Types */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 dark:text-white flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                  </svg>
-                  Choose Report Type
-                </h4>
-
-                {/* Energy Records Report */}
-                <div className="border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:border-green-500 dark:hover:border-green-500 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h5 className="font-semibold text-lg text-gray-900 dark:text-white mb-1">
-                        📊 Energy Records Report
-                      </h5>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Detailed report of all energy generation records with statistics and analysis
-                      </p>
-                    </div>
-                  </div>
+              {/* Report Options */}
+              <div className="space-y-3 mb-6">
+                <h4 className="font-medium text-gray-900 dark:text-white">Select Report Type</h4>
+                
+                <div className="border rounded-lg p-3 dark:border-gray-600">
+                  <div className="font-medium text-gray-900 dark:text-white mb-2">Energy Records</div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleGenerateReport('records', 'pdf')}
                       disabled={reportLoading}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50"
                     >
-                      📄 PDF
+                      PDF
                     </button>
                     <button
                       onClick={() => handleGenerateReport('records', 'csv')}
                       disabled={reportLoading}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded disabled:opacity-50"
                     >
-                      📊 CSV
+                      CSV
                     </button>
                   </div>
                 </div>
 
-                {/* Sources Report */}
-                <div className="border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:border-green-500 dark:hover:border-green-500 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h5 className="font-semibold text-lg text-gray-900 dark:text-white mb-1">
-                        ⚡ Renewable Sources Report
-                      </h5>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Complete list of all renewable energy sources with performance metrics
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-3 dark:border-gray-600">
+                  <div className="font-medium text-gray-900 dark:text-white mb-2">Renewable Sources</div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleGenerateReport('sources', 'pdf')}
                       disabled={reportLoading}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50"
                     >
-                      📄 PDF
+                      PDF
                     </button>
                     <button
                       onClick={() => handleGenerateReport('sources', 'csv')}
                       disabled={reportLoading}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded disabled:opacity-50"
                     >
-                      📊 CSV
+                      CSV
                     </button>
                   </div>
                 </div>
 
-                {/* Summary Report */}
-                <div className="border-2 border-gray-200 dark:border-gray-600 rounded-xl p-4 hover:border-green-500 dark:hover:border-green-500 transition-colors">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <h5 className="font-semibold text-lg text-gray-900 dark:text-white mb-1">
-                        📈 Summary Report
-                      </h5>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Comprehensive overview with key statistics and insights
-                      </p>
-                    </div>
-                  </div>
+                <div className="border rounded-lg p-3 dark:border-gray-600">
+                  <div className="font-medium text-gray-900 dark:text-white mb-2">Summary Report</div>
                   <button
                     onClick={() => handleGenerateReport('summary', 'pdf')}
                     disabled={reportLoading}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded disabled:opacity-50"
                   >
-                    📄 Generate PDF Summary
+                    Generate PDF
                   </button>
                 </div>
               </div>
 
               {reportLoading && (
-                <div className="flex items-center justify-center py-4">
-                  <div className="loading-spinner w-8 h-8 mr-3"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Generating report...</span>
+                <div className="flex items-center justify-center py-3">
+                  <div className="loading-spinner w-6 h-6 mr-2"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Generating...</span>
                 </div>
               )}
-            </div>
 
-            {/* Footer */}
-            <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end">
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg transition-colors font-medium"
-              >
-                Close
-              </button>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
