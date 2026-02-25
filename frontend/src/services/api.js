@@ -78,6 +78,38 @@ export const renewableService = {
   // Statistics
   getStatistics: (params) => api.get('/renewable/stats', { params }),
   getDashboard: () => api.get('/renewable/dashboard'),
+  
+  // Report Generation
+  generateRecordsPDF: (params) => {
+    return api.get('/renewable/reports/pdf', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateRecordsCSV: (params) => {
+    return api.get('/renewable/reports/csv', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateSourcesPDF: (params) => {
+    return api.get('/renewable/reports/sources/pdf', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateSourcesCSV: (params) => {
+    return api.get('/renewable/reports/sources/csv', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateSummaryPDF: (params) => {
+    return api.get('/renewable/reports/summary/pdf', {
+      params,
+      responseType: 'blob'
+    });
+  }
 };
 
 export default api;

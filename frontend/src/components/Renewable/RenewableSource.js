@@ -10,6 +10,8 @@ const RenewableSource = () => {
   const [editingSource, setEditingSource] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingSource, setDeletingSource] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const sourceTypes = ['Solar', 'Wind', 'Hydro', 'Biomass', 'Geothermal', 'Other'];
   const statusOptions = ['Active', 'Inactive', 'Maintenance'];
@@ -119,6 +121,37 @@ const RenewableSource = () => {
     setDeletingSource(null);
   };
 
+  const downloadFile = (blob, filename) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleGenerateReport = async (format) => {
+    setReportLoading(true);
+    try {
+      let response;
+      if (format === 'pdf') {
+        response = await renewableService.generateSourcesPDF();
+        downloadFile(response.data, `renewable-sources-report-${Date.now()}.pdf`);
+      } else {
+        response = await renewableService.generateSourcesCSV();
+        downloadFile(response.data, `renewable-sources-${Date.now()}.csv`);
+      }
+      setShowReportModal(false);
+    } catch (err) {
+      console.error('Error generating report:', err);
+      setError('Failed to generate report. Please try again.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   const handleAddNew = () => {
     setEditingSource(null);
     setFormData(initialFormState);
@@ -165,15 +198,26 @@ const RenewableSource = () => {
           <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100">Renewable Energy Sources</h1>
           <p className="text-textSecondary dark:text-gray-300 mt-1">Manage your renewable energy installations</p>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="btn-primary flex items-center"
-        >
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          Add New Source
-        </button>
+        <div className="flex gap-3 flex-wrap">
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="btn-success flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+            Generate Report
+          </button>
+          <button
+            onClick={handleAddNew}
+            className="btn-primary flex items-center"
+          >
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+            Add New Source
+          </button>
+        </div>
       </div>
 
       {sources.length === 0 ? (
@@ -581,6 +625,112 @@ const RenewableSource = () => {
                 className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-3 rounded-xl transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
               >
                 🗑️ Delete Forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Generation Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all animate-scale-in">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="bg-white bg-opacity-20 rounded-xl p-3 mr-4">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Generate Sources Report</h3>
+                    <p className="text-green-100 text-sm">Export all renewable sources</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                Choose your preferred format to export all renewable energy sources with their details and statistics.
+              </p>
+
+              {/* Report Options */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => handleGenerateReport('pdf')}
+                  disabled={reportLoading}
+                  className="w-full bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white p-4 rounded-xl transition-colors font-medium flex items-center justify-center group"
+                >
+                  <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                  </svg>
+                  <span>📄 Generate PDF Report</span>
+                  <svg className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                <button
+                  onClick={() => handleGenerateReport('csv')}
+                  disabled={reportLoading}
+                  className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white p-4 rounded-xl transition-colors font-medium flex items-center justify-center group"
+                >
+                  <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                  </svg>
+                  <span>📊 Export as CSV</span>
+                  <svg className="w-5 h-5 ml-auto group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {reportLoading && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="loading-spinner w-8 h-8 mr-3"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Generating report...</span>
+                </div>
+              )}
+
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                  </svg>
+                  <div className="text-sm text-blue-800 dark:text-blue-300">
+                    <p className="font-semibold mb-1">Report Contents:</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>All renewable energy sources</li>
+                      <li>Source details and specifications</li>
+                      <li>Performance statistics</li>
+                      <li>Installation and warranty information</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setShowReportModal(false)}
+                disabled={reportLoading}
+                className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
               </button>
             </div>
           </div>

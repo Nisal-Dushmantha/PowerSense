@@ -21,6 +21,15 @@ const {
   getDashboardSummary
 } = require('../controllers/renewableController');
 
+const {
+  // Report controllers
+  generatePDFReport,
+  generateCSVReport,
+  generateSourcesPDFReport,
+  generateSourcesCSVReport,
+  generateSummaryPDFReport
+} = require('../controllers/renewableReportController');
+
 // ============ RENEWABLE SOURCE ROUTES ============
 
 // @route   POST /api/renewable/sources
@@ -86,5 +95,32 @@ router.get('/dashboard', protect, getDashboardSummary);
 // @desc    Get renewable energy statistics
 // @access  Private
 router.get('/stats', protect, getStatistics);
+
+// ============ REPORT ROUTES ============
+
+// @route   GET /api/renewable/reports/pdf
+// @desc    Generate PDF report for energy records
+// @access  Private
+router.get('/reports/pdf', protect, generatePDFReport);
+
+// @route   GET /api/renewable/reports/csv
+// @desc    Generate CSV export for energy records
+// @access  Private
+router.get('/reports/csv', protect, generateCSVReport);
+
+// @route   GET /api/renewable/reports/sources/pdf
+// @desc    Generate PDF report for renewable sources
+// @access  Private
+router.get('/reports/sources/pdf', protect, generateSourcesPDFReport);
+
+// @route   GET /api/renewable/reports/sources/csv
+// @desc    Generate CSV export for renewable sources
+// @access  Private
+router.get('/reports/sources/csv', protect, generateSourcesCSVReport);
+
+// @route   GET /api/renewable/reports/summary/pdf
+// @desc    Generate summary PDF report for all renewable data
+// @access  Private
+router.get('/reports/summary/pdf', protect, generateSummaryPDFReport);
 
 module.exports = router;
