@@ -3,9 +3,9 @@ const Device = require('../models/devices');
 // Create a new device
 exports.createDevice = async (req, res) => {
 	try {
-		const { deviceId, name, type, powerRating, expectedDailyUsage } = req.body;
-
-		const device = new Device({ deviceId, name, type, powerRating, expectedDailyUsage });
+		// Ignore deviceId from client, always auto-generate
+		const { name, type, powerRating, expectedDailyUsage } = req.body;
+		const device = new Device({ name, type, powerRating, expectedDailyUsage });
 		await device.save();
 		return res.status(201).json(device);
 	} catch (error) {
@@ -56,11 +56,16 @@ exports.updateDevice = async (req, res) => {
 	}
 };
 
-// Delete device by deviceId
+// Delete device by deviceId or _id
 exports.deleteDevice = async (req, res) => {
 	try {
 		const { deviceId } = req.params;
-		const device = await Device.findOneAndDelete({ deviceId });
+		// Try by deviceId first
+		let device = await Device.findOneAndDelete({ deviceId });
+		// If not found, try by _id
+		if (!device && deviceId.match(/^[a-fA-F0-9]{24}$/)) {
+			device = await Device.findByIdAndDelete(deviceId);
+		}
 		if (!device) return res.status(404).json({ message: 'Device not found' });
 		return res.json({ message: 'Device deleted' });
 	} catch (error) {

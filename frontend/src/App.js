@@ -14,6 +14,9 @@ import BillList from './components/energyReports/BillList';
 import CreateBill from './components/energyReports/CreateBill';
 import EditBill from './components/energyReports/EditBill';
 import BillStats from './components/energyReports/BillStats';
+import DevicesList from './components/Devices/DevicesList';
+import CreateDevice from './components/Devices/CreateDevice';
+import EditDevice from './components/Devices/EditDevice';
 import EnergyConsumption from './components/energyConsumption';
 
 // Initialize auth service

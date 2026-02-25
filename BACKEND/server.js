@@ -18,10 +18,12 @@ app.use(express.urlencoded({ extended: true }));
 // Connect to database
 connectDB();
 
+
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
 const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
+const devicesRoutes = require('./routes/devices');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -31,6 +33,7 @@ app.get('/', (req, res) => {
     database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
     endpoints: {
       bills: '/api/bills',
+      devices: '/api/devices',
       stats: '/api/bills/stats',
       energy: '/api/energy-consumption'
       
@@ -42,6 +45,7 @@ app.get('/', (req, res) => {
 app.use('/api/bills', monthlyBillRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/devices', devicesRoutes);
 
 const PORT = process.env.PORT || 5000;
 

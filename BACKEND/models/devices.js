@@ -33,10 +33,22 @@ const DeviceSchema = new mongoose.Schema({
 	timestamps: true,
 });
 
-// generate a simple unique deviceId if not provided
-DeviceSchema.pre('validate', function (next) {
-	if (!this.deviceId) {
-		this.deviceId = `DEV-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8).toUpperCase()}`;
+
+// Auto-increment deviceId as DVC-001, DVC-002, ...
+DeviceSchema.pre('validate', async function (next) {
+	if (this.isNew && (!this.deviceId || this.deviceId === '')) {
+		try {
+			const Counter = mongoose.model('Counter', new mongoose.Schema({ _id: String, seq: Number }));
+			const counter = await Counter.findByIdAndUpdate(
+				{ _id: 'deviceId' },
+				{ $inc: { seq: 1 } },
+				{ new: true, upsert: true }
+			);
+			const num = counter.seq;
+			this.deviceId = `DVC-${String(num).padStart(3, '0')}`;
+		} catch (err) {
+			return next(err);
+		}
 	}
 	next();
 });
