@@ -41,6 +41,9 @@ export const authService = {
   // Get current user
   getCurrentUser: () => authAPI.get('/auth/me'),
   
+  // Update user profile
+  updateProfile: (userData) => authAPI.put('/auth/profile', userData),
+  
   // Logout (clear local storage)
   logout: () => {
     localStorage.removeItem('token');

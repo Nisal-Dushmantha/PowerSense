@@ -1,15 +1,25 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import { authService } from './services/authService';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Components
 import PrivateRoute from './components/PrivateRoute';
 import Home from './components/Home';
+import Profile from './components/Profile';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
-import { authService } from './services/authService';
-import { ThemeProvider } from './contexts/ThemeContext';
+import CreateBillModal from './components/energyReports/CreateBillModal';
+import EditBillModal from './components/energyReports/EditBill';
+import EnergyConsumption from './components/energyConsumption';
+import RenewableDashboard from './components/Renewable/RenewableDashboard';
+import RenewableSource from './components/Renewable/RenewableSource';
+import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
+import DevicesList from './components/Devices/DevicesList';
+import DeviceChartsPage from './components/Devices/DeviceChartsPage';
+import EditDevice from './components/Devices/EditDevice';
 
 // Initialize auth service
 authService.init();
@@ -34,38 +44,75 @@ function App() {
                 </div>
               </PrivateRoute>
             } />
-            
-            {/* Placeholder routes for new nav items */}
-            <Route path="/consumption" element={
+            <Route path="/bills/new" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Energy Consumption</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <CreateBillModal />
                 </div>
+              </PrivateRoute>
+            } />
+            <Route path="/bills/edit/:id" element={
+              <PrivateRoute>
+                <div className="container mx-auto px-4 py-8">
+                  <EditBillModal />
+                </div>
+              </PrivateRoute>
+            } />
+            
+            {/* Placeholder routes for new nav items */}
+            <Route path="/consumption/*" element={
+              <PrivateRoute>
+                <EnergyConsumption />
               </PrivateRoute>
             } />
             <Route path="/renewable" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Renewable Energy</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <RenewableDashboard />
                 </div>
               </PrivateRoute>
             } />
-            <Route path="/devices" element={
+            <Route path="/renewable/sources" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Device Management</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <RenewableSource />
                 </div>
               </PrivateRoute>
             } />
+            <Route path="/renewable/records" element={
+              <PrivateRoute>
+                <div className="container mx-auto px-4 py-8">
+                  <RenewableEnergyForm />
+                </div>
+              </PrivateRoute>
+            } />
+            <Route path="/renewable/records/new" element={
+              <PrivateRoute>
+                <div className="container mx-auto px-4 py-8">
+                  <RenewableEnergyForm />
+                </div>
+              </PrivateRoute>
+            } />
+            
+            <Route path="/devices" element={
+              <PrivateRoute>
+                  <div className="container mx-auto px-4 py-8">
+                    <DevicesList />
+                  </div>
+              </PrivateRoute>
+            } />
+            <Route path="/devices/charts" element={
+              <PrivateRoute>
+                <DeviceChartsPage />
+              </PrivateRoute>
+            } />
+              <Route path="/devices/edit/:id" element={
+                <PrivateRoute>
+                  <div className="container mx-auto px-4 py-8">
+                    <EditDevice />
+                  </div>
+                </PrivateRoute>
+              } />
           </Routes>
         </div>
       </Router>

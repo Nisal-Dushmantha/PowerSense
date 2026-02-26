@@ -2,7 +2,7 @@ const EnergyConsumption = require('../models/energyConsumption');
 
 // @desc    Create a new energy consumption record
 // @route   POST /api/energy-consumption
-// @access  Public
+// @access  Private
 exports.createEnergyConsumption = async (req, res) => {
     try {
         const { 
@@ -12,8 +12,9 @@ exports.createEnergyConsumption = async (req, res) => {
             period_type 
         } = req.body;
 
-        // Create new record
+        // Create new record with user ID from authentication
         const newRecord = new EnergyConsumption({
+            user: req.user.id,
             consumption_date: new Date(consumption_date),
             consumption_time,
             energy_used_kwh: parseFloat(energy_used_kwh),
@@ -37,15 +38,19 @@ exports.createEnergyConsumption = async (req, res) => {
     }
 };
 
-// @desc    Get all energy consumption records
+// @desc    Get all energy consumption records for the authenticated user
 // @route   GET /api/energy-consumption
-// @access  Public
+// @access  Private
 exports.getEnergyConsumption = async (req, res) => {
     try {
-        const { household_id, startDate, endDate, period_type } = req.query;
-        const query = {};
+        const { startDate, endDate, period_type, id } = req.query;
+        const query = { user: req.user.id };
 
-        if (household_id) query.household_id = household_id;
+        // If specific ID is requested, add it to query
+        if (id) {
+            query._id = id;
+        }
+
         if (period_type) query.period_type = period_type;
         
         if (startDate || endDate) {
@@ -72,25 +77,52 @@ exports.getEnergyConsumption = async (req, res) => {
     }
 };
 
-// @desc    Get total energy consumption
+// @desc    Get total energy consumption for the authenticated user
 // @route   GET /api/energy-consumption/total
-// @access  Public
+// @access  Private
 exports.getTotalConsumption = async (req, res) => {
     try {
-        const { household_id, startDate, endDate } = req.query;
+        const { startDate, endDate, period } = req.query;
+        const userId = req.user.id;
         
-        if (!household_id) {
-            return res.status(400).json({
-                success: false,
-                message: 'Household ID is required'
-            });
+        const matchQuery = { user: userId };
+
+        // Add date range filter if provided
+        if (startDate && endDate) {
+            matchQuery.consumption_date = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate)
+            };
         }
 
-        const result = await EnergyConsumption.getTotalConsumption(household_id, startDate, endDate);
+        // Aggregate pipeline to calculate total consumption
+        const result = await EnergyConsumption.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: null,
+                    total_consumption: { $sum: '$energy_used_kwh' },
+                    count: { $sum: 1 },
+                    average_daily: { $avg: '$energy_used_kwh' }
+                }
+            }
+        ]);
+
+        // Get individual records for the chart data
+        const records = await EnergyConsumption.find(matchQuery)
+            .sort({ consumption_date: 1 })
+            .select('consumption_date energy_used_kwh period_type');
+
+        const responseData = {
+            total_consumption: result.length > 0 ? result[0].total_consumption : 0,
+            average_daily: result.length > 0 ? result[0].average_daily : 0,
+            count: result.length > 0 ? result[0].count : 0,
+            data: records
+        };
 
         res.status(200).json({
             success: true,
-            data: result
+            data: responseData
         });
     } catch (error) {
         console.error('Error calculating total energy consumption:', error);
@@ -104,11 +136,24 @@ exports.getTotalConsumption = async (req, res) => {
 
 // @desc    Update an energy consumption record
 // @route   PUT /api/energy-consumption/:id
-// @access  Public
+// @access  Private
 exports.updateEnergyConsumption = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = { ...req.body };
+
+        // Ensure the user can only update their own records
+        const existingRecord = await EnergyConsumption.findOne({ 
+            _id: id, 
+            user: req.user.id 
+        });
+
+        if (!existingRecord) {
+            return res.status(404).json({
+                success: false,
+                message: 'Energy consumption record not found or you do not have permission to update it'
+            });
+        }
 
         // Convert date string to Date object if provided
         if (updateData.consumption_date) {
@@ -125,13 +170,6 @@ exports.updateEnergyConsumption = async (req, res) => {
             updateData,
             { new: true, runValidators: true }
         );
-
-        if (!updatedRecord) {
-            return res.status(404).json({
-                success: false,
-                message: 'Energy consumption record not found'
-            });
-        }
 
         res.status(200).json({
             success: true,
@@ -150,17 +188,21 @@ exports.updateEnergyConsumption = async (req, res) => {
 
 // @desc    Delete an energy consumption record
 // @route   DELETE /api/energy-consumption/:id
-// @access  Public
+// @access  Private
 exports.deleteEnergyConsumption = async (req, res) => {
     try {
         const { id } = req.params;
         
-        const record = await EnergyConsumption.findByIdAndDelete(id);
+        // Ensure the user can only delete their own records
+        const record = await EnergyConsumption.findOneAndDelete({ 
+            _id: id, 
+            user: req.user.id 
+        });
         
         if (!record) {
             return res.status(404).json({
                 success: false,
-                message: 'Energy consumption record not found'
+                message: 'Energy consumption record not found or you do not have permission to delete it'
             });
         }
 
