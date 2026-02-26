@@ -21,6 +21,7 @@ const RenewableDashboard = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [formError, setFormError] = useState(null);
   const [formSuccess, setFormSuccess] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
 
   const weatherOptions = ['Sunny', 'Cloudy', 'Rainy', 'Windy', 'Stormy', 'Foggy', 'Mixed', 'Other'];
 
@@ -102,6 +103,7 @@ const RenewableDashboard = () => {
     setFormData(initialFormState);
     setFormError(null);
     setFormSuccess(null);
+    setFormErrors({});
     setShowFormModal(true);
   };
 
@@ -125,15 +127,128 @@ const RenewableDashboard = () => {
     });
     setFormError(null);
     setFormSuccess(null);
+    setFormErrors({});
     setShowFormModal(true);
+  };
+
+  const validateRecordField = (name, value) => {
+    const errors = {};
+    const selectedSource = sources.find(s => s._id === formData.source);
+
+    switch (name) {
+      case 'source':
+        if (!value) {
+          errors.source = 'Please select a renewable source';
+        }
+        break;
+
+      case 'recordDate':
+        if (!value) {
+          errors.recordDate = 'Record date is required'; 
+        } else if (new Date(value) > new Date()) {
+          errors.recordDate = 'Record date cannot be in the future';
+        } else if (selectedSource && selectedSource.installationDate) {
+          const installDate = new Date(selectedSource.installationDate);
+          if (new Date(value) < installDate) {
+            errors.recordDate = 'Record date cannot be before source installation date';
+          }
+        }
+        break;
+
+      case 'energyGenerated':
+        if (!value) {
+          errors.energyGenerated = 'Energy generated is required';
+        } else if (parseFloat(value) <= 0) {
+          errors.energyGenerated = 'Energy generated must be greater than 0';
+        } else if (parseFloat(value) > 1000000) {
+          errors.energyGenerated = 'Energy generated value is too large';
+        }
+        break;
+
+      case 'peakPower':
+        if (value && parseFloat(value) < 0) {
+          errors.peakPower = 'Peak power cannot be negative';
+        } else if (value && parseFloat(value) > 1000000) {
+          errors.peakPower = 'Peak power value is too large';
+        }
+        break;
+
+      case 'averagePower':
+        if (value && parseFloat(value) < 0) {
+          errors.averagePower = 'Average power cannot be negative';
+        } else if (value && formData.peakPower && parseFloat(value) > parseFloat(formData.peakPower)) {
+          errors.averagePower = 'Average power cannot exceed peak power';
+        }
+        break;
+
+      case 'operatingHours':
+        if (value && (parseFloat(value) < 0 || parseFloat(value) > 24)) {
+          errors.operatingHours = 'Operating hours must be between 0 and 24';
+        }
+        break;
+
+      case 'efficiency':
+        if (value && (parseFloat(value) < 0 || parseFloat(value) > 100)) {
+          errors.efficiency = 'Efficiency must be between 0 and 100%';
+        }
+        break;
+
+      case 'temperature':
+        if (value && (parseFloat(value) < -100 || parseFloat(value) > 150)) {
+          errors.temperature = 'Temperature must be between -100°C and 150°C';
+        }
+        break;
+
+      case 'costSavings':
+        if (value && parseFloat(value) < 0) {
+          errors.costSavings = 'Cost savings cannot be negative';
+        } else if (value && parseFloat(value) > 10000000) {
+          errors.costSavings = 'Cost savings value is too large';
+        }
+        break;
+
+      case 'notes':
+        if (value && value.length > 500) {
+          errors.notes = 'Notes must not exceed 500 characters';
+        }
+        break;
+
+      case 'issues':
+        if (value && value.length > 500) {
+          errors.issues = 'Issues must not exceed 500 characters';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return errors;
   };
 
   const handleFormInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const newValue = type === 'checkbox' ? checked : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: newValue
     }));
+
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+
+    // Validate field on change
+    const fieldErrors = validateRecordField(name, newValue);
+    if (Object.keys(fieldErrors).length > 0) {
+      setFormErrors(prev => ({ ...prev, ...fieldErrors }));
+    }
   };
 
   const handleFormSubmit = async (e) => {
@@ -141,8 +256,16 @@ const RenewableDashboard = () => {
     setFormError(null);
     setFormSuccess(null);
 
-    if (!formData.source) {
-      setFormError('Please select a renewable source');
+    // Validate all fields
+    const errors = {};
+    Object.keys(formData).forEach(key => {
+      const fieldErrors = validateRecordField(key, formData[key]);
+      Object.assign(errors, fieldErrors);
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setFormError('Please fix the errors in the form');
       return;
     }
 
@@ -729,7 +852,7 @@ const RenewableDashboard = () => {
                     value={formData.source}
                     onChange={handleFormInputChange}
                     required
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.source ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                   >
                     <option value="">Select a source...</option>
                     {sources.map(source => (
@@ -738,6 +861,9 @@ const RenewableDashboard = () => {
                       </option>
                     ))}
                   </select>
+                  {formErrors.source && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.source}</p>
+                  )}
                 </div>
 
                 <div>
@@ -751,8 +877,11 @@ const RenewableDashboard = () => {
                     onChange={handleFormInputChange}
                     required
                     max={new Date().toISOString().split('T')[0]}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.recordDate ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                   />
+                  {formErrors.recordDate && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.recordDate}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -766,17 +895,23 @@ const RenewableDashboard = () => {
                     Energy Generated <span className="text-red-500">*</span>
                   </label>
                   <div className="flex gap-2">
-                    <input
-                      type="number"
-                      name="energyGenerated"
-                      value={formData.energyGenerated}
-                      onChange={handleFormInputChange}
-                      required
-                      min="0"
-                      step="0.01"
-                      className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="e.g., 45.5"
-                    />
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        name="energyGenerated"
+                        value={formData.energyGenerated}
+                        onChange={handleFormInputChange}
+                        required
+                        min="0.01"
+                        max="1000000"
+                        step="0.01"
+                        className={`w-full border ${formErrors.energyGenerated ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                        placeholder="e.g., 45.5"
+                      />
+                      {formErrors.energyGenerated && (
+                        <p className="text-red-500 text-xs mt-1">{formErrors.energyGenerated}</p>
+                      )}
+                    </div>
                     <select
                       name="energyUnit"
                       value={formData.energyUnit}
@@ -798,10 +933,14 @@ const RenewableDashboard = () => {
                     value={formData.peakPower}
                     onChange={handleFormInputChange}
                     min="0"
+                    max="1000000"
                     step="0.01"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.peakPower ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="e.g., 5.2"
                   />
+                  {formErrors.peakPower && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.peakPower}</p>
+                  )}
                 </div>
 
                 <div>
@@ -813,9 +952,12 @@ const RenewableDashboard = () => {
                     onChange={handleFormInputChange}
                     min="0"
                     step="0.01"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.averagePower ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="e.g., 3.8"
                   />
+                  {formErrors.averagePower && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.averagePower}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -834,9 +976,12 @@ const RenewableDashboard = () => {
                     min="0"
                     max="24"
                     step="0.1"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.operatingHours ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="0-24 hours"
                   />
+                  {formErrors.operatingHours && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.operatingHours}</p>
+                  )}
                 </div>
 
                 <div>
@@ -849,9 +994,12 @@ const RenewableDashboard = () => {
                     min="0"
                     max="100"
                     step="0.01"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.efficiency ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="0-100%"
                   />
+                  {formErrors.efficiency && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.efficiency}</p>
+                  )}
                 </div>
 
                 <div>
@@ -862,10 +1010,14 @@ const RenewableDashboard = () => {
                     value={formData.costSavings}
                     onChange={handleFormInputChange}
                     min="0"
+                    max="10000000"
                     step="0.01"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.costSavings ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="e.g., 1250"
                   />
+                  {formErrors.costSavings && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.costSavings}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -897,10 +1049,15 @@ const RenewableDashboard = () => {
                     name="temperature"
                     value={formData.temperature}
                     onChange={handleFormInputChange}
+                    min="-100"
+                    max="150"
                     step="0.1"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.temperature ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="e.g., 28.5"
                   />
+                  {formErrors.temperature && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.temperature}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -929,9 +1086,14 @@ const RenewableDashboard = () => {
                     value={formData.issues}
                     onChange={handleFormInputChange}
                     rows="2"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    maxLength="500"
+                    className={`w-full border ${formErrors.issues ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="Report any issues or problems encountered..."
                   />
+                  {formErrors.issues && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.issues}</p>
+                  )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formData.issues.length}/500 characters</p>
                 </div>
 
                 <div>
@@ -942,9 +1104,12 @@ const RenewableDashboard = () => {
                     onChange={handleFormInputChange}
                     rows="3"
                     maxLength="500"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className={`w-full border ${formErrors.notes ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent`}
                     placeholder="Any additional observations or comments..."
                   />
+                  {formErrors.notes && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.notes}</p>
+                  )}
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formData.notes.length}/500 characters</p>
                 </div>
               </div>
