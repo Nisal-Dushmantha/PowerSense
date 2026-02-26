@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { renewableService } from '../../services/api';
+import Modal from '../common/Modal';
 
 const RenewableDashboard = () => {
   const [records, setRecords] = useState([]);
+  const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -15,9 +17,35 @@ const RenewableDashboard = () => {
     endDate: '',
     sourceId: ''
   });
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [formError, setFormError] = useState(null);
+  const [formSuccess, setFormSuccess] = useState(null);
+
+  const weatherOptions = ['Sunny', 'Cloudy', 'Rainy', 'Windy', 'Stormy', 'Foggy', 'Mixed', 'Other'];
+
+  const initialFormState = {
+    source: '',
+    recordDate: new Date().toISOString().split('T')[0],
+    energyGenerated: '',
+    energyUnit: 'kWh',
+    peakPower: '',
+    averagePower: '',
+    operatingHours: '',
+    efficiency: '',
+    weatherCondition: 'Sunny',
+    temperature: '',
+    costSavings: '',
+    notes: '',
+    maintenancePerformed: false,
+    issues: ''
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
     fetchRecords();
+    fetchSources();
   }, []);
 
   const fetchRecords = async () => {
@@ -31,6 +59,15 @@ const RenewableDashboard = () => {
       console.error('Error fetching records:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSources = async () => {
+    try {
+      const response = await renewableService.getSources({ status: 'Active' });
+      setSources(response.data.data);
+    } catch (err) {
+      console.error('Error fetching sources:', err);
     }
   };
 
@@ -58,6 +95,105 @@ const RenewableDashboard = () => {
   const cancelDelete = () => {
     setShowDeleteModal(false);
     setDeletingRecord(null);
+  };
+
+  const handleAddNew = () => {
+    setEditingRecord(null);
+    setFormData(initialFormState);
+    setFormError(null);
+    setFormSuccess(null);
+    setShowFormModal(true);
+  };
+
+  const handleEditRecord = (record) => {
+    setEditingRecord(record);
+    setFormData({
+      source: record.source._id || record.source,
+      recordDate: record.recordDate ? record.recordDate.split('T')[0] : '',
+      energyGenerated: record.energyGenerated,
+      energyUnit: record.energyUnit,
+      peakPower: record.peakPower || '',
+      averagePower: record.averagePower || '',
+      operatingHours: record.operatingHours || '',
+      efficiency: record.efficiency || '',
+      weatherCondition: record.weatherCondition || 'Sunny',
+      temperature: record.temperature || '',
+      costSavings: record.costSavings || '',
+      notes: record.notes || '',
+      maintenancePerformed: record.maintenancePerformed || false,
+      issues: record.issues || ''
+    });
+    setFormError(null);
+    setFormSuccess(null);
+    setShowFormModal(true);
+  };
+
+  const handleFormInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    setFormError(null);
+    setFormSuccess(null);
+
+    if (!formData.source) {
+      setFormError('Please select a renewable source');
+      return;
+    }
+
+    try {
+      if (editingRecord) {
+        await renewableService.updateRecord(editingRecord._id, formData);
+        setFormSuccess('Energy record updated successfully!');
+      } else {
+        await renewableService.createRecord(formData);
+        setFormSuccess('Energy record created successfully!');
+      }
+      
+      fetchRecords();
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        setShowFormModal(false);
+        setEditingRecord(null);
+        setFormData(initialFormState);
+        setFormSuccess(null);
+      }, 1500);
+    } catch (err) {
+      setFormError(err.response?.data?.message || 'Failed to save energy record');
+      console.error('Error saving record:', err);
+    }
+  };
+
+  const getSourceTypeIcon = (type) => {
+    const icons = {
+      Solar: '☀️',
+      Wind: '🌪️',
+      Hydro: '💧',
+      Biomass: '🌿',
+      Geothermal: '🌋',
+      Other: '⚡'
+    };
+    return icons[type] || '⚡';
+  };
+
+  const getWeatherIcon = (weather) => {
+    const icons = {
+      Sunny: '☀️',
+      Cloudy: '☁️',
+      Rainy: '🌧️',
+      Windy: '💨',
+      Stormy: '⛈️',
+      Foggy: '🌫️',
+      Mixed: '⛅',
+      Other: '🌤️'
+    };
+    return icons[weather] || '🌤️';
   };
 
   const downloadFile = (blob, filename) => {
@@ -178,15 +314,15 @@ const RenewableDashboard = () => {
             </svg>
             Manage Sources
           </Link>
-          <Link
-            to="/renewable/records/new"
+          <button
+            onClick={handleAddNew}
             className="btn-primary flex items-center"
           >
             <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
             Add New Record
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -200,15 +336,15 @@ const RenewableDashboard = () => {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No energy records found</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Start by creating your first energy record</p>
-            <Link
-              to="/renewable/records/new"
+            <button
+              onClick={handleAddNew}
               className="btn-primary inline-flex items-center"
             >
               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
               Create Your First Record
-            </Link>
+            </button>
           </div>
         </div>
       ) : (
@@ -258,14 +394,14 @@ const RenewableDashboard = () => {
                     </td>
                     <td className="table-cell">
                       <div className="flex items-center space-x-2">
-                        <Link
-                          to={`/renewable/records/edit/${record._id}`}
+                        <button
+                          onClick={() => handleEditRecord(record)}
                           className="btn-ghost btn-sm text-secondary hover:text-primary dark:text-secondary dark:hover:text-primary-light"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                           </svg>
-                        </Link>
+                        </button>
                         <button
                           onClick={() => handleDelete(record)}
                           className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
@@ -320,12 +456,12 @@ const RenewableDashboard = () => {
                 </div>
 
                 <div className="flex justify-end space-x-2">
-                  <Link
-                    to={`/renewable/records/edit/${record._id}`}
+                  <button
+                    onClick={() => handleEditRecord(record)}
                     className="btn-secondary btn-sm"
                   >
                     Edit
-                  </Link>
+                  </button>
                   <button
                     onClick={() => handleDelete(record)}
                     className="btn-danger btn-sm"
@@ -491,6 +627,294 @@ const RenewableDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Energy Record Form Modal */}
+      {showFormModal && (
+        <Modal
+          isOpen={showFormModal}
+          onClose={() => {
+            setShowFormModal(false);
+            setEditingRecord(null);
+            setFormData(initialFormState);
+            setFormError(null);
+            setFormSuccess(null);
+          }}
+          title={editingRecord ? 'Edit Energy Record' : 'Add New Energy Record'}
+          size="large"
+        >
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Success/Error Messages */}
+            {formSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded dark:bg-green-900/20 dark:border-green-800 dark:text-green-400">
+                <p className="text-sm font-medium">{formSuccess}</p>
+              </div>
+            )}
+
+            {formError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded dark:bg-red-900/20 dark:border-red-800 dark:text-red-400">
+                <p className="text-sm font-medium">{formError}</p>
+              </div>
+            )}
+
+            {/* Basic Information */}
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Renewable Source <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="source"
+                    value={formData.source}
+                    onChange={handleFormInputChange}
+                    required
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    <option value="">Select a source...</option>
+                    {sources.map(source => (
+                      <option key={source._id} value={source._id}>
+                        {getSourceTypeIcon(source.sourceType)} {source.sourceName} ({source.capacity} {source.capacityUnit})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Record Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="recordDate"
+                    value={formData.recordDate}
+                    onChange={handleFormInputChange}
+                    required
+                    max={new Date().toISOString().split('T')[0]}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Energy Production */}
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Energy Production</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Energy Generated <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      name="energyGenerated"
+                      value={formData.energyGenerated}
+                      onChange={handleFormInputChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="e.g., 45.5"
+                    />
+                    <select
+                      name="energyUnit"
+                      value={formData.energyUnit}
+                      onChange={handleFormInputChange}
+                      className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="kWh">kWh</option>
+                      <option value="MWh">MWh</option>
+                      <option value="GWh">GWh</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Peak Power (kW)</label>
+                  <input
+                    type="number"
+                    name="peakPower"
+                    value={formData.peakPower}
+                    onChange={handleFormInputChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="e.g., 5.2"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Average Power (kW)</label>
+                  <input
+                    type="number"
+                    name="averagePower"
+                    value={formData.averagePower}
+                    onChange={handleFormInputChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="e.g., 3.8"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Metrics */}
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Performance Metrics</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Operating Hours</label>
+                  <input
+                    type="number"
+                    name="operatingHours"
+                    value={formData.operatingHours}
+                    onChange={handleFormInputChange}
+                    min="0"
+                    max="24"
+                    step="0.1"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="0-24 hours"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Efficiency (%)</label>
+                  <input
+                    type="number"
+                    name="efficiency"
+                    value={formData.efficiency}
+                    onChange={handleFormInputChange}
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="0-100%"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost Savings (LKR)</label>
+                  <input
+                    type="number"
+                    name="costSavings"
+                    value={formData.costSavings}
+                    onChange={handleFormInputChange}
+                    min="0"
+                    step="0.01"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="e.g., 1250"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Environmental Conditions */}
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Environmental Conditions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weather Condition</label>
+                  <select
+                    name="weatherCondition"
+                    value={formData.weatherCondition}
+                    onChange={handleFormInputChange}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  >
+                    {weatherOptions.map(weather => (
+                      <option key={weather} value={weather}>
+                        {getWeatherIcon(weather)} {weather}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Temperature (°C)</label>
+                  <input
+                    type="number"
+                    name="temperature"
+                    value={formData.temperature}
+                    onChange={handleFormInputChange}
+                    step="0.1"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="e.g., 28.5"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Maintenance & Notes */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Maintenance & Notes</h3>
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="maintenancePerformed"
+                    checked={formData.maintenancePerformed}
+                    onChange={handleFormInputChange}
+                    className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Maintenance performed on this day
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Issues or Problems</label>
+                  <textarea
+                    name="issues"
+                    value={formData.issues}
+                    onChange={handleFormInputChange}
+                    rows="2"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Report any issues or problems encountered..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Additional Notes</label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleFormInputChange}
+                    rows="3"
+                    maxLength="500"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Any additional observations or comments..."
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{formData.notes.length}/500 characters</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className="flex gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="submit"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+              >
+                {editingRecord ? 'Update Record' : 'Create Record'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFormModal(false);
+                  setEditingRecord(null);
+                  setFormData(initialFormState);
+                  setFormError(null);
+                  setFormSuccess(null);
+                }}
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium text-gray-700 dark:text-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );
