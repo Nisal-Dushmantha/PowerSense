@@ -298,12 +298,15 @@ const RenewableDashboard = () => {
         <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => setShowReportModal(true)}
-            className="btn-success flex items-center"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
           >
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
             </svg>
             Generate Report
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+            </svg>
           </button>
           <Link
             to="/renewable/sources"
@@ -514,13 +517,24 @@ const RenewableDashboard = () => {
       {/* Report Generation Modal */}
       {showReportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full">
             <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Generate Report</h3>
+              {/* Header */}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <svg className="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                    </svg>
+                    Download Energy Records Report
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Export your renewable energy production data
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowReportModal(false)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -528,100 +542,145 @@ const RenewableDashboard = () => {
                 </button>
               </div>
 
-              {/* Date Filters */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filter by Date Range</h4>
-                <div className="grid grid-cols-2 gap-3">
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                  </svg>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">Start Date</label>
+                    <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Report Includes:</h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Energy generation data with dates and amounts</li>
+                      <li>• Efficiency metrics and performance indicators</li>
+                      <li>• Weather conditions and cost savings</li>
+                      <li>• Source details and maintenance records</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Date Filter Section */}
+              <div className="mb-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
+                  </svg>
+                  <h4 className="font-semibold text-gray-900 dark:text-white">Filter by Date Range</h4>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">Optional</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Start Date
+                    </label>
                     <input
                       type="date"
                       value={reportFilter.startDate}
-                      onChange={(e) =>setReportFilter({ ...reportFilter, startDate: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      onChange={(e) => setReportFilter({ ...reportFilter, startDate: e.target.value })}
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      End Date
+                    </label>
                     <input
                       type="date"
                       value={reportFilter.endDate}
                       onChange={(e) => setReportFilter({ ...reportFilter, endDate: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      className="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                     />
                   </div>
                 </div>
+                {(reportFilter.startDate || reportFilter.endDate) && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-3 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    </svg>
+                    Date filter applied
+                  </p>
+                )}
               </div>
 
-              {/* Report Options */}
-              <div className="space-y-3 mb-6">
-                <h4 className="font-medium text-gray-900 dark:text-white">Select Report Type</h4>
-                
-                <div className="border rounded-lg p-3 dark:border-gray-600">
-                  <div className="font-medium text-gray-900 dark:text-white mb-2">Energy Records</div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGenerateReport('records', 'pdf')}
-                      disabled={reportLoading}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50"
-                    >
-                      PDF
-                    </button>
-                    <button
-                      onClick={() => handleGenerateReport('records', 'csv')}
-                      disabled={reportLoading}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded disabled:opacity-50"
-                    >
-                      CSV
-                    </button>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-3 dark:border-gray-600">
-                  <div className="font-medium text-gray-900 dark:text-white mb-2">Renewable Sources</div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGenerateReport('sources', 'pdf')}
-                      disabled={reportLoading}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50"
-                    >
-                      PDF
-                    </button>
-                    <button
-                      onClick={() => handleGenerateReport('sources', 'csv')}
-                      disabled={reportLoading}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded disabled:opacity-50"
-                    >
-                      CSV
-                    </button>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-3 dark:border-gray-600">
-                  <div className="font-medium text-gray-900 dark:text-white mb-2">Summary Report</div>
+              {/* Download Options */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+                  </svg>
+                  Choose Download Format
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* PDF Option */}
                   <button
-                    onClick={() => handleGenerateReport('summary', 'pdf')}
+                    onClick={() => handleGenerateReport('records', 'pdf')}
                     disabled={reportLoading}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded disabled:opacity-50"
+                    className="group relative overflow-hidden bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl p-6 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
                   >
-                    Generate PDF
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/>
+                        </svg>
+                      </div>
+                      <div className="text-left flex-1">
+                        <h5 className="font-bold text-lg mb-1">PDF Report</h5>
+                        <p className="text-sm text-red-100">Professional formatted document</p>
+                      </div>
+                      <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* CSV Option */}
+                  <button
+                    onClick={() => handleGenerateReport('records', 'csv')}
+                    disabled={reportLoading}
+                    className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl p-6 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                        </svg>
+                      </div>
+                      <div className="text-left flex-1">
+                        <h5 className="font-bold text-lg mb-1">CSV Export</h5>
+                        <p className="text-sm text-green-100">Spreadsheet-compatible data</p>
+                      </div>
+                      <svg className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                      </svg>
+                    </div>
                   </button>
                 </div>
               </div>
 
+              {/* Loading State */}
               {reportLoading && (
-                <div className="flex items-center justify-center py-3">
-                  <div className="loading-spinner w-6 h-6 mr-2"></div>
-                  <span className="text-gray-600 dark:text-gray-400">Generating...</span>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">Generating your report...</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">This will download automatically when ready</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <div className="flex justify-end">
+              {/* Footer */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
-                  onClick={() => setShowReportModal(false)}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                  onClick={() => {
+                    setShowReportModal(false);
+                    setReportFilter({ startDate: '', endDate: '', sourceId: '' });
+                  }}
+                  className="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors"
                 >
-                  Close
+                  Cancel
                 </button>
               </div>
             </div>
