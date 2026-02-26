@@ -187,6 +187,7 @@ const ConsumptionForm = () => {
             >
               <option value="hourly">Hourly</option>
               <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
             </select>
           </div>
@@ -202,7 +203,7 @@ const ConsumptionForm = () => {
             </button>
             <button
               type="submit"
-              className="btn-primary flex-1"
+              className="bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-1 min-w-[140px] flex items-center justify-center"
               disabled={loading}
             >
               {loading ? (

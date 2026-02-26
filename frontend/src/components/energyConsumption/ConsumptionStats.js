@@ -125,6 +125,7 @@ const ConsumptionStats = () => {
               value={filters.period}
               onChange={(e) => handleFilterChange('period', e.target.value)}
             >
+              <option value="hourly">Hourly</option>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -212,8 +213,10 @@ const ConsumptionStats = () => {
                     </td>
                     <td className="table-cell">
                       <span className={`badge ${
+                        (item.period_type || filters.period) === 'hourly' ? 'badge-info' :
                         (item.period_type || filters.period) === 'daily' ? 'badge-primary' :
                         (item.period_type || filters.period) === 'weekly' ? 'badge-success' :
+                        (item.period_type || filters.period) === 'monthly' ? 'badge-secondary' :
                         'badge-warning'
                       }`}>
                         {item.period_type || filters.period}

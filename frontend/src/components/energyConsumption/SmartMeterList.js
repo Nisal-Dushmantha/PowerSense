@@ -306,10 +306,19 @@ const ConsumptionList = () => {
           </div>
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="btn-primary flex items-center space-x-2"
+            className="bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center space-x-3 min-w-[160px] justify-center group"
           >
-            <span>➕</span>
+            <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all duration-300">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
             <span>Add Reading</span>
+            <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center group-hover:rotate-90 transition-all duration-300">
+              <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
           </button>
         </div>
 
@@ -330,6 +339,7 @@ const ConsumptionList = () => {
                 <option value="">All Types</option>
                 <option value="hourly">Hourly</option>
                 <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
               </select>
             </div>
