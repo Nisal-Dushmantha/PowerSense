@@ -113,11 +113,3 @@ export const renewableService = {
 };
 
 export default api;
-
-export const deviceService = {
-  getAllDevices: () => api.get('/devices'),
-  getDeviceById: (id) => api.get(`/devices/${id}`),
-  createDevice: (data) => api.post('/devices', data),
-  updateDevice: (id, data) => api.put(`/devices/${id}`, data),
-  deleteDevice: (id) => api.delete(`/devices/${id}`),
-};

@@ -1,25 +1,18 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import { authService } from './services/authService';
-import { ThemeProvider } from './contexts/ThemeContext';
-
-// Components
 import PrivateRoute from './components/PrivateRoute';
 import Home from './components/Home';
-import Profile from './components/Profile';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
-import CreateBillModal from './components/energyReports/CreateBillModal';
-import EditBillModal from './components/energyReports/EditBill';
-import EnergyConsumption from './components/energyConsumption';
+import CreateBill from './components/energyReports/CreateBill';
+import EditBill from './components/energyReports/EditBill';
 import RenewableDashboard from './components/Renewable/RenewableDashboard';
 import RenewableSource from './components/Renewable/RenewableSource';
 import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
-import DevicesList from './components/Devices/DevicesList';
-import DeviceChartsPage from './components/Devices/DeviceChartsPage';
-import EditDevice from './components/Devices/EditDevice';
+import { authService } from './services/authService';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Initialize auth service
 authService.init();
@@ -47,24 +40,31 @@ function App() {
             <Route path="/bills/new" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <CreateBillModal />
+                  <CreateBill />
                 </div>
               </PrivateRoute>
             } />
             <Route path="/bills/edit/:id" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <EditBillModal />
+                  <EditBill />
                 </div>
               </PrivateRoute>
             } />
             
             {/* Placeholder routes for new nav items */}
-            <Route path="/consumption/*" element={
+            <Route path="/consumption" element={
               <PrivateRoute>
-                <EnergyConsumption />
+                <div className="container mx-auto px-4 py-8">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Energy Consumption</h1>
+                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
+                  </div>
+                </div>
               </PrivateRoute>
             } />
+            
+            {/* Renewable Energy Routes */}
             <Route path="/renewable" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
@@ -96,23 +96,14 @@ function App() {
             
             <Route path="/devices" element={
               <PrivateRoute>
-                  <div className="container mx-auto px-4 py-8">
-                    <DevicesList />
+                <div className="container mx-auto px-4 py-8">
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Device Management</h1>
+                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
                   </div>
+                </div>
               </PrivateRoute>
             } />
-            <Route path="/devices/charts" element={
-              <PrivateRoute>
-                <DeviceChartsPage />
-              </PrivateRoute>
-            } />
-              <Route path="/devices/edit/:id" element={
-                <PrivateRoute>
-                  <div className="container mx-auto px-4 py-8">
-                    <EditDevice />
-                  </div>
-                </PrivateRoute>
-              } />
           </Routes>
         </div>
       </Router>

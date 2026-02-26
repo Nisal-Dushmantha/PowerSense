@@ -14,7 +14,7 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "set NODE_OPTIONS=--max_old_space_size=4096 && react-scripts start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
