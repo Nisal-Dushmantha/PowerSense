@@ -3,6 +3,8 @@ import { billService } from '../../services/api';
 import CreateBillModal from './CreateBillModal';
 import EditBillModal from './EditBill';
 import InsightsModal from './InsightsModal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
@@ -92,7 +94,274 @@ const BillList = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  // Filter bills based on search term
+  const generateBillsSummaryPDF = () => {
+    if (bills.length === 0) {
+      alert('No bills available to generate a summary.');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.width;
+    const pageH = doc.internal.pageSize.height;
+
+    // ── Color palette ──────────────────────────────────────────────
+    const navy    = [25, 50, 85];
+    const blue    = [0, 120, 180];
+    const green   = [40, 125, 70];
+    const red     = [180, 50, 50];
+    const amber   = [200, 130, 25];
+    const white   = [255, 255, 255];
+    const lightBg = [248, 250, 252];
+    const border  = [220, 225, 235];
+    const dark    = [25, 25, 25];
+    const mid     = [80, 80, 80];
+    const light   = [130, 130, 130];
+
+    // ── Header bar ─────────────────────────────────────────────────
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, pageW, 40, 'F');
+    doc.setFillColor(...blue);
+    doc.rect(0, 37, pageW, 3, 'F');
+
+    doc.setTextColor(...white);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.text('POWERSENSE', 14, 18);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Smart Electricity Management', 14, 28);
+
+    // Report label right-aligned
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('BILLS SUMMARY REPORT', pageW - 14, 18, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.text(`Generated: ${today}`, pageW - 14, 28, { align: 'right' });
+
+    // ── Compute statistics ─────────────────────────────────────────
+    const totalBills    = bills.length;
+    const paidBills     = bills.filter(b => b.isPaid).length;
+    const unpaidBills   = totalBills - paidBills;
+    const totalKWh      = bills.reduce((s, b) => s + (b.totalKWh || 0), 0);
+    const totalAmount   = bills.reduce((s, b) => s + (b.totalPayment || 0), 0);
+    const totalPaid     = bills.reduce((s, b) => s + (b.totalPaid || 0), 0);
+    const totalBalance  = bills.reduce((s, b) => s + (b.balance || 0), 0);
+    const avgKWh        = totalKWh / totalBills;
+    const avgAmount     = totalAmount / totalBills;
+    const payRate       = totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0;
+
+    // ── Summary title ──────────────────────────────────────────────
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('SUMMARY OVERVIEW', 14, 56);
+    doc.setFillColor(...navy);
+    doc.rect(14, 59, pageW - 28, 1.2, 'F');
+
+    // ── 4 KPI cards in one row ─────────────────────────────────────
+    const cardY    = 64;
+    const cardH    = 34;
+    const cardW    = (pageW - 28 - 9) / 4;
+    const kpis = [
+      { label: 'Total Bills',       value: totalBills.toString(),                      unit: 'Records',                                  color: navy  },
+      { label: 'Total Consumption', value: `${(totalKWh / 1000).toFixed(2)}K`,         unit: 'KWh Used',                                 color: blue  },
+      { label: 'Total Amount',      value: `LKR ${(totalAmount / 1000).toFixed(1)}K`,  unit: 'Billed',                                   color: amber },
+      { label: 'Outstanding',       value: `LKR ${(totalBalance / 1000).toFixed(1)}K`, unit: totalBalance > 0 ? 'Balance Due' : 'Fully Settled', color: totalBalance > 0 ? red : green }
+    ];
+
+    kpis.forEach((k, i) => {
+      const x = 14 + i * (cardW + 3);
+      // Shadow
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(x + 0.8, cardY + 0.8, cardW, cardH, 3, 3, 'F');
+      // Card
+      doc.setFillColor(...white);
+      doc.roundedRect(x, cardY, cardW, cardH, 3, 3, 'F');
+      // Top accent
+      doc.setFillColor(...k.color);
+      doc.roundedRect(x, cardY, cardW, 3, 3, 3, 'F');
+      // Border
+      doc.setDrawColor(...border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, cardY, cardW, cardH, 3, 3, 'S');
+      // Label
+      doc.setTextColor(...light);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.label, x + 4, cardY + 11);
+      // Value
+      doc.setTextColor(...k.color);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text(k.value, x + 4, cardY + 23);
+      // Unit
+      doc.setTextColor(...mid);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.unit, x + 4, cardY + 30);
+    });
+
+    // ── Two-column analytics & status ─────────────────────────────
+    const secY = cardY + cardH + 12;
+
+    // LEFT: Analytics
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('PERFORMANCE ANALYTICS', 14, secY);
+    doc.setFillColor(...navy);
+    doc.rect(14, secY + 2, 88, 1, 'F');
+
+    autoTable(doc, {
+      startY: secY + 6,
+      head: [['Metric', 'Value', 'Rating']],
+      body: [
+        ['Avg Monthly Usage',   `${avgKWh.toFixed(1)} KWh`,            'Monthly Baseline'],
+        ['Avg Monthly Amount',  `LKR ${(avgAmount/1000).toFixed(1)}K`, 'Avg Spend'],
+        ['Payment Rate',        `${payRate.toFixed(1)}%`,               payRate >= 90 ? 'Excellent' : payRate >= 70 ? 'Good' : 'Average'],
+        ['Bills Settled',       `${paidBills} / ${totalBills}`,         unpaidBills === 0 ? 'All Paid' : `${unpaidBills} Pending`]
+      ],
+      theme: 'plain',
+      headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 4, right: 4 } },
+      bodyStyles: { fontSize: 8.5, cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 }, textColor: dark },
+      alternateRowStyles: { fillColor: lightBg },
+      columnStyles: {
+        0: { cellWidth: 40, fontStyle: 'bold' },
+        1: { cellWidth: 26, halign: 'right', textColor: blue, fontStyle: 'bold' },
+        2: { cellWidth: 22, halign: 'center', textColor: mid }
+      },
+      margin: { left: 14, right: 108 },
+      styles: { lineColor: border, lineWidth: 0.2 }
+    });
+
+    // RIGHT: Financial status
+    const rightX = 108;
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('FINANCIAL STATUS', rightX, secY);
+    doc.setFillColor(...navy);
+    doc.rect(rightX, secY + 2, 88, 1, 'F');
+
+    const statusCards = [
+      { label: 'Completed Bills', count: paidBills,   pct: ((paidBills / totalBills) * 100).toFixed(0),   amt: `LKR ${((totalAmount - totalBalance)/1000).toFixed(1)}K`, color: green },
+      { label: 'Pending Bills',   count: unpaidBills, pct: ((unpaidBills / totalBills) * 100).toFixed(0), amt: `LKR ${(totalBalance/1000).toFixed(1)}K`,                color: amber }
+    ];
+
+    statusCards.forEach((s, i) => {
+      const y = secY + 8 + i * 28;
+      doc.setFillColor(...white);
+      doc.roundedRect(rightX, y, 88, 24, 2, 2, 'F');
+      doc.setFillColor(...s.color);
+      doc.roundedRect(rightX, y, 3.5, 24, 1, 1, 'F');
+      doc.setDrawColor(...border);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(rightX, y, 88, 24, 2, 2, 'S');
+
+      doc.setTextColor(...mid);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(s.label, rightX + 8, y + 7);
+      doc.setTextColor(...s.color);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${s.count}  (${s.pct}%)`, rightX + 8, y + 16);
+      doc.setTextColor(...mid);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(s.amt, rightX + 8, y + 22);
+    });
+
+    // ── Detailed bills table ───────────────────────────────────────
+    const tableStartY = doc.lastAutoTable.finalY + 16;
+
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('DETAILED BILL RECORDS', 14, tableStartY);
+    doc.setFillColor(...navy);
+    doc.rect(14, tableStartY + 2, pageW - 28, 1, 'F');
+
+    const sortedBills = [...bills].sort((a, b) => new Date(a.billIssueDate) - new Date(b.billIssueDate));
+
+    autoTable(doc, {
+      startY: tableStartY + 7,
+      head: [['#', 'Bill No.', 'Issue Date', 'Usage (KWh)', 'Total (LKR)', 'Paid (LKR)', 'Balance (LKR)', 'Status']],
+      body: sortedBills.map((bill, idx) => [
+        idx + 1,
+        bill.billNumber,
+        new Date(bill.billIssueDate).toLocaleDateString('en-US', { year: '2-digit', month: 'short', day: '2-digit' }),
+        bill.totalKWh.toLocaleString(),
+        bill.totalPayment.toLocaleString(),
+        (bill.totalPaid || 0).toLocaleString(),
+        bill.balance.toLocaleString(),
+        bill.isPaid ? 'PAID' : 'PENDING'
+      ]),
+      theme: 'plain',
+      headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 9, cellPadding: { top: 5, bottom: 5, left: 4, right: 4 } },
+      bodyStyles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 4, right: 4 }, textColor: dark },
+      alternateRowStyles: { fillColor: lightBg },
+      columnStyles: {
+        0: { cellWidth: 9,  halign: 'center', textColor: light },
+        1: { cellWidth: 25, fontStyle: 'bold', textColor: blue },
+        2: { cellWidth: 22, halign: 'center' },
+        3: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
+        4: { cellWidth: 24, halign: 'right' },
+        5: { cellWidth: 24, halign: 'right' },
+        6: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
+        7: { cellWidth: 24, halign: 'center', fontStyle: 'bold' }
+      },
+      margin: { left: 14, right: 14 },
+      styles: { lineColor: border, lineWidth: 0.2 },
+      showHead: 'everyPage',
+      didParseCell: (data) => {
+        if (data.section === 'body') {
+          const bill = sortedBills[data.row.index];
+          if (!bill) return;
+          // Balance column
+          if (data.column.index === 6) {
+            data.cell.styles.textColor = bill.balance > 0 ? red : green;
+          }
+          // Status column
+          if (data.column.index === 7) {
+            data.cell.styles.textColor  = bill.isPaid ? green : amber;
+            data.cell.styles.fillColor  = bill.isPaid ? [240, 255, 240] : [255, 250, 235];
+          }
+        }
+      }
+    });
+
+    // ── Footer on every page ───────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(...navy);
+      doc.rect(0, pageH - 14, pageW, 14, 'F');
+      doc.setFillColor(...blue);
+      doc.rect(0, pageH - 14, pageW, 2, 'F');
+
+      doc.setTextColor(...white);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('POWERSENSE', 14, pageH - 6);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.text('Smart Electricity Management', 14, pageH - 2);
+
+      const pg = `Page ${p} of ${totalPages}`;
+      doc.setFontSize(7);
+      doc.text(pg, pageW - 14, pageH - 6, { align: 'right' });
+      doc.setFontSize(6);
+      doc.setTextColor(200, 200, 200);
+      doc.text('Computer-generated report. No signature required.', pageW - 14, pageH - 2, { align: 'right' });
+    }
+
+    // ── Save ───────────────────────────────────────────────────────
+    const filename = `PowerSense_Bills_Summary_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(filename);
+  };
   const filteredBills = bills.filter(bill => 
     bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -134,6 +403,16 @@ const BillList = () => {
             <p className="text-textSecondary dark:text-gray-300 mt-1">Manage your monthly electricity bills</p>
           </div>
           <div className="flex gap-3">
+            <button
+              onClick={generateBillsSummaryPDF}
+              className="btn-accent flex items-center"
+              title="Download Bills Summary PDF"
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8 17v-1h8v1H8zm0-3v-1h8v1H8zm0-3V10h4v1H8z"/>
+              </svg>
+              Bill Summary
+            </button>
             <button
               onClick={() => setIsInsightsModalOpen(true)}
               className="btn-secondary flex items-center"
