@@ -36,6 +36,26 @@ const DeviceSchema = new mongoose.Schema({
 	timestamps: true,
 });
 
+// Virtual properties for energy consumption calculations
+DeviceSchema.virtual('dailyW').get(function() {
+	return parseFloat((this.powerRating * this.expectedDailyUsage).toFixed(0));
+});
+
+DeviceSchema.virtual('monthlyW').get(function() {
+	return parseFloat((this.dailyW * 30).toFixed(0));
+});
+
+DeviceSchema.virtual('dailyKwh').get(function() {
+	return parseFloat((this.dailyW / 1000).toFixed(3));
+});
+
+DeviceSchema.virtual('monthlyKwh').get(function() {
+	return parseFloat((this.monthlyW / 1000).toFixed(3));
+});
+
+// Ensure virtual fields are serialized when converting to JSON
+DeviceSchema.set('toJSON', { virtuals: true });
+DeviceSchema.set('toObject', { virtuals: true });
 
 // Auto-increment deviceId as DVC-001, DVC-002, ...
 DeviceSchema.pre('validate', async function (next) {

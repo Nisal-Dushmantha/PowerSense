@@ -120,6 +120,18 @@ const EditBillModal = ({ isOpen, onClose, billData, onBillUpdated }) => {
     setLoading(true);
     setError(null);
 
+    // Frontend date validation — no future dates
+    if (formData.billIssueDate) {
+      const issueDate = new Date(formData.billIssueDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (issueDate > today) {
+        setError('Bill issue date cannot be a future date');
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       // Create FormData for file upload
       const formDataToSend = new FormData();
@@ -199,6 +211,7 @@ const EditBillModal = ({ isOpen, onClose, billData, onBillUpdated }) => {
                   name="billIssueDate"
                   value={formData.billIssueDate}
                   onChange={handleChange}
+                  max={new Date().toISOString().split('T')[0]}
                   required
                   className="input-field"
                 />

@@ -110,30 +110,30 @@ const DeviceCharts = ({ devices }) => {
                 
                 {/* Tab Selector */}
                 <div className="flex bg-gray-100 rounded-lg p-1">
-                    <button
-                        onClick={() => setActiveTab('daily')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            activeTab === 'daily'
-                                ? 'bg-white text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                        Daily View
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('monthly')}
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                            activeTab === 'monthly'
-                                ? 'bg-white text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                    >
-                        Monthly View
-                    </button>
+                        <button
+                            onClick={() => setActiveTab('daily')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'daily'
+                                    ? 'bg-white text-blue-600 shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            Daily View
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('monthly')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                                activeTab === 'monthly'
+                                    ? 'bg-white text-blue-600 shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            Monthly View
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Bar Chart */}
                 <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="text-md font-medium text-gray-700 mb-4">

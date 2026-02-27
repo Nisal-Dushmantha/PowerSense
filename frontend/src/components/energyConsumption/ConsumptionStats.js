@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getTotalConsumption } from '../../services/energyApi';
 
 const ConsumptionStats = () => {
@@ -16,7 +16,7 @@ const ConsumptionStats = () => {
     period: 'daily',
   });
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!filters.startDate || !filters.endDate) return;
 
     setLoading(true);
@@ -48,11 +48,11 @@ const ConsumptionStats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchStats();
-  }, [filters]);
+  }, [filters, fetchStats]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));
@@ -125,6 +125,7 @@ const ConsumptionStats = () => {
               value={filters.period}
               onChange={(e) => handleFilterChange('period', e.target.value)}
             >
+              <option value="hourly">Hourly</option>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
@@ -212,8 +213,10 @@ const ConsumptionStats = () => {
                     </td>
                     <td className="table-cell">
                       <span className={`badge ${
+                        (item.period_type || filters.period) === 'hourly' ? 'badge-info' :
                         (item.period_type || filters.period) === 'daily' ? 'badge-primary' :
                         (item.period_type || filters.period) === 'weekly' ? 'badge-success' :
+                        (item.period_type || filters.period) === 'monthly' ? 'badge-secondary' :
                         'badge-warning'
                       }`}>
                         {item.period_type || filters.period}
@@ -229,5 +232,5 @@ const ConsumptionStats = () => {
     </div>
   );
 };
-
+//update
 export default ConsumptionStats;
