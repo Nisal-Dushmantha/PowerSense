@@ -208,15 +208,15 @@ const ConsumptionList = () => {
             </p>
           </div>
           <div>
-            <span className="text-gray-500 dark:text-gray-400">Current</span>
-            <p className="font-medium text-gray-900 dark:text-white">
-              {record.current_reading?.toLocaleString() || 'N/A'}
+            <span className="text-gray-500 dark:text-gray-400">🌿 CO₂ Emission</span>
+            <p className="font-medium text-green-600 dark:text-green-400">
+              {(record.energy_used_kwh * 0.527).toFixed(2)} kg
             </p>
           </div>
           <div>
-            <span className="text-gray-500 dark:text-gray-400">Previous</span>
-            <p className="font-medium text-gray-900 dark:text-white">
-              {record.previous_reading?.toLocaleString() || 'N/A'}
+            <span className="text-gray-500 dark:text-gray-400">💰 Est. Cost</span>
+            <p className="font-medium text-blue-600 dark:text-blue-400">
+              Rs. {(record.energy_used_kwh * 35).toFixed(2)}
             </p>
           </div>
         </div>
