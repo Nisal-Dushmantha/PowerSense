@@ -131,6 +131,7 @@ const ConsumptionForm = () => {
               value={formData.consumption_date}
               onChange={handleChange}
               required
+              max={new Date().toISOString().split('T')[0]}
               className="input-field"
             />
           </div>

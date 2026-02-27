@@ -147,6 +147,7 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
                 value={formData.consumption_date}
                 onChange={handleChange}
                 required
+                max={new Date().toISOString().split('T')[0]}
                 className="input-field pl-10 py-2.5 text-sm transition-all duration-300 hover:shadow-md focus:shadow-lg border-2"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
