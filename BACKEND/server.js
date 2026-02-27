@@ -15,6 +15,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (uploaded images)
+app.use('/uploads', express.static('uploads'));
+
 // Connect to database
 connectDB();
 
@@ -24,6 +27,7 @@ const monthlyBillRoutes = require('./routes/monthlyBill');
 const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
 const devicesRoutes = require('./routes/devices');
+const renewableRoutes = require('./routes/renewableRoutes');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -46,6 +50,7 @@ app.use('/api/bills', monthlyBillRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', devicesRoutes);
+app.use('/api/renewable', renewableRoutes);
 
 const PORT = process.env.PORT || 5000;
 

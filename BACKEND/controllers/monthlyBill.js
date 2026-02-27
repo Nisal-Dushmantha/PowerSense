@@ -8,6 +8,25 @@ const createBill = async (req, res) => {
   try {
     const { billNumber, billIssueDate, totalKWh, totalPayment, totalPaid } = req.body;
 
+    // Validate bill issue date is not in the future
+    if (billIssueDate) {
+      const issueDate = new Date(billIssueDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // allow today's date
+      if (isNaN(issueDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid bill issue date format'
+        });
+      }
+      if (issueDate > today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bill issue date cannot be a future date'
+        });
+      }
+    }
+
     // Check if bill number already exists for this user
     const existingBill = await MonthlyBill.findOne({ 
       user: new mongoose.Types.ObjectId(req.user.id),
@@ -20,15 +39,21 @@ const createBill = async (req, res) => {
       });
     }
 
-    const bill = new MonthlyBill({
+    const billData = {
       user: req.user.id,
       billNumber,
       billIssueDate,
       totalKWh,
       totalPayment,
       totalPaid: totalPaid || 0
-    });
+    };
 
+    // Add photo path if file was uploaded
+    if (req.file) {
+      billData.billPhoto = req.file.filename;
+    }
+
+    const bill = new MonthlyBill(billData);
     const savedBill = await bill.save();
 
     res.status(201).json({
@@ -187,6 +212,25 @@ const updateBill = async (req, res) => {
       });
     }
 
+    // Validate bill issue date is not in the future
+    if (billIssueDate) {
+      const issueDate = new Date(billIssueDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // allow today's date
+      if (isNaN(issueDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid bill issue date format'
+        });
+      }
+      if (issueDate > today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bill issue date cannot be a future date'
+        });
+      }
+    }
+
     // Check if bill number is being changed and if it already exists for this user
     if (billNumber && billNumber !== bill.billNumber) {
       const existingBill = await MonthlyBill.findOne({ 
@@ -207,6 +251,11 @@ const updateBill = async (req, res) => {
     if (totalKWh !== undefined) bill.totalKWh = totalKWh;
     if (totalPayment !== undefined) bill.totalPayment = totalPayment;
     if (totalPaid !== undefined) bill.totalPaid = totalPaid;
+    
+    // Update photo if new file uploaded
+    if (req.file) {
+      bill.billPhoto = req.file.filename;
+    }
 
     const updatedBill = await bill.save();
 

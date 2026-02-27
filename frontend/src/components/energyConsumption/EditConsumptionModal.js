@@ -1,18 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  createEnergyRecord, 
-  updateEnergyRecord, 
-  getEnergyRecords 
-} from '../../services/energyApi';
+import { updateEnergyRecord, getEnergyRecords } from '../../services/energyApi';
+import Modal from '../common/Modal';
 
-const ConsumptionForm = () => {
+const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) => {
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const navigate = useNavigate();
-  const { id } = useParams();
-  
   const [formData, setFormData] = useState({
     consumption_date: '',
     consumption_time: '',
@@ -20,17 +13,27 @@ const ConsumptionForm = () => {
     period_type: 'daily'
   });
 
-  useEffect(() => {
-    if (id) {
-      setIsEditMode(true);
-      fetchRecord(id);
-    }
-  }, [id]);
+  const resetForm = () => {
+    setFormData({
+      consumption_date: '',
+      consumption_time: '',
+      energy_used_kwh: '',
+      period_type: 'daily'
+    });
+    setError(null);
+  };
 
-  const fetchRecord = async (recordId) => {
-    setLoading(true);
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  const fetchRecord = async (id) => {
+    if (!id) return;
+    
+    setFetchLoading(true);
     try {
-      const response = await getEnergyRecords({ id: recordId });
+      const response = await getEnergyRecords({ id });
       if (response.data && response.data.length > 0) {
         const record = response.data[0];
         setFormData({
@@ -45,9 +48,17 @@ const ConsumptionForm = () => {
       setError('Failed to fetch record details');
       console.error('Error fetching record:', err);
     } finally {
-      setLoading(false);
+      setFetchLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && recordId) {
+      fetchRecord(recordId);
+    } else if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen, recordId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,54 +86,51 @@ const ConsumptionForm = () => {
           : formData.consumption_time;
       }
 
-      if (isEditMode) {
-        await updateEnergyRecord(id, submitData);
-      } else {
-        await createEnergyRecord(submitData);
+      const response = await updateEnergyRecord(recordId, submitData);
+      
+      // Notify parent component about the updated record
+      if (onRecordUpdated) {
+        onRecordUpdated(response.data);
       }
       
-      navigate('/consumption');
+      // Close modal and reset form
+      handleClose();
     } catch (err) {
-      const errorMessage = isEditMode 
-        ? 'Failed to update record' 
-        : 'Failed to create record';
-      setError(err.response?.data?.message || errorMessage);
-      console.error('Error:', err);
+      setError(err.response?.data?.message || 'Failed to update record');
+      console.error('Error updating record:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="loading-spinner w-12 h-12"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="card">
-        <h1 className="text-3xl font-bold text-textPrimary dark:text-gray-100 mb-6">
-          {isEditMode ? 'Edit Energy Consumption Record' : 'Add New Energy Consumption Record'}
-        </h1>
-        
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
-              <span>{error}</span>
-            </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Edit Energy Consumption Record"
+      size="default"
+    >
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-6 fade-in">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+            <span>{error}</span>
           </div>
-        )}
+        </div>
+      )}
 
+      {fetchLoading ? (
+        <div className="flex justify-center items-center py-8">
+          <div className="loading-spinner w-8 h-8"></div>
+        </div>
+      ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Date Field */}
           <div>
             <label htmlFor="consumption_date" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
-              Date <span className="text-red-500">*</span>
+              Consumption Date *
             </label>
             <input
               type="date"
@@ -135,9 +143,10 @@ const ConsumptionForm = () => {
             />
           </div>
 
+          {/* Time Field */}
           <div>
             <label htmlFor="consumption_time" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
-              Time (Optional)
+              Consumption Time
             </label>
             <input
               type="time"
@@ -146,36 +155,32 @@ const ConsumptionForm = () => {
               value={formData.consumption_time}
               onChange={handleChange}
               className="input-field"
-              placeholder="HH:MM"
             />
           </div>
 
+          {/* Energy Usage Field */}
           <div>
             <label htmlFor="energy_used_kwh" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
-              Energy Used (kWh) <span className="text-red-500">*</span>
+              Energy Used (kWh) *
             </label>
-            <div className="relative">
-              <input
-                type="number"
-                id="energy_used_kwh"
-                name="energy_used_kwh"
-                value={formData.energy_used_kwh}
-                onChange={handleChange}
-                required
-                step="0.01"
-                min="0"
-                className="input-field pr-16"
-                placeholder="Enter energy consumption"
-              />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <span className="text-textSecondary dark:text-gray-400 text-sm font-medium">kWh</span>
-              </div>
-            </div>
+            <input
+              type="number"
+              id="energy_used_kwh"
+              name="energy_used_kwh"
+              value={formData.energy_used_kwh}
+              onChange={handleChange}
+              step="0.01"
+              min="0"
+              required
+              className="input-field"
+              placeholder="0.00"
+            />
           </div>
 
+          {/* Period Type Field */}
           <div>
             <label htmlFor="period_type" className="block text-sm font-medium text-textPrimary dark:text-gray-200 mb-2">
-              Period Type <span className="text-red-500">*</span>
+              Period Type *
             </label>
             <select
               id="period_type"
@@ -185,40 +190,42 @@ const ConsumptionForm = () => {
               required
               className="input-field"
             >
-              <option value="hourly">Hourly</option>
               <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
+              <option value="hourly">Hourly</option>
             </select>
           </div>
 
-          <div className="flex space-x-4">
+          {/* Form Actions */}
+          <div className="flex justify-end space-x-3 pt-4 border-t border-surface dark:border-gray-700">
             <button
               type="button"
-              onClick={() => navigate('/consumption')}
-              className="btn-secondary flex-1"
+              onClick={handleClose}
+              className="btn-secondary"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary flex-1"
-              disabled={loading}
+              className="btn-primary"
+              disabled={loading || fetchLoading}
             >
               {loading ? (
-                <span className="flex items-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  {isEditMode ? 'Updating...' : 'Creating...'}
-                </span>
+                <div className="flex items-center">
+                  <div className="loading-spinner w-4 h-4 mr-2"></div>
+                  Updating...
+                </div>
               ) : (
-                isEditMode ? 'Update Record' : 'Create Record'
+                'Update Record'
               )}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 };
 
-export default ConsumptionForm;
+export default EditConsumptionModal;

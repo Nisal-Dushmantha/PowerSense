@@ -16,6 +16,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Don't set Content-Type for FormData (file uploads)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {
@@ -52,6 +58,58 @@ export const billService = {
   
   // Delete bill
   deleteBill: (id) => api.delete(`/bills/${id}`)
+};
+
+export const renewableService = {
+  // Source operations
+  createSource: (sourceData) => api.post('/renewable/sources', sourceData),
+  getSources: (params) => api.get('/renewable/sources', { params }),
+  getSourceById: (id) => api.get(`/renewable/sources/${id}`),
+  updateSource: (id, sourceData) => api.put(`/renewable/sources/${id}`, sourceData),
+  deleteSource: (id) => api.delete(`/renewable/sources/${id}`),
+  
+  // Record operations
+  createRecord: (recordData) => api.post('/renewable/records', recordData),
+  getRecords: (params) => api.get('/renewable/records', { params }),
+  getRecordById: (id) => api.get(`/renewable/records/${id}`),
+  updateRecord: (id, recordData) => api.put(`/renewable/records/${id}`, recordData),
+  deleteRecord: (id) => api.delete(`/renewable/records/${id}`),
+  
+  // Statistics
+  getStatistics: (params) => api.get('/renewable/stats', { params }),
+  getDashboard: () => api.get('/renewable/dashboard'),
+  
+  // Report Generation
+  generateRecordsPDF: (params) => {
+    return api.get('/renewable/reports/pdf', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateRecordsCSV: (params) => {
+    return api.get('/renewable/reports/csv', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateSourcesPDF: (params) => {
+    return api.get('/renewable/reports/sources/pdf', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateSourcesCSV: (params) => {
+    return api.get('/renewable/reports/sources/csv', {
+      params,
+      responseType: 'blob'
+    });
+  },
+  generateSummaryPDF: (params) => {
+    return api.get('/renewable/reports/summary/pdf', {
+      params,
+      responseType: 'blob'
+    });
+  }
 };
 
 export default api;
