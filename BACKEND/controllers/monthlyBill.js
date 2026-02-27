@@ -8,6 +8,25 @@ const createBill = async (req, res) => {
   try {
     const { billNumber, billIssueDate, totalKWh, totalPayment, totalPaid } = req.body;
 
+    // Validate bill issue date is not in the future
+    if (billIssueDate) {
+      const issueDate = new Date(billIssueDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // allow today's date
+      if (isNaN(issueDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid bill issue date format'
+        });
+      }
+      if (issueDate > today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bill issue date cannot be a future date'
+        });
+      }
+    }
+
     // Check if bill number already exists for this user
     const existingBill = await MonthlyBill.findOne({ 
       user: new mongoose.Types.ObjectId(req.user.id),
@@ -191,6 +210,25 @@ const updateBill = async (req, res) => {
         success: false,
         message: 'Bill not found'
       });
+    }
+
+    // Validate bill issue date is not in the future
+    if (billIssueDate) {
+      const issueDate = new Date(billIssueDate);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // allow today's date
+      if (isNaN(issueDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid bill issue date format'
+        });
+      }
+      if (issueDate > today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Bill issue date cannot be a future date'
+        });
+      }
     }
 
     // Check if bill number is being changed and if it already exists for this user
