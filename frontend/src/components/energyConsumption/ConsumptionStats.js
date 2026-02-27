@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getTotalConsumption } from '../../services/energyApi';
 
 const ConsumptionStats = () => {
@@ -16,7 +16,7 @@ const ConsumptionStats = () => {
     period: 'daily',
   });
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!filters.startDate || !filters.endDate) return;
 
     setLoading(true);
@@ -48,11 +48,11 @@ const ConsumptionStats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchStats();
-  }, [filters]);
+  }, [filters, fetchStats]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));

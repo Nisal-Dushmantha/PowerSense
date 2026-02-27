@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getEnergyRecords, deleteEnergyRecord } from '../../services/energyApi';
 import CreateConsumptionModal from './CreateConsumptionModal';
 import EditConsumptionModal from './EditConsumptionModal';
@@ -19,7 +19,7 @@ const ConsumptionList = () => {
     search: ''
   });
 
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = {};
@@ -49,11 +49,11 @@ const ConsumptionList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchRecords();
-  }, [filters]);
+  }, [filters, fetchRecords]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
@@ -75,16 +75,6 @@ const ConsumptionList = () => {
     return 'critical';
   };
 
-  const getUsageLevelColor = (level) => {
-    const colors = {
-      low: '#2ECC71',
-      moderate: '#F1C40F', 
-      high: '#E67E22',
-      critical: '#E74C3C'
-    };
-    return colors[level] || colors.low;
-  };
-
   const getMeterDialAngle = (consumption, maxReading = 500) => {
     const percentage = Math.min(consumption / maxReading, 1);
     return percentage * 180; // 180 degrees for half circle
@@ -92,10 +82,6 @@ const ConsumptionList = () => {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatEnergy = (kwh) => {
-    return `${parseFloat(kwh).toFixed(2)} kWh`;
   };
 
   const handleFilterChange = (field, value) => {
@@ -134,7 +120,6 @@ const ConsumptionList = () => {
   // Smart Meter Card Component
   const SmartMeterCard = ({ record, onEdit, onDelete }) => {
     const usageLevel = getUsageLevel(record.energy_used_kwh);
-    const usageColor = getUsageLevelColor(usageLevel);
     const dialAngle = getMeterDialAngle(record.energy_used_kwh);
     const usagePercentage = Math.min((record.energy_used_kwh / 500) * 100, 100);
     const isUpdating = updatingIds.has(record._id);
