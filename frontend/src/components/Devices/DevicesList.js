@@ -6,6 +6,38 @@ import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// ── CEB Sri Lanka Domestic Tariff (Category 1) ─────────────────────────────
+// Slab-based: entire consumption billed at the slab rate it falls into.
+// Source: Ceylon Electricity Board domestic tariff schedule.
+const CEB_SLABS = [
+  { max: 30,  rate: 7.85,   fixed: 30  },
+  { max: 60,  rate: 10.00,  fixed: 60  },
+  { max: 90,  rate: 27.75,  fixed: 90  },
+  { max: 120, rate: 32.00,  fixed: 120 },
+  { max: 180, rate: 45.00,  fixed: 240 },
+  { max: 300, rate: 75.00,  fixed: 360 },
+  { max: Infinity, rate: 100.00, fixed: 540 },
+];
+const VAT_RATE = 0.10; // 10% VAT
+
+function calculateCEBBill(totalKwh) {
+  const units = Math.ceil(totalKwh); // CEB rounds up to nearest whole unit
+  const slab  = CEB_SLABS.find(s => units <= s.max);
+  const energyCharge = units * slab.rate;
+  const fixedCharge  = slab.fixed;
+  const subtotal     = energyCharge + fixedCharge;
+  const vat          = subtotal * VAT_RATE;
+  const total        = subtotal + vat;
+  return {
+    units,
+    slab,
+    energyCharge: energyCharge.toFixed(2),
+    fixedCharge:  fixedCharge.toFixed(2),
+    vat:          vat.toFixed(2),
+    total:        total.toFixed(2),
+  };
+}
+
 const DevicesList = () => {
 	const [devices, setDevices] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -438,50 +470,134 @@ const handleDownloadPDF = () => {
 					   </div>
 
 					   {/* Summary Section */}
-					   <div className="mt-6 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-6 border border-gray-200">
-						   <h3 className="text-lg font-semibold text-gray-800 mb-4">Energy Consumption Summary</h3>
-						   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							   <div className="bg-white rounded-lg p-4 shadow-sm border border-green-200">
-								   <div className="flex items-center">
-									   <div className="p-2 bg-green-100 rounded-lg">
-										   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-										   </svg>
+					   {(() => {
+						   const totalDailyKwh   = filteredDevices.reduce((s, d) => s + (d.dailyKwh   || 0), 0);
+						   const totalMonthlyKwh  = filteredDevices.reduce((s, d) => s + (d.monthlyKwh || 0), 0);
+						   const bill = calculateCEBBill(totalMonthlyKwh);
+
+						   return (
+							   <div className="mt-6 space-y-4">
+
+								   {/* ── Stat cards row ─────────────────────────── */}
+								   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+									   {/* Daily */}
+									   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+											   <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/>
+											   </svg>
+										   </div>
+										   <div>
+											   <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Daily Usage</p>
+											   <p className="text-2xl font-bold text-gray-800">{totalDailyKwh.toFixed(2)} <span className="text-sm font-normal text-gray-400">kWh</span></p>
+										   </div>
 									   </div>
-									   <div className="ml-4">
-										   <p className="text-sm font-medium text-gray-600">Total Daily Consumption</p>
-										   <p className="text-2xl font-bold text-green-600">
-											   {filteredDevices.reduce((sum, device) => {
-												   const dailyKwh = device.dailyKwh || 0;
-												   return sum + dailyKwh;
-											   }, 0).toFixed(3)} kWh
-										   </p>
+
+									   {/* Monthly */}
+									   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+											   <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+											   </svg>
+										   </div>
+										   <div>
+											   <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Monthly Usage</p>
+											   <p className="text-2xl font-bold text-gray-800">{totalMonthlyKwh.toFixed(2)} <span className="text-sm font-normal text-gray-400">kWh</span></p>
+										   </div>
+									   </div>
+
+									   {/* Estimated Bill highlight */}
+									   <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-md p-5 flex items-center gap-4">
+										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center">
+											   <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+												   <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+											   </svg>
+										   </div>
+										   <div>
+											   <p className="text-xs text-green-100 font-medium uppercase tracking-wide">Est. Monthly Bill</p>
+											   <p className="text-2xl font-bold text-white">Rs. {Number(bill.total).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</p>
+										   </div>
 									   </div>
 								   </div>
-							   </div>
-							   <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-200">
-								   <div className="flex items-center">
-									   <div className="p-2 bg-blue-100 rounded-lg">
-										   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-										   </svg>
+
+								   {/* ── CEB Bill Detail Card ────────────────────── */}
+								   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+									   {/* Card header */}
+									   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+										   <div className="flex items-center gap-2">
+											   <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
+											   <h3 className="font-semibold text-gray-700">CEB Bill Estimate — Sri Lanka Domestic Tariff</h3>
+										   </div>
+										   <span className="text-xs bg-green-50 text-green-600 font-semibold px-3 py-1 rounded-full border border-green-200">
+											   Tariff Block: Rs. {bill.slab.rate.toFixed(2)}/kWh
+										   </span>
 									   </div>
-									   <div className="ml-4">
-										   <p className="text-sm font-medium text-gray-600">Total Monthly Consumption</p>
-										   <p className="text-2xl font-bold text-blue-600">
-											   {filteredDevices.reduce((sum, device) => {
-												   const monthlyKwh = device.monthlyKwh || 0;
-												   return sum + monthlyKwh;
-											   }, 0).toFixed(3)} kWh
-										   </p>
+
+									   <div className="p-6 space-y-6">
+
+										   {/* ── Bill breakdown ──────────────────────── */}
+										   <div className="space-y-2">
+											   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-xl">
+												   <div className="flex items-center gap-2">
+													   <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+													   <span className="text-sm text-gray-600">Energy Charge</span>
+													   <span className="text-xs text-gray-400">({bill.units} kWh × Rs. {bill.slab.rate.toFixed(2)})</span>
+												   </div>
+												   <span className="text-sm font-semibold text-gray-700">Rs. {Number(bill.energyCharge).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   </div>
+											   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-xl">
+												   <div className="flex items-center gap-2">
+													   <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+													   <span className="text-sm text-gray-600">Fixed / Service Charge</span>
+												   </div>
+												   <span className="text-sm font-semibold text-gray-700">Rs. {Number(bill.fixedCharge).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   </div>
+											   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-xl">
+												   <div className="flex items-center gap-2">
+													   <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+													   <span className="text-sm text-gray-600">VAT (10%)</span>
+												   </div>
+												   <span className="text-sm font-semibold text-gray-700">Rs. {Number(bill.vat).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   </div>
+											   <div className="flex items-center justify-between py-3 px-4 bg-green-50 border border-green-200 rounded-xl">
+												   <span className="font-bold text-green-700">Estimated Total</span>
+												   <span className="text-xl font-extrabold text-green-600">Rs. {Number(bill.total).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   </div>
+										   </div>
+
+										   {/* ── Slab rate reference ─────────────────── */}
+										   <div>
+											   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">CEB Slab Rate Reference</p>
+											   <div className="flex gap-1.5 flex-wrap">
+												   {[
+													   { label: '≤ 30',    rate: 7.85,   color: 'bg-green-100 text-green-700 border-green-200'  },
+													   { label: '31–60',   rate: 10.00,  color: 'bg-lime-100 text-lime-700 border-lime-200'    },
+													   { label: '61–90',   rate: 27.75,  color: 'bg-yellow-100 text-yellow-700 border-yellow-200'},
+													   { label: '91–120',  rate: 32.00,  color: 'bg-amber-100 text-amber-700 border-amber-200'  },
+													   { label: '121–180', rate: 45.00,  color: 'bg-orange-100 text-orange-700 border-orange-200'},
+													   { label: '181–300', rate: 75.00,  color: 'bg-red-100 text-red-600 border-red-200'        },
+													   { label: '> 300',   rate: 100.00, color: 'bg-red-200 text-red-700 border-red-300'        },
+												   ].map(s => {
+													   const active = Math.abs(bill.slab.rate - s.rate) < 0.01;
+													   return (
+														   <div key={s.label} className={`border rounded-lg px-3 py-2 text-center text-xs ${active ? 'ring-2 ring-green-500 bg-green-500 !text-white border-green-500 font-bold scale-105' : s.color} transition-transform`}>
+															   <div className="font-semibold">{s.label} kWh</div>
+															   <div className="mt-0.5">Rs. {s.rate.toFixed(2)}</div>
+															   {active && <div className="mt-1 text-green-100 font-normal">← your block</div>}
+														   </div>
+													   );
+												   })}
+											   </div>
+										   </div>
+
+										   <p className="text-xs text-gray-400">* Based on CEB domestic tariff (Category 1). Assumes 30 days/month. Actual bill may differ due to fuel adjustment charges or meter reading date.</p>
 									   </div>
 								   </div>
+
+								   <p className="text-xs text-gray-400 px-1">Consumption figures are based on the power ratings and expected daily usage hours of your devices.</p>
 							   </div>
-						   </div>
-						   <div className="mt-4 text-sm text-gray-600">
-							   <p><strong>Note:</strong> Calculations are based on expected daily usage hours and power ratings of your devices. Monthly consumption assumes 30 days per month.</p>
-						   </div>
-					   </div>
+						   );
+					   })()}
 				   </>
 			   )}
 		   </div>
