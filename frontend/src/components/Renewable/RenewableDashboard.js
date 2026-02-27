@@ -390,7 +390,6 @@ const RenewableDashboard = () => {
     const navy    = [25, 50, 85];
     const green   = [34, 139, 34];
     const emerald = [16, 185, 129];
-    const amber   = [245, 158, 11];
     const blue    = [59, 130, 246];
     const white   = [255, 255, 255];
     const lightBg = [248, 250, 252];

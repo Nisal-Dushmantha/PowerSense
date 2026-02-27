@@ -52,7 +52,7 @@ function App() {
               </PrivateRoute>
             } />
             
-            {/* Placeholder routes for new nav items */}
+            {/* Consumption Route */}
             <Route path="/consumption" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
@@ -94,6 +94,7 @@ function App() {
               </PrivateRoute>
             } />
             
+            {/* Devices Route */}
             <Route path="/devices" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
