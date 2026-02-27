@@ -8,6 +8,9 @@ router.post('/', devicesController.createDevice);
 // GET /api/devices - list all devices
 router.get('/', devicesController.getDevices);
 
+// GET /api/devices/export/pdf - download PDF report
+router.get('/export/pdf', devicesController.generateDevicesPDFReport);
+
 // GET /api/devices/:deviceId - get single device
 router.get('/:deviceId', devicesController.getDeviceById);
 
