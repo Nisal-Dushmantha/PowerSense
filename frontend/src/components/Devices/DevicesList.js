@@ -63,6 +63,42 @@ const DevicesList = () => {
 		   fetchDevices();
 	   };
 
+	   const handleDownloadPDF = async () => {
+		   try {
+			   const token = localStorage.getItem('token');
+			   const headers = {};
+			   
+			   // Only add Authorization header if token exists
+			   if (token) {
+				   headers['Authorization'] = `Bearer ${token}`;
+			   }
+			   
+			   const response = await fetch('/api/devices/export/pdf', {
+				   method: 'GET',
+				   headers: headers
+			   });
+			   
+			   if (!response.ok) {
+				   const errorText = await response.text();
+				   console.error('PDF generation failed:', errorText);
+				   throw new Error(`Server responded with ${response.status}: ${errorText}`);
+			   }
+			   
+			   const blob = await response.blob();
+			   const url = window.URL.createObjectURL(blob);
+			   const link = document.createElement('a');
+			   link.href = url;
+			   link.download = 'PowerSense_Device_Report.pdf';
+			   document.body.appendChild(link);
+			   link.click();
+			   document.body.removeChild(link);
+			   window.URL.revokeObjectURL(url);
+		   } catch (error) {
+			   console.error('Error downloading PDF:', error);
+			   setError(`Failed to download PDF report: ${error.message}`);
+		   }
+	   };
+
 	if (loading) return <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
 	if (error) return <div className="text-red-600">{error}</div>;
 
@@ -109,6 +145,15 @@ const DevicesList = () => {
 					   </svg>
 					   <span>View Charts</span>
 				   </Link>
+				   <button
+					   className="btn-secondary min-w-[120px] flex items-center space-x-2"
+					   onClick={handleDownloadPDF}
+				   >
+					   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+					   </svg>
+					   <span>PDF Report</span>
+				   </button>
 				   <button
 					   className="btn-primary min-w-[120px]"
 					   onClick={() => setShowModal(true)}
@@ -194,7 +239,7 @@ const DevicesList = () => {
 										   <p className="text-sm font-medium text-gray-600">Total Daily Consumption</p>
 										   <p className="text-2xl font-bold text-green-600">
 											   {filteredDevices.reduce((sum, device) => {
-												   const dailyKwh = (device.powerRating * device.expectedDailyUsage) / 1000;
+												   const dailyKwh = device.dailyKwh || 0;
 												   return sum + dailyKwh;
 											   }, 0).toFixed(3)} kWh
 										   </p>
@@ -212,8 +257,7 @@ const DevicesList = () => {
 										   <p className="text-sm font-medium text-gray-600">Total Monthly Consumption</p>
 										   <p className="text-2xl font-bold text-blue-600">
 											   {filteredDevices.reduce((sum, device) => {
-												   const dailyKwh = (device.powerRating * device.expectedDailyUsage) / 1000;
-												   const monthlyKwh = dailyKwh * 30;
+												   const monthlyKwh = device.monthlyKwh || 0;
 												   return sum + monthlyKwh;
 											   }, 0).toFixed(3)} kWh
 										   </p>
