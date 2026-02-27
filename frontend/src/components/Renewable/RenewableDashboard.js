@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { renewableService } from '../../services/api';
 import Modal from '../common/Modal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const RenewableDashboard = () => {
   const [records, setRecords] = useState([]);
@@ -374,6 +376,259 @@ const RenewableDashboard = () => {
     }
   };
 
+  const generateRecordsSummaryPDF = () => {
+    if (records.length === 0) {
+      alert('No renewable energy records available to generate a summary.');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.width;
+    const pageH = doc.internal.pageSize.height;
+
+    // ── Color palette ──────────────────────────────────────────────
+    const navy    = [25, 50, 85];
+    const green   = [34, 139, 34];
+    const emerald = [16, 185, 129];
+    const amber   = [245, 158, 11];
+    const blue    = [59, 130, 246];
+    const white   = [255, 255, 255];
+    const lightBg = [248, 250, 252];
+    const border  = [220, 225, 235];
+    const dark    = [25, 25, 25];
+    const mid     = [80, 80, 80];
+    const light   = [130, 130, 130];
+
+    // ── Header bar ─────────────────────────────────────────────────
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, pageW, 40, 'F');
+    doc.setFillColor(...emerald);
+    doc.rect(0, 37, pageW, 3, 'F');
+
+    doc.setTextColor(...white);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.text('POWERSENSE', 14, 18);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Smart Electricity Management', 14, 28);
+
+    // Report label right-aligned
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('RENEWABLE ENERGY REPORT', pageW - 14, 18, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.text(`Generated: ${today}`, pageW - 14, 28, { align: 'right' });
+
+    // ── Compute statistics ─────────────────────────────────────────
+    const totalRecords = records.length;
+    const totalEnergy = records.reduce((s, r) => s + (r.energyGenerated || 0), 0);
+    const totalSavings = records.reduce((s, r) => s + (r.costSavings || 0), 0);
+    const avgEnergy = totalEnergy / totalRecords;
+    const avgEfficiency = records.reduce((s, r) => s + (r.efficiency || 0), 0) / totalRecords;
+    const recordsWithMaintenance = records.filter(r => r.maintenancePerformed).length;
+    const activeSources = new Set(records.map(r => r.source?._id || r.source)).size;
+
+    // ── Summary title ──────────────────────────────────────────────
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('SUMMARY OVERVIEW', 14, 56);
+    doc.setFillColor(...navy);
+    doc.rect(14, 59, pageW - 28, 1.2, 'F');
+
+    // ── 4 KPI cards in one row ─────────────────────────────────────
+    const cardY    = 64;
+    const cardH    = 34;
+    const cardW    = (pageW - 28 - 9) / 4;
+    const kpis = [
+      { label: 'Total Records',     value: totalRecords.toString(),                     unit: 'Entries',      color: navy  },
+      { label: 'Energy Generated',  value: `${(totalEnergy / 1000).toFixed(2)}K`,       unit: 'kWh Produced', color: green },
+      { label: 'Cost Savings',      value: `LKR ${(totalSavings / 1000).toFixed(1)}K`,  unit: 'Total Saved',  color: emerald },
+      { label: 'Active Sources',    value: activeSources.toString(),                    unit: 'Sources',      color: blue }
+    ];
+
+    kpis.forEach((k, i) => {
+      const x = 14 + i * (cardW + 3);
+      // Shadow
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(x + 0.8, cardY + 0.8, cardW, cardH, 3, 3, 'F');
+      // Card
+      doc.setFillColor(...white);
+      doc.roundedRect(x, cardY, cardW, cardH, 3, 3, 'F');
+      // Top accent
+      doc.setFillColor(...k.color);
+      doc.roundedRect(x, cardY, cardW, 3, 3, 3, 'F');
+      // Border
+      doc.setDrawColor(...border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, cardY, cardW, cardH, 3, 3, 'S');
+      // Label
+      doc.setTextColor(...light);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.label, x + 4, cardY + 11);
+      // Value
+      doc.setTextColor(...k.color);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text(k.value, x + 4, cardY + 23);
+      // Unit
+      doc.setTextColor(...mid);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.unit, x + 4, cardY + 30);
+    });
+
+    // ── Two-column analytics & performance ─────────────────────────
+    const secY = cardY + cardH + 12;
+
+    // LEFT: Performance Analytics
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('PERFORMANCE ANALYTICS', 14, secY);
+    doc.setFillColor(...navy);
+    doc.rect(14, secY + 2, 88, 1, 'F');
+
+    autoTable(doc, {
+      startY: secY + 6,
+      head: [['Metric', 'Value', 'Rating']],
+      body: [
+        ['Avg Energy/Record',   `${avgEnergy.toFixed(1)} kWh`,      'Per Entry'],
+        ['Avg Efficiency',      `${avgEfficiency.toFixed(1)}%`,     avgEfficiency >= 80 ? 'Excellent' : avgEfficiency >= 60 ? 'Good' : 'Average'],
+        ['Maintenance Rate',    `${((recordsWithMaintenance/totalRecords)*100).toFixed(1)}%`, `${recordsWithMaintenance} of ${totalRecords}`],
+        ['Active Sources',      `${activeSources}`,                 'Sources Used']
+      ],
+      theme: 'plain',
+      headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 4, right: 4 } },
+      bodyStyles: { fontSize: 8.5, cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 }, textColor: dark },
+      alternateRowStyles: { fillColor: lightBg },
+      columnStyles: {
+        0: { cellWidth: 40, fontStyle: 'bold' },
+        1: { cellWidth: 26, halign: 'right', textColor: green, fontStyle: 'bold' },
+        2: { cellWidth: 22, halign: 'center', textColor: mid }
+      },
+      margin: { left: 14, right: 108 },
+      styles: { lineColor: border, lineWidth: 0.2 }
+    });
+
+    // RIGHT: Source Distribution (if sources available)
+    const rightX = 108;
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('SOURCE BREAKDOWN', rightX, secY);
+    doc.setFillColor(...navy);
+    doc.rect(rightX, secY + 2, 88, 1, 'F');
+
+    // Group records by source
+    const sourceMap = {};
+    records.forEach(r => {
+      const sourceName = r.source?.sourceName || 'Unknown';
+      if (!sourceMap[sourceName]) {
+        sourceMap[sourceName] = { count: 0, energy: 0 };
+      }
+      sourceMap[sourceName].count++;
+      sourceMap[sourceName].energy += r.energyGenerated || 0;
+    });
+
+    const sourceData = Object.entries(sourceMap).slice(0, 4); // Top 4 sources
+    sourceData.forEach((s, i) => {
+      const y = secY + 8 + i * 22;
+      const [name, data] = s;
+      doc.setFillColor(...white);
+      doc.roundedRect(rightX, y, 88, 18, 2, 2, 'F');
+      doc.setFillColor(...green);
+      doc.roundedRect(rightX, y, 3.5, 18, 1, 1, 'F');
+      doc.setDrawColor(...border);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(rightX, y, 88, 18, 2, 2, 'S');
+
+      doc.setTextColor(...dark);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(name.substring(0, 25), rightX + 8, y + 7);
+      doc.setTextColor(...mid);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${data.count} records • ${(data.energy/1000).toFixed(2)}K kWh`, rightX + 8, y + 14);
+    });
+
+    // ── Detailed records table ───────────────────────────────────────
+    const tableStartY = doc.lastAutoTable.finalY + 16;
+
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('DETAILED ENERGY RECORDS', 14, tableStartY);
+    doc.setFillColor(...navy);
+    doc.rect(14, tableStartY + 2, pageW - 28, 1, 'F');
+
+    const sortedRecords = [...records].sort((a, b) => new Date(a.recordDate) - new Date(b.recordDate));
+
+    autoTable(doc, {
+      startY: tableStartY + 7,
+      head: [['#', 'Source', 'Date', 'Energy (kWh)', 'Efficiency', 'Savings (LKR)', 'Weather']],
+      body: sortedRecords.map((record, idx) => [
+        idx + 1,
+        (record.source?.sourceName || 'N/A').substring(0, 15),
+        new Date(record.recordDate).toLocaleDateString('en-US', { year: '2-digit', month: 'short', day: '2-digit' }),
+        record.energyGenerated.toFixed(1),
+        record.efficiency ? `${record.efficiency.toFixed(1)}%` : 'N/A',
+        record.costSavings ? record.costSavings.toLocaleString() : '0',
+        record.weatherCondition || 'N/A'
+      ]),
+      theme: 'plain',
+      headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 9, cellPadding: { top: 5, bottom: 5, left: 4, right: 4 } },
+      bodyStyles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 4, right: 4 }, textColor: dark },
+      alternateRowStyles: { fillColor: lightBg },
+      columnStyles: {
+        0: { cellWidth: 9,  halign: 'center', textColor: light },
+        1: { cellWidth: 32, fontStyle: 'bold', textColor: green },
+        2: { cellWidth: 24, halign: 'center' },
+        3: { cellWidth: 24, halign: 'right', fontStyle: 'bold', textColor: emerald },
+        4: { cellWidth: 22, halign: 'center' },
+        5: { cellWidth: 26, halign: 'right' },
+        6: { cellWidth: 20, halign: 'center', fontSize: 7.5 }
+      },
+      margin: { left: 14, right: 14 },
+      styles: { lineColor: border, lineWidth: 0.2 },
+      showHead: 'everyPage'
+    });
+
+    // ── Footer on every page ───────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(...navy);
+      doc.rect(0, pageH - 14, pageW, 14, 'F');
+      doc.setFillColor(...emerald);
+      doc.rect(0, pageH - 14, pageW, 2, 'F');
+
+      doc.setTextColor(...white);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('POWERSENSE - Renewable Energy', 14, pageH - 6);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.text('Smart Electricity Management', 14, pageH - 2);
+
+      const pg = `Page ${p} of ${totalPages}`;
+      doc.setFontSize(7);
+      doc.text(pg, pageW - 14, pageH - 6, { align: 'right' });
+      doc.setFontSize(6);
+      doc.setTextColor(200, 200, 200);
+      doc.text('Computer-generated report. No signature required.', pageW - 14, pageH - 2, { align: 'right' });
+    }
+
+    // ── Save ───────────────────────────────────────────────────────
+    const filename = `PowerSense_Renewable_Energy_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(filename);
+  };
+
   const formatNumber = (num) => {
     if (!num) return '0';
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
@@ -420,16 +675,14 @@ const RenewableDashboard = () => {
         </div>
         <div className="flex gap-3 flex-wrap">
           <button
-            onClick={() => setShowReportModal(true)}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+            onClick={generateRecordsSummaryPDF}
+            className="btn-accent flex items-center"
+            title="Download Energy Summary PDF"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8 17v-1h8v1H8zm0-3v-1h8v1H8zm0-3V10h4v1H8z"/>
             </svg>
-            Generate Report
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
-            </svg>
+            Energy Summary
           </button>
           <Link
             to="/renewable/sources"

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { renewableService } from '../../services/api';
 import Modal from '../common/Modal';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const RenewableSource = () => {
   const [sources, setSources] = useState([]);
@@ -266,6 +268,279 @@ const RenewableSource = () => {
     setShowModal(true);
   };
 
+  const generateSourcesSummaryPDF = () => {
+    if (sources.length === 0) {
+      alert('No renewable energy sources available to generate a summary.');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.width;
+    const pageH = doc.internal.pageSize.height;
+
+    // ── Color palette ──────────────────────────────────────────────
+    const navy    = [25, 50, 85];
+    const green   = [34, 139, 34];
+    const emerald = [16, 185, 129];
+    const amber   = [245, 158, 11];
+    const blue    = [59, 130, 246];
+    const white   = [255, 255, 255];
+    const lightBg = [248, 250, 252];
+    const border  = [220, 225, 235];
+    const dark    = [25, 25, 25];
+    const mid     = [80, 80, 80];
+    const light   = [130, 130, 130];
+
+    // ── Header bar ─────────────────────────────────────────────────
+    doc.setFillColor(...navy);
+    doc.rect(0, 0, pageW, 40, 'F');
+    doc.setFillColor(...emerald);
+    doc.rect(0, 37, pageW, 3, 'F');
+
+    doc.setTextColor(...white);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(24);
+    doc.text('POWERSENSE', 14, 18);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Smart Electricity Management', 14, 28);
+
+    // Report label right-aligned
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('RENEWABLE SOURCES REPORT', pageW - 14, 18, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.text(`Generated: ${today}`, pageW - 14, 28, { align: 'right' });
+
+    // ── Compute statistics ─────────────────────────────────────────
+    const totalSources = sources.length;
+    const activeSources = sources.filter(s => s.status === 'Active').length;
+    const maintenanceSources = sources.filter(s => s.status === 'Maintenance').length;
+    const inactiveSources = sources.filter(s => s.status === 'Inactive').length;
+    const totalCapacity = sources.reduce((s, src) => s + (src.capacity || 0), 0);
+    const totalEstProduction = sources.reduce((s, src) => s + (src.estimatedAnnualProduction || 0), 0);
+
+    // ── Summary title ──────────────────────────────────────────────
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('SUMMARY OVERVIEW', 14, 56);
+    doc.setFillColor(...navy);
+    doc.rect(14, 59, pageW - 28, 1.2, 'F');
+
+    // ── 4 KPI cards in one row ─────────────────────────────────────
+    const cardY    = 64;
+    const cardH    = 34;
+    const cardW    = (pageW - 28 - 9) / 4;
+    const kpis = [
+      { label: 'Total Sources',    value: totalSources.toString(),                   unit: 'Installations', color: navy  },
+      { label: 'Active Sources',   value: activeSources.toString(),                  unit: 'Operational',   color: green },
+      { label: 'Total Capacity',   value: `${(totalCapacity / 1000).toFixed(2)}K`,   unit: 'kW',            color: emerald },
+      { label: 'Est. Production',  value: `${(totalEstProduction / 1000).toFixed(1)}K`, unit: 'kWh/Year',   color: blue }
+    ];
+
+    kpis.forEach((k, i) => {
+      const x = 14 + i * (cardW + 3);
+      // Shadow
+      doc.setFillColor(220, 220, 220);
+      doc.roundedRect(x + 0.8, cardY + 0.8, cardW, cardH, 3, 3, 'F');
+      // Card
+      doc.setFillColor(...white);
+      doc.roundedRect(x, cardY, cardW, cardH, 3, 3, 'F');
+      // Top accent
+      doc.setFillColor(...k.color);
+      doc.roundedRect(x, cardY, cardW, 3, 3, 3, 'F');
+      // Border
+      doc.setDrawColor(...border);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, cardY, cardW, cardH, 3, 3, 'S');
+      // Label
+      doc.setTextColor(...light);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.label, x + 4, cardY + 11);
+      // Value
+      doc.setTextColor(...k.color);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text(k.value, x + 4, cardY + 23);
+      // Unit
+      doc.setTextColor(...mid);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.unit, x + 4, cardY + 30);
+    });
+
+    // ── Two-column analytics ───────────────────────────────────────
+    const secY = cardY + cardH + 12;
+
+    // LEFT: Source Type Distribution
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('SOURCE TYPE DISTRIBUTION', 14, secY);
+    doc.setFillColor(...navy);
+    doc.rect(14, secY + 2, 88, 1, 'F');
+
+    // Group by type
+    const typeMap = {};
+    sources.forEach(s => {
+      const type = s.sourceType || 'Other';
+      if (!typeMap[type]) {
+        typeMap[type] = { count: 0, capacity: 0 };
+      }
+      typeMap[type].count++;
+      typeMap[type].capacity += s.capacity || 0;
+    });
+
+    autoTable(doc, {
+      startY: secY + 6,
+      head: [['Type', 'Count', 'Capacity (kW)']],
+      body: Object.entries(typeMap).map(([type, data]) => [
+        type,
+        data.count.toString(),
+        data.capacity.toFixed(1)
+      ]),
+      theme: 'plain',
+      headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 9, cellPadding: { top: 4, bottom: 4, left: 4, right: 4 } },
+      bodyStyles: { fontSize: 8.5, cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 }, textColor: dark },
+      alternateRowStyles: { fillColor: lightBg },
+      columnStyles: {
+        0: { cellWidth: 40, fontStyle: 'bold' },
+        1: { cellWidth: 24, halign: 'center', textColor: green, fontStyle: 'bold' },
+        2: { cellWidth: 24, halign: 'right', textColor: emerald, fontStyle: 'bold' }
+      },
+      margin: { left: 14, right: 108 },
+      styles: { lineColor: border, lineWidth: 0.2 }
+    });
+
+    // RIGHT: Status Breakdown
+    const rightX = 108;
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('STATUS BREAKDOWN', rightX, secY);
+    doc.setFillColor(...navy);
+    doc.rect(rightX, secY + 2, 88, 1, 'F');
+
+    const statusData = [
+      { label: 'Active', count: activeSources, pct: ((activeSources/totalSources)*100).toFixed(0), color: green },
+      { label: 'Maintenance', count: maintenanceSources, pct: ((maintenanceSources/totalSources)*100).toFixed(0), color: amber },
+      { label: 'Inactive', count: inactiveSources, pct: ((inactiveSources/totalSources)*100).toFixed(0), color: mid }
+    ];
+
+    statusData.forEach((s, i) => {
+      const y = secY + 8 + i * 20;
+      doc.setFillColor(...white);
+      doc.roundedRect(rightX, y, 88, 16, 2, 2, 'F');
+      doc.setFillColor(...s.color);
+      doc.roundedRect(rightX, y, 3.5, 16, 1, 1, 'F');
+      doc.setDrawColor(...border);
+      doc.setLineWidth(0.2);
+      doc.roundedRect(rightX, y, 88, 16, 2, 2, 'S');
+
+      doc.setTextColor(...dark);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(s.label, rightX + 8, y + 7);
+      doc.setTextColor(...s.color);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${s.count} (${s.pct}%)`, rightX + 8, y + 13);
+    });
+
+    // ── Detailed sources table ────────────────────────────────────
+    const tableStartY = doc.lastAutoTable.finalY + 16;
+
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('DETAILED SOURCE RECORDS', 14, tableStartY);
+    doc.setFillColor(...navy);
+    doc.rect(14, tableStartY + 2, pageW - 28, 1, 'F');
+
+    const sortedSources = [...sources].sort((a, b) => new Date(a.installationDate) - new Date(b.installationDate));
+
+    autoTable(doc, {
+      startY: tableStartY + 7,
+      head: [['#', 'Source Name', 'Type', 'Capacity', 'Location', 'Installed', 'Status']],
+      body: sortedSources.map((source, idx) => [
+        idx + 1,
+        (source.sourceName || 'N/A').substring(0, 20),
+        source.sourceType || 'N/A',
+        `${source.capacity || 0} ${source.capacityUnit || 'kW'}`,
+        (source.location || 'N/A').substring(0, 15),
+        new Date(source.installationDate).toLocaleDateString('en-US', { year: '2-digit', month: 'short', day: '2-digit' }),
+        source.status || 'N/A'
+      ]),
+      theme: 'plain',
+      headStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 9, cellPadding: { top: 5, bottom: 5, left: 4, right: 4 } },
+      bodyStyles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 4, right: 4 }, textColor: dark },
+      alternateRowStyles: { fillColor: lightBg },
+      columnStyles: {
+        0: { cellWidth: 9,  halign: 'center', textColor: light },
+        1: { cellWidth: 38, fontStyle: 'bold', textColor: green },
+        2: { cellWidth: 20, halign: 'center' },
+        3: { cellWidth: 24, halign: 'right', fontStyle: 'bold', textColor: emerald },
+        4: { cellWidth: 28, halign: 'left' },
+        5: { cellWidth: 24, halign: 'center' },
+        6: { cellWidth: 22, halign: 'center', fontStyle: 'bold' }
+      },
+      margin: { left: 14, right: 14 },
+      styles: { lineColor: border, lineWidth: 0.2 },
+      showHead: 'everyPage',
+      didParseCell: (data) => {
+        if (data.section === 'body') {
+          const source = sortedSources[data.row.index];
+          if (!source) return;
+          // Status column
+          if (data.column.index === 6) {
+            if (source.status === 'Active') {
+              data.cell.styles.textColor = green;
+              data.cell.styles.fillColor = [240, 255, 240];
+            } else if (source.status === 'Maintenance') {
+              data.cell.styles.textColor = amber;
+              data.cell.styles.fillColor = [255, 250, 235];
+            } else {
+              data.cell.styles.textColor = mid;
+            }
+          }
+        }
+      }
+    });
+
+    // ── Footer on every page ───────────────────────────────────────
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFillColor(...navy);
+      doc.rect(0, pageH - 14, pageW, 14, 'F');
+      doc.setFillColor(...emerald);
+      doc.rect(0, pageH - 14, pageW, 2, 'F');
+
+      doc.setTextColor(...white);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('POWERSENSE - Renewable Sources', 14, pageH - 6);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.text('Smart Electricity Management', 14, pageH - 2);
+
+      const pg = `Page ${p} of ${totalPages}`;
+      doc.setFontSize(7);
+      doc.text(pg, pageW - 14, pageH - 6, { align: 'right' });
+      doc.setFontSize(6);
+      doc.setTextColor(200, 200, 200);
+      doc.text('Computer-generated report. No signature required.', pageW - 14, pageH - 2, { align: 'right' });
+    }
+
+    // ── Save ───────────────────────────────────────────────────────
+    const filename = `PowerSense_Renewable_Sources_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(filename);
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
@@ -308,16 +583,14 @@ const RenewableSource = () => {
         </div>
         <div className="flex gap-3 flex-wrap">
           <button
-            onClick={() => setShowReportModal(true)}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+            onClick={generateSourcesSummaryPDF}
+            className="btn-accent flex items-center"
+            title="Download Sources Summary PDF"
           >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8 17v-1h8v1H8zm0-3v-1h8v1H8zm0-3V10h4v1H8z"/>
             </svg>
-            Generate Report
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
-            </svg>
+            Energy Summary
           </button>
           <button
             onClick={handleAddNew}
