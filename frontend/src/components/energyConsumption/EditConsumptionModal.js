@@ -62,10 +62,17 @@ const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) =>
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'energy_used_kwh') {
+      if (value !== '' && (parseFloat(value) < 0.01 || parseFloat(value) > 99999)) return;
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleEnergyKeyDown = (e) => {
+    if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
   };
 
   const handleSubmit = async (e) => {
@@ -234,11 +241,13 @@ const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) =>
                   name="energy_used_kwh"
                   value={formData.energy_used_kwh}
                   onChange={handleChange}
+                  onKeyDown={handleEnergyKeyDown}
                   required
                   step="0.01"
-                  min="0"
+                  min="0.01"
+                  max="99999"
                   className="input-field pl-10 pr-16 py-2.5 text-lg font-semibold transition-all duration-300 hover:shadow-md focus:shadow-lg border-2"
-                  placeholder="Enter value"
+                  placeholder="0.01 – 99999"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">

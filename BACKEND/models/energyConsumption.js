@@ -26,7 +26,8 @@ const energyConsumptionSchema = new mongoose.Schema({
     energy_used_kwh: {
         type: Number,
         required: [true, 'Energy consumption in kWh is required'],
-        min: [0, 'Energy consumption cannot be negative']
+        min: [0.01, 'Energy consumption must be at least 0.01 kWh'],
+        max: [99999, 'Energy consumption cannot exceed 99,999 kWh']
     },
     period_type: {
         type: String,
