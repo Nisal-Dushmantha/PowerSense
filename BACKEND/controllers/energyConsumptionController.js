@@ -142,6 +142,9 @@ exports.updateEnergyConsumption = async (req, res) => {
         const { id } = req.params;
         const updateData = { ...req.body };
 
+        // Prevent meter_id from being changed
+        delete updateData.meter_id;
+
         // Ensure the user can only update their own records
         const existingRecord = await EnergyConsumption.findOne({ 
             _id: id, 

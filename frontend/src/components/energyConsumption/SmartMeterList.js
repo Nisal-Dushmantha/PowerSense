@@ -142,7 +142,7 @@ const ConsumptionList = () => {
               className={`status-indicator w-4 h-4 rounded-full usage-level-${usageLevel} meter-pulse`}
             ></div>
             <h3 className="font-semibold text-gray-900 dark:text-white">
-              Meter #{record.meter_number || record._id.slice(-4)}
+              {record.meter_id || `Meter #${record._id.slice(-4)}`}
             </h3>
           </div>
           <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
