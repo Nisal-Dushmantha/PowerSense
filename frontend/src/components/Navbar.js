@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { getEnergyRecords } from '../services/energyApi';
@@ -18,6 +18,47 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
+
+  const fetchProfileStats = useCallback(async () => {
+    if (!isAuthenticated) {
+      setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
+      return;
+    }
+
+    try {
+      setProfileStats(prev => ({ ...prev, loading: true }));
+      
+      // Get all records
+      const response = await getEnergyRecords();
+      const records = response.data || [];
+      
+      // Calculate total records
+      const totalRecords = records.length;
+      
+      // Calculate this month's consumption
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      
+      const monthlyConsumption = records
+        .filter(record => {
+          const recordDate = new Date(record.consumption_date);
+          return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+        })
+        .reduce((total, record) => {
+          return total + (parseFloat(record.energy_used_kwh) || 0);
+        }, 0);
+      
+      setProfileStats({
+        totalRecords,
+        monthlyConsumption: Math.round(monthlyConsumption * 100) / 100,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching profile stats:', error);
+      setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -50,7 +91,7 @@ const Navbar = () => {
       window.removeEventListener('storage', checkAuth);
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [location]);
+  }, [location, fetchProfileStats]);
 
   const handleLogout = () => {
     authService.logout();
@@ -72,47 +113,6 @@ const Navbar = () => {
 
   const closeProfileDropdown = () => {
     setIsProfileDropdownOpen(false);
-  };
-
-  const fetchProfileStats = async () => {
-    if (!isAuthenticated) {
-      setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
-      return;
-    }
-
-    try {
-      setProfileStats(prev => ({ ...prev, loading: true }));
-      
-      // Get all records
-      const response = await getEnergyRecords();
-      const records = response.data || [];
-      
-      // Calculate total records
-      const totalRecords = records.length;
-      
-      // Calculate this month's consumption
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth();
-      const currentYear = currentDate.getFullYear();
-      
-      const monthlyConsumption = records
-        .filter(record => {
-          const recordDate = new Date(record.consumption_date);
-          return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
-        })
-        .reduce((total, record) => {
-          return total + (parseFloat(record.energy_used_kwh) || 0);
-        }, 0);
-      
-      setProfileStats({
-        totalRecords,
-        monthlyConsumption: Math.round(monthlyConsumption * 100) / 100, // Round to 2 decimal places
-        loading: false
-      });
-    } catch (error) {
-      console.error('Error fetching profile stats:', error);
-      setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
-    }
   };
 
   const isActivePath = (path) => {

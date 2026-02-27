@@ -7,7 +7,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 // Components
 import PrivateRoute from './components/PrivateRoute';
 import Home from './components/Home';
-import Profile from './components/Profile';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import BillList from './components/energyReports/BillList';
