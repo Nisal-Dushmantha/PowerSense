@@ -63,7 +63,7 @@ exports.deleteDevice = async (req, res) => {
 		const { deviceId } = req.params;
 		// Try by deviceId first
 		let device = await Device.findOneAndDelete({ deviceId });
-		// If not found, try by _id
+		// If not found, try by _id(mongoDB ObjectId)
 		if (!device && deviceId.match(/^[a-fA-F0-9]{24}$/)) {
 			device = await Device.findByIdAndDelete(deviceId);
 		}

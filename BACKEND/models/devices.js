@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+//auto incrementing device id
 const CounterSchema = new mongoose.Schema({ _id: String, seq: Number });
 const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
 
@@ -53,7 +54,7 @@ DeviceSchema.virtual('monthlyKwh').get(function() {
 	return parseFloat((this.monthlyW / 1000).toFixed(3));
 });
 
-// Ensure virtual fields are serialized when converting to JSON
+// Ensure virtual fields are serialized when converting to JSON(ensure when API return the data)
 DeviceSchema.set('toJSON', { virtuals: true });
 DeviceSchema.set('toObject', { virtuals: true });
 
