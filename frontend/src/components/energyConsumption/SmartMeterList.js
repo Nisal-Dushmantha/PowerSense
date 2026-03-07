@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getEnergyRecords, deleteEnergyRecord } from '../../services/energyApi';
 import CreateConsumptionModal from './CreateConsumptionModal';
 import EditConsumptionModal from './EditConsumptionModal';
+import { Column, Pie } from '@ant-design/charts';
 import './SmartMeterAnimations.css';
 
 const ConsumptionList = () => {
@@ -20,6 +21,8 @@ const ConsumptionList = () => {
     endDate: '',
     search: ''
   });
+  const [activeSummaryTab, setActiveSummaryTab] = useState('all');
+  const [showSummary, setShowSummary] = useState(false);
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -278,6 +281,69 @@ const ConsumptionList = () => {
     );
   }
 
+  // ── Summary computations ──────────────────────────────────────────
+  const summaryRecords = activeSummaryTab === 'all'
+    ? records
+    : records.filter(r => r.period_type === activeSummaryTab);
+
+  const totalKwh   = summaryRecords.reduce((s, r) => s + (r.energy_used_kwh || 0), 0);
+  const totalCO2   = totalKwh * 0.527;
+  const totalCost  = totalKwh * 35;
+  const avgKwh     = summaryRecords.length > 0 ? totalKwh / summaryRecords.length : 0;
+  const peakRecord = summaryRecords.reduce((mx, r) => (!mx || r.energy_used_kwh > mx.energy_used_kwh ? r : mx), null);
+
+  const columnChartData = [...summaryRecords]
+    .sort((a, b) => b.energy_used_kwh - a.energy_used_kwh)
+    .slice(0, 15)
+    .map(r => ({
+      label: r.meter_id || `Meter #${r._id.slice(-4)}`,
+      value: parseFloat((r.energy_used_kwh || 0).toFixed(2)),
+    }));
+
+  const levelCounts = { Low: 0, Moderate: 0, High: 0, Critical: 0 };
+  summaryRecords.forEach(r => {
+    const level = getUsageLevel(r.energy_used_kwh);
+    if      (level === 'low')      levelCounts.Low++;
+    else if (level === 'moderate') levelCounts.Moderate++;
+    else if (level === 'high')     levelCounts.High++;
+    else                           levelCounts.Critical++;
+  });
+  const pieChartData = Object.entries(levelCounts)
+    .filter(([, cnt]) => cnt > 0)
+    .map(([type, value]) => ({ type, value }));
+
+  const columnConfig = {
+    data: columnChartData,
+    xField: 'label',
+    yField: 'value',
+    columnWidthRatio: 0.65,
+    color: ({ value }) => {
+      const lv = getUsageLevel(value);
+      return lv === 'low' ? '#16a34a' : lv === 'moderate' ? '#d97706' : lv === 'high' ? '#ea580c' : '#dc2626';
+    },
+    columnStyle: { radius: [4, 4, 0, 0] },
+    yAxis: { title: { text: 'Energy Used (kWh)' } },
+    xAxis: { label: { autoRotate: true, style: { fontSize: 11 } } },
+    tooltip: { formatter: datum => ({ name: 'Energy', value: `${datum.value} kWh` }) },
+    height: 220,
+  };
+
+  const pieConfig = {
+    data: pieChartData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.85,
+    innerRadius: 0.6,
+    color: ['#16a34a', '#d97706', '#ea580c', '#dc2626'],
+    label: false,
+    statistic: {
+      title: { content: 'Usage' },
+      content: { content: `${summaryRecords.length}` },
+    },
+    legend: { position: 'bottom', offsetY: 4 },
+    height: 220,
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-light-mint via-white to-background dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
       <div className="max-w-7xl mx-auto">
@@ -292,6 +358,19 @@ const ConsumptionList = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowSummary(prev => !prev)}
+              className={`border-2 px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center space-x-2 ${
+                showSummary
+                  ? 'bg-primary border-primary text-white'
+                  : 'bg-white dark:bg-gray-800 border-primary text-primary hover:bg-primary hover:text-white'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{showSummary ? 'Hide Summary' : 'Summary'}</span>
+            </button>
             <button
               onClick={() => navigate('/consumption/analytics')}
               className="bg-white dark:bg-gray-800 border-2 border-primary text-primary hover:bg-primary hover:text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center space-x-2"
@@ -320,7 +399,9 @@ const ConsumptionList = () => {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters & Meter Grid — hidden while summary is open */}
+        {!showSummary && (
+          <>
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-100 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
             <span className="mr-2">🔍</span>
@@ -371,7 +452,202 @@ const ConsumptionList = () => {
             </div>
           </div>
         </div>
+          </>
+        )}
 
+        {/* ── Consumption Summary Panel ─────────────────────────────── */}
+        {showSummary && records.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden">
+            {/* Panel header */}
+            <div className="bg-gradient-to-r from-primary to-secondary px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0120 9.414V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-lg leading-tight">Consumption Summary</h2>
+                  <p className="text-white/70 text-xs">Aggregated insights across your readings</p>
+                </div>
+              </div>
+              {/* Period tabs */}
+              <div className="flex bg-white/10 rounded-lg p-1 gap-1">
+                {[
+                  { key: 'all',     label: 'All' },
+                  { key: 'hourly',  label: 'Hourly' },
+                  { key: 'weekly',  label: 'Weekly' },
+                  { key: 'monthly', label: 'Monthly' },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveSummaryTab(tab.key)}
+                    className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-all duration-200 ${
+                      activeSummaryTab === tab.key
+                        ? 'bg-white text-primary shadow'
+                        : 'text-white/80 hover:text-white hover:bg-white/15'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6">
+              {summaryRecords.length === 0 ? (
+                <div className="text-center py-10 text-gray-400 dark:text-gray-500">
+                  <div className="text-4xl mb-2">📭</div>
+                  <p className="text-sm">No <span className="font-semibold capitalize">{activeSummaryTab}</span> records found.</p>
+                </div>
+              ) : (
+                <>
+                  {/* KPI Strip */}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                    {[
+                      {
+                        icon: '📋',
+                        label: 'Total Records',
+                        value: summaryRecords.length,
+                        sub: 'readings captured',
+                        color: 'from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20',
+                        accent: 'border-l-blue-500',
+                        text: 'text-blue-700 dark:text-blue-300',
+                      },
+                      {
+                        icon: '⚡',
+                        label: 'Total Energy',
+                        value: `${totalKwh.toFixed(2)} kWh`,
+                        sub: `avg ${avgKwh.toFixed(1)} kWh/record`,
+                        color: 'from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20',
+                        accent: 'border-l-yellow-500',
+                        text: 'text-yellow-700 dark:text-yellow-300',
+                      },
+                      {
+                        icon: '🌿',
+                        label: 'CO₂ Emitted',
+                        value: `${totalCO2.toFixed(2)} kg`,
+                        sub: `~ ${(totalCO2 / 1000).toFixed(3)} tonnes`,
+                        color: 'from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20',
+                        accent: 'border-l-green-500',
+                        text: 'text-green-700 dark:text-green-300',
+                      },
+                      {
+                        icon: '💰',
+                        label: 'Est. Cost',
+                        value: `Rs. ${totalCost.toFixed(0)}`,
+                        sub: `@ Rs.35/kWh`,
+                        color: 'from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20',
+                        accent: 'border-l-purple-500',
+                        text: 'text-purple-700 dark:text-purple-300',
+                      },
+                      {
+                        icon: '🔺',
+                        label: 'Peak Reading',
+                        value: peakRecord ? `${peakRecord.energy_used_kwh} kWh` : '—',
+                        sub: peakRecord ? (peakRecord.meter_id || `Meter #${peakRecord._id.slice(-4)}`) : '',
+                        color: 'from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20',
+                        accent: 'border-l-red-500',
+                        text: 'text-red-700 dark:text-red-300',
+                      },
+                    ].map(kpi => (
+                      <div
+                        key={kpi.label}
+                        className={`bg-gradient-to-br ${kpi.color} border-l-4 ${kpi.accent} rounded-xl p-4 shadow-sm`}
+                      >
+                        <div className="text-2xl mb-1">{kpi.icon}</div>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{kpi.label}</p>
+                        <p className={`text-xl font-bold ${kpi.text} leading-tight mt-0.5`}>{kpi.value}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{kpi.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Charts row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Column chart – Top readings */}
+                    <div className="lg:col-span-2 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-5 border border-gray-100 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
+                            Top Readings by Consumption
+                          </h3>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">Highest {Math.min(columnChartData.length, 15)} records (kWh)</p>
+                        </div>
+                        <span className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold capitalize">
+                          {activeSummaryTab}
+                        </span>
+                      </div>
+                      {columnChartData.length > 0 ? (
+                        <Column {...columnConfig} />
+                      ) : (
+                        <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">No data</div>
+                      )}
+                    </div>
+
+                    {/* Pie chart – Usage level distribution */}
+                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-5 border border-gray-100 dark:border-gray-700 flex flex-col">
+                      <div className="mb-4">
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-sm">Usage Level Distribution</h3>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">Low / Moderate / High / Critical</p>
+                      </div>
+                      {pieChartData.length > 0 ? (
+                        <Pie {...pieConfig} />
+                      ) : (
+                        <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">No data</div>
+                      )}
+                      {/* Legend */}
+                      <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1">
+                        {[
+                          { label: 'Low',      color: '#16a34a', range: '≤ 50 kWh'  },
+                          { label: 'Moderate', color: '#d97706', range: '≤ 150 kWh' },
+                          { label: 'High',     color: '#ea580c', range: '≤ 300 kWh' },
+                          { label: 'Critical', color: '#dc2626', range: '> 300 kWh' },
+                        ].map(l => (
+                          <div key={l.label} className="flex items-center space-x-1.5">
+                            <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: l.color }}></span>
+                            <span className="text-xs text-gray-600 dark:text-gray-400">{l.label}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">({l.range})</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Period breakdown mini-stats */}
+                  {activeSummaryTab === 'all' && (
+                    <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {['hourly', 'daily', 'weekly', 'monthly'].map(pt => {
+                        const pts = records.filter(r => r.period_type === pt);
+                        const ptKwh = pts.reduce((s, r) => s + (r.energy_used_kwh || 0), 0);
+                        const colors = {
+                          hourly: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300',
+                          daily:  'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300',
+                          weekly: 'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300',
+                          monthly:'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-300',
+                        };
+                        return (
+                          <button
+                            key={pt}
+                            onClick={() => setActiveSummaryTab(pt)}
+                            className={`border rounded-xl p-3 text-left hover:shadow-md transition-all duration-200 hover:scale-105 ${colors[pt]}`}
+                          >
+                            <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-0.5">{pt}</p>
+                            <p className="font-bold text-base">{pts.length} records</p>
+                            <p className="text-xs opacity-75">{ptKwh.toFixed(1)} kWh total</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!showSummary && (
+          <>
         {/* Content Area */}
         {records.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 shadow-lg">
@@ -401,6 +677,8 @@ const ConsumptionList = () => {
               />
             ))}
           </div>
+        )}
+          </>
         )}
 
         {/* Modals */}
