@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   getPeakUsage,
   getThresholdAlerts,
@@ -7,7 +9,7 @@ import {
   getUsageComparison,
   getRecommendations,
   updateEnergyThreshold,
-  downloadMonthlyReport
+  getEnergyRecords
 } from '../../services/energyApi';
 
 const CO2_FACTOR  = 0.527;
@@ -172,12 +174,347 @@ const EnergyAnalytics = () => {
     finally { setThresholdSaving(false); }
   };
 
-  // ── PDF download ──
+  // ── PDF download (client-side jsPDF) ──
   const handleDownloadPdf = async () => {
     setPdfLoading(true);
-    try { await downloadMonthlyReport(pdfMonth, pdfYear); }
-    catch { alert('Failed to generate PDF report.'); }
-    finally { setPdfLoading(false); }
+    try {
+      // Build date range for the selected month/year
+      const startDate = new Date(pdfYear, pdfMonth - 1, 1).toISOString().split('T')[0];
+      const endDate   = new Date(pdfYear, pdfMonth, 0).toISOString().split('T')[0];
+      const res       = await getEnergyRecords({ startDate, endDate });
+      const records   = res.data || [];
+
+      const doc    = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageW  = 210;
+      const pageH  = 297;
+      const mg     = 14;
+      const now    = new Date();
+      const monthLabel = MONTH_NAMES[pdfMonth - 1];
+      const reportId   = `EC-${pdfYear}${String(pdfMonth).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+      const fmtDate    = (d) => new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // Palette
+      const navy   = [11, 20, 38];
+      const navyL  = [21, 35, 64];
+      const blue   = [37, 99, 235];
+      const teal   = [20, 184, 166];
+      const green  = [22, 163, 74];
+      const amber  = [217, 119, 6];
+      const orange = [234, 88, 12];
+      const red    = [220, 38, 38];
+      const white  = [255, 255, 255];
+      const slate  = [100, 116, 139];
+      const slateL = [148, 163, 184];
+      const dark   = [15, 23, 42];
+      const bg     = [248, 250, 252];
+      const border = [226, 232, 240];
+
+      const getLevel = (kwh) => {
+        if (kwh <= 50)  return 'LOW';
+        if (kwh <= 150) return 'MODERATE';
+        if (kwh <= 300) return 'HIGH';
+        return 'CRITICAL';
+      };
+      const levelColor = { LOW: green, MODERATE: amber, HIGH: orange, CRITICAL: red };
+
+      const drawFooter = (pageNum) => {
+        doc.setFillColor(...navy);
+        doc.rect(0, pageH - 13, pageW, 13, 'F');
+        doc.setFillColor(...blue);
+        doc.rect(0, pageH - 13, pageW, 1.2, 'F');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slateL);
+        doc.text('PowerSense  ·  Energy Management Platform  ·  CONFIDENTIAL', mg, pageH - 5);
+        doc.text(`Page ${pageNum}`, pageW - mg, pageH - 5, { align: 'right' });
+        doc.text(`Report ID: ${reportId}`, pageW / 2, pageH - 5, { align: 'center' });
+      };
+
+      const drawWatermark = () => {
+        doc.saveGraphicsState();
+        doc.setGState(new doc.GState({ opacity: 0.04 }));
+        doc.setFontSize(52);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...navy);
+        doc.text('POWERSENSE', pageW / 2, pageH / 2, { align: 'center', angle: 45 });
+        doc.restoreGraphicsState();
+      };
+
+      /* ── Header banner ── */
+      doc.setFillColor(...navy);
+      doc.rect(0, 0, pageW, 42, 'F');
+      doc.setFillColor(...blue);
+      doc.rect(0, 0, pageW, 3, 'F');
+      doc.setFillColor(...teal);
+      doc.rect(0, 42, pageW, 1.5, 'F');
+
+      // Logo
+      doc.setFillColor(...blue);
+      doc.roundedRect(mg, 10, 20, 20, 2.5, 2.5, 'F');
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...white);
+      doc.text('PS', mg + 5.2, 22.5);
+
+      // Brand name
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...white);
+      doc.text('PowerSense', mg + 24, 19);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...slateL);
+      doc.text('Energy Management Platform', mg + 24, 26);
+
+      // Report title right
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...white);
+      doc.text('MONTHLY ENERGY REPORT', pageW - mg, 17, { align: 'right' });
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...slateL);
+      doc.text(`${monthLabel} ${pdfYear}`, pageW - mg, 24, { align: 'right' });
+      doc.setFontSize(7.5);
+      doc.text(`Report ID: ${reportId}`, pageW - mg, 30, { align: 'right' });
+      doc.text(`Generated: ${now.toLocaleDateString('en-GB')}  ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`, pageW - mg, 36, { align: 'right' });
+
+      /* ── KPI cards ── */
+      const totalKwh  = records.reduce((s, r) => s + (r.energy_used_kwh || 0), 0);
+      const totalCo2  = totalKwh * CO2_FACTOR;
+      const totalCost = totalKwh * TARIFF_RATE;
+      const avgKwh    = records.length > 0 ? totalKwh / records.length : 0;
+      const peakKwh   = records.length > 0 ? Math.max(...records.map(r => r.energy_used_kwh || 0)) : 0;
+      const critCount = records.filter(r => getLevel(r.energy_used_kwh) === 'CRITICAL').length;
+
+      const kpiY  = 50;
+      const kpiH  = 26;
+      const kpiGp = 3;
+      const kpiW  = (pageW - mg * 2 - kpiGp * 3) / 4;
+
+      const kpis = [
+        { label: 'TOTAL READINGS',  value: String(records.length),       sub: `${monthLabel} ${pdfYear}`,   color: [99, 102, 241] },
+        { label: 'TOTAL USAGE',     value: `${totalKwh.toFixed(1)} kWh`, sub: 'cumulative',                 color: blue  },
+        { label: 'EST. CO\u2082',       value: `${totalCo2.toFixed(1)} kg`, sub: '0.527 kg/kWh factor',        color: green },
+        { label: 'EST. TOTAL COST', value: `Rs.${totalCost.toFixed(0)}`, sub: 'at Rs.35/kWh',               color: teal  },
+      ];
+
+      kpis.forEach((kpi, i) => {
+        const x = mg + i * (kpiW + kpiGp);
+        doc.setFillColor(218, 220, 228);
+        doc.roundedRect(x + 0.8, kpiY + 0.8, kpiW, kpiH, 2.5, 2.5, 'F');
+        doc.setFillColor(...bg);
+        doc.roundedRect(x, kpiY, kpiW, kpiH, 2.5, 2.5, 'F');
+        doc.setFillColor(...kpi.color);
+        doc.roundedRect(x, kpiY, kpiW, 3, 1, 1, 'F');
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slate);
+        doc.text(kpi.label, x + 5, kpiY + 9);
+        doc.setFontSize(11.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...dark);
+        doc.text(kpi.value, x + 5, kpiY + 19);
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slateL);
+        doc.text(kpi.sub, x + 5, kpiY + 24.5);
+      });
+
+      /* ── Two-column insight section ── */
+      const insY = kpiY + kpiH + 5;
+      const colW = (pageW - mg * 2 - 4) / 2;
+
+      // Left card: additional stats
+      const lcX = mg;
+      const lcH = 34;
+      doc.setFillColor(218, 220, 228);
+      doc.roundedRect(lcX + 0.7, insY + 0.7, colW, lcH, 2, 2, 'F');
+      doc.setFillColor(...bg);
+      doc.roundedRect(lcX, insY, colW, lcH, 2, 2, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...dark);
+      doc.text('CONSUMPTION HIGHLIGHTS', lcX + 5, insY + 7);
+
+      const highlights = [
+        { label: 'Peak Reading',      value: `${peakKwh.toFixed(2)} kWh`,   color: dark  },
+        { label: 'Average per Record',value: `${avgKwh.toFixed(2)} kWh`,    color: dark  },
+        { label: 'Critical Alerts',   value: String(critCount),              color: critCount > 0 ? red : green },
+      ];
+      highlights.forEach((h, i) => {
+        const hy = insY + 13 + i * 8;
+        if (i > 0) {
+          doc.setDrawColor(...border);
+          doc.setLineWidth(0.2);
+          doc.line(lcX + 5, hy - 2, lcX + colW - 5, hy - 2);
+        }
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slate);
+        doc.text(h.label, lcX + 5, hy + 3);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...h.color);
+        doc.text(h.value, lcX + colW - 5, hy + 3, { align: 'right' });
+      });
+
+      // Right card: usage level distribution bar chart
+      const rcX = mg + colW + 4;
+      const rcH = 34;
+      doc.setFillColor(218, 220, 228);
+      doc.roundedRect(rcX + 0.7, insY + 0.7, colW, rcH, 2, 2, 'F');
+      doc.setFillColor(...bg);
+      doc.roundedRect(rcX, insY, colW, rcH, 2, 2, 'F');
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...dark);
+      doc.text('USAGE LEVEL DISTRIBUTION', rcX + 5, insY + 7);
+
+      const levelData = [
+        { label: 'Low',      color: green,  count: records.filter(r => getLevel(r.energy_used_kwh) === 'LOW').length },
+        { label: 'Moderate', color: amber,  count: records.filter(r => getLevel(r.energy_used_kwh) === 'MODERATE').length },
+        { label: 'High',     color: orange, count: records.filter(r => getLevel(r.energy_used_kwh) === 'HIGH').length },
+        { label: 'Critical', color: red,    count: records.filter(r => getLevel(r.energy_used_kwh) === 'CRITICAL').length },
+      ];
+      const barMaxW = colW - 44;
+      levelData.forEach((b, i) => {
+        const by  = insY + 12 + i * 6.5;
+        const fw  = records.length > 0 ? (b.count / records.length) * barMaxW : 0;
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slate);
+        doc.text(b.label, rcX + 5, by + 4.5);
+        doc.setFillColor(...border);
+        doc.roundedRect(rcX + 24, by, barMaxW, 5.5, 1, 1, 'F');
+        if (fw > 0) {
+          doc.setFillColor(...b.color);
+          doc.roundedRect(rcX + 24, by, fw, 5.5, 1, 1, 'F');
+        }
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...b.color);
+        doc.text(`${b.count}`, rcX + 24 + barMaxW + 2.5, by + 4.5);
+      });
+
+      /* ── Section heading ── */
+      const tblY = insY + lcH + 5;
+      doc.setFillColor(...navyL);
+      doc.roundedRect(mg, tblY, pageW - mg * 2, 8, 1, 1, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...white);
+      doc.text('METER READING DETAILS', mg + 4, tblY + 5.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...slateL);
+      doc.text(`${records.length} record(s)  ·  ${monthLabel} ${pdfYear}`, pageW - mg - 4, tblY + 5.5, { align: 'right' });
+
+      /* ── Table ── */
+      if (records.length === 0) {
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slateL);
+        doc.text(`No energy records found for ${monthLabel} ${pdfYear}.`, mg, tblY + 18);
+      } else {
+        autoTable(doc, {
+          startY: tblY + 10,
+          margin: { left: mg, right: mg },
+          head: [['#', 'Meter ID', 'Date', 'Period', 'Usage (kWh)', 'Level', 'CO\u2082 (kg)', 'Cost (Rs.)']],
+          body: records.map((r, idx) => {
+            const lvl = getLevel(r.energy_used_kwh);
+            return [
+              idx + 1,
+              r.meter_id || `Meter #${r._id?.slice(-4) || '----'}`,
+              fmtDate(r.consumption_date),
+              r.period_type ? r.period_type.charAt(0).toUpperCase() + r.period_type.slice(1) : 'N/A',
+              (r.energy_used_kwh || 0).toFixed(2),
+              lvl,
+              (r.energy_used_kwh * CO2_FACTOR).toFixed(2),
+              (r.energy_used_kwh * TARIFF_RATE).toFixed(2),
+            ];
+          }),
+          styles: {
+            fontSize: 8,
+            cellPadding: { top: 3.5, bottom: 3.5, left: 3.5, right: 3.5 },
+            textColor: dark,
+            lineColor: border,
+            lineWidth: 0.25,
+          },
+          headStyles: {
+            fillColor: navy,
+            textColor: white,
+            fontStyle: 'bold',
+            fontSize: 7.5,
+            cellPadding: { top: 4.5, bottom: 4.5, left: 3.5, right: 3.5 },
+          },
+          alternateRowStyles: { fillColor: bg },
+          columnStyles: {
+            0: { halign: 'center', fontStyle: 'bold', textColor: slate, cellWidth: 8 },
+            1: { fontStyle: 'bold' },
+            4: { halign: 'right' },
+            5: { halign: 'center', fontStyle: 'bold' },
+            6: { halign: 'right' },
+            7: { halign: 'right' },
+          },
+          didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 5) {
+              data.cell.styles.textColor = levelColor[data.cell.raw] || dark;
+            }
+          },
+          foot: [['', '', '', 'TOTALS', `${totalKwh.toFixed(2)}`, '', `${totalCo2.toFixed(2)}`, `${totalCost.toFixed(2)}`]],
+          footStyles: { fillColor: navy, textColor: white, fontStyle: 'bold', fontSize: 8 },
+          didDrawPage: (data) => {
+            drawWatermark();
+            drawFooter(data.pageNumber + 1);
+            if (data.pageNumber > 1) {
+              doc.setFillColor(...navy);
+              doc.rect(0, 0, pageW, 12, 'F');
+              doc.setFillColor(...blue);
+              doc.rect(0, 11, pageW, 1.2, 'F');
+              doc.setFontSize(8);
+              doc.setFont('helvetica', 'bold');
+              doc.setTextColor(...white);
+              doc.text('PowerSense', mg, 8);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(...slateL);
+              doc.text(`Energy Report  ·  ${monthLabel} ${pdfYear}  (continued)`, mg + 28, 8);
+            }
+          },
+        });
+      }
+
+      /* ── Disclaimer ── */
+      const afterY = records.length > 0 ? doc.lastAutoTable.finalY + 6 : tblY + 28;
+      if (afterY < pageH - 32) {
+        doc.setFillColor(...bg);
+        doc.roundedRect(mg, afterY, pageW - mg * 2, 16, 2, 2, 'F');
+        doc.setDrawColor(...border);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(mg, afterY, pageW - mg * 2, 16, 2, 2, 'S');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...slate);
+        doc.text('DISCLAIMER', mg + 4, afterY + 5.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...slateL);
+        doc.text(
+          `This report covers ${monthLabel} ${pdfYear}. CO\u2082 estimates use IPCC emission factor of ${CO2_FACTOR} kg/kWh. ` +
+          `Cost estimates are at Rs.${TARIFF_RATE}/kWh. Thresholds: Low \u226450, Moderate \u2264150, High \u2264300, Critical >300 kWh. ` +
+          'This document is confidential and intended for authorised users only.',
+          mg + 4, afterY + 11,
+          { maxWidth: pageW - mg * 2 - 8 }
+        );
+      }
+
+      drawFooter(1);
+      drawWatermark();
+
+      doc.save(`PowerSense-Energy-Report-${monthLabel}-${pdfYear}.pdf`);
+    } catch (err) {
+      console.error('PDF generation failed:', err);
+      alert('Failed to generate PDF report.');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   // ── Nav tabs ──
