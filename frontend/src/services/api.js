@@ -79,6 +79,13 @@ export const renewableService = {
   getStatistics: (params) => api.get('/renewable/stats', { params }),
   getDashboard: () => api.get('/renewable/dashboard'),
   
+  // Advanced Analytics
+  getGenerationMeters: (params) => api.get('/renewable/meters', { params }),
+  getPeakGeneration: (params) => api.get('/renewable/peak-detection', { params }),
+  getProductionAlerts: (params) => api.get('/renewable/alerts', { params }),
+  getEnergyIndependence: (params) => api.get('/renewable/independence', { params }),
+  getOptimizationRecommendations: () => api.get('/renewable/recommendations'),
+  
   // Report Generation
   generateRecordsPDF: (params) => {
     return api.get('/renewable/reports/pdf', {

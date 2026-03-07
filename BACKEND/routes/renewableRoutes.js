@@ -18,7 +18,14 @@ const {
   
   // Statistics controllers
   getStatistics,
-  getDashboardSummary
+  getDashboardSummary,
+
+  // Advanced analytics controllers
+  getGenerationMeters,
+  getPeakGeneration,
+  getProductionAlerts,
+  getEnergyIndependence,
+  getOptimizationRecommendations
 } = require('../controllers/renewableController');
 
 const {
@@ -95,6 +102,33 @@ router.get('/dashboard', protect, getDashboardSummary);
 // @desc    Get renewable energy statistics
 // @access  Private
 router.get('/stats', protect, getStatistics);
+
+// ============ ADVANCED ANALYTICS ROUTES ============
+
+// @route   GET /api/renewable/meters
+// @desc    Get generation meters monitoring data
+// @access  Private
+router.get('/meters', protect, getGenerationMeters);
+
+// @route   GET /api/renewable/peak-detection
+// @desc    Detect peak generation periods
+// @access  Private
+router.get('/peak-detection', protect, getPeakGeneration);
+
+// @route   GET /api/renewable/alerts
+// @desc    Check production thresholds and get alerts
+// @access  Private
+router.get('/alerts', protect, getProductionAlerts);
+
+// @route   GET /api/renewable/independence
+// @desc    Get energy independence analytics
+// @access  Private
+router.get('/independence', protect, getEnergyIndependence);
+
+// @route   GET /api/renewable/recommendations
+// @desc    Get smart optimization recommendations
+// @access  Private
+router.get('/recommendations', protect, getOptimizationRecommendations);
 
 // ============ REPORT ROUTES ============
 

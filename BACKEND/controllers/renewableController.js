@@ -560,6 +560,589 @@ const getDashboardSummary = async (req, res) => {
   }
 };
 
+// @desc    Get generation meters monitoring data
+// @route   GET /api/renewable/meters
+// @access  Private
+const getGenerationMeters = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { sourceId, period = '24h' } = req.query;
+
+    const query = { user: userId };
+    if (sourceId) query.source = new mongoose.Types.ObjectId(sourceId);
+
+    // Calculate date range based on period
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch (period) {
+      case '24h':
+        startDate.setHours(now.getHours() - 24);
+        break;
+      case '7d':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(now.getDate() - 30);
+        break;
+      default:
+        startDate.setHours(now.getHours() - 24);
+    }
+
+    query.recordDate = { $gte: startDate };
+
+    // Get real-time generation data
+    const meterData = await RenewableEnergyRecord.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'renewablesources',
+          localField: 'source',
+          foreignField: '_id',
+          as: 'sourceInfo'
+        }
+      },
+      { $unwind: '$sourceInfo' },
+      {
+        $group: {
+          _id: '$source',
+          sourceName: { $first: '$sourceInfo.sourceName' },
+          sourceType: { $first: '$sourceInfo.sourceType' },
+          capacity: { $first: '$sourceInfo.capacity' },
+          capacityUnit: { $first: '$sourceInfo.capacityUnit' },
+          currentGeneration: { $last: '$energyGenerated' },
+          totalGeneration: { $sum: '$energyGenerated' },
+          averageGeneration: { $avg: '$energyGenerated' },
+          peakGeneration: { $max: '$energyGenerated' },
+          currentEfficiency: { $last: '$efficiency' },
+          averageEfficiency: { $avg: '$efficiency' },
+          operatingTime: { $sum: '$operatingHours' },
+          lastUpdate: { $max: '$recordDate' },
+          recordCount: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          sourceName: 1,
+          sourceType: 1,
+          capacity: 1,
+          capacityUnit: 1,
+          currentGeneration: 1,
+          totalGeneration: 1,
+          averageGeneration: 1,
+          peakGeneration: 1,
+          currentEfficiency: 1,
+          averageEfficiency: 1,
+          operatingTime: 1,
+          lastUpdate: 1,
+          recordCount: 1,
+          utilizationRate: {
+            $multiply: [
+              { $divide: ['$averageGeneration', '$capacity'] },
+              100
+            ]
+          }
+        }
+      },
+      { $sort: { totalGeneration: -1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      period,
+      data: meterData
+    });
+  } catch (error) {
+    console.error('Error fetching generation meters:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching generation meters data'
+    });
+  }
+};
+
+// @desc    Detect peak generation periods
+// @route   GET /api/renewable/peak-detection
+// @access  Private
+const getPeakGeneration = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { sourceId, days = 30 } = req.query;
+
+    const query = { user: userId };
+    if (sourceId) query.source = new mongoose.Types.ObjectId(sourceId);
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(days));
+    query.recordDate = { $gte: startDate };
+
+    // Analyze peak generation by hour of day
+    const peakByHour = await RenewableEnergyRecord.aggregate([
+      { $match: query },
+      {
+        $project: {
+          hour: { $hour: '$recordDate' },
+          energyGenerated: 1,
+          peakPower: 1,
+          weatherCondition: 1,
+          efficiency: 1,
+          source: 1
+        }
+      },
+      {
+        $group: {
+          _id: '$hour',
+          avgGeneration: { $avg: '$energyGenerated' },
+          maxGeneration: { $max: '$energyGenerated' },
+          avgPeakPower: { $avg: '$peakPower' },
+          avgEfficiency: { $avg: '$efficiency' },
+          recordCount: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Analyze peak by weather condition
+    const peakByWeather = await RenewableEnergyRecord.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: '$weatherCondition',
+          avgGeneration: { $avg: '$energyGenerated' },
+          maxGeneration: { $max: '$energyGenerated' },
+          avgEfficiency: { $avg: '$efficiency' },
+          recordCount: { $sum: 1 }
+        }
+      },
+      { $sort: { avgGeneration: -1 } }
+    ]);
+
+    // Find top peak generation records
+    const topPeakRecords = await RenewableEnergyRecord.find(query)
+      .populate('source', 'sourceName sourceType')
+      .sort('-energyGenerated')
+      .limit(10)
+      .select('recordDate energyGenerated peakPower efficiency weatherCondition temperature source');
+
+    // Calculate overall peak statistics
+    const peakStats = await RenewableEnergyRecord.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: null,
+          overallPeak: { $max: '$energyGenerated' },
+          avgPeak: { $avg: '$peakPower' },
+          peakEfficiency: { $max: '$efficiency' },
+          totalRecords: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        peakByHour,
+        peakByWeather,
+        topPeakRecords,
+        statistics: peakStats[0] || {}
+      }
+    });
+  } catch (error) {
+    console.error('Error detecting peak generation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error analyzing peak generation'
+    });
+  }
+};
+
+// @desc    Check production thresholds and get alerts
+// @route   GET /api/renewable/alerts
+// @access  Private
+const getProductionAlerts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { thresholdPercentage = 50 } = req.query;
+
+    // Get all active sources with their expected production
+    const sources = await RenewableSource.find({ 
+      user: userId, 
+      status: 'Active' 
+    });
+
+    const alerts = [];
+    const now = new Date();
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    for (const source of sources) {
+      // Get recent records for this source
+      const recentRecords = await RenewableEnergyRecord.find({
+        user: userId,
+        source: source._id,
+        recordDate: { $gte: last24Hours }
+      });
+
+      if (recentRecords.length === 0) {
+        alerts.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          alertType: 'no_data',
+          severity: 'warning',
+          message: 'No production data in last 24 hours',
+          timestamp: now
+        });
+        continue;
+      }
+
+      const totalGeneration = recentRecords.reduce((sum, r) => sum + r.energyGenerated, 0);
+      const avgGeneration = totalGeneration / recentRecords.length;
+      const expectedDaily = source.capacity; // Simplified, could be more complex
+      const threshold = (expectedDaily * thresholdPercentage) / 100;
+
+      if (avgGeneration < threshold) {
+        alerts.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          alertType: 'low_production',
+          severity: avgGeneration < threshold * 0.5 ? 'critical' : 'warning',
+          message: `Production ${((avgGeneration / expectedDaily) * 100).toFixed(1)}% of capacity`,
+          currentProduction: avgGeneration.toFixed(2),
+          expectedProduction: expectedDaily,
+          threshold: threshold.toFixed(2),
+          timestamp: now
+        });
+      }
+
+      // Check for efficiency drops
+      const avgEfficiency = recentRecords.reduce((sum, r) => sum + (r.efficiency || 0), 0) / recentRecords.length;
+      if (avgEfficiency < 70) {
+        alerts.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          alertType: 'low_efficiency',
+          severity: avgEfficiency < 50 ? 'critical' : 'warning',
+          message: `Low efficiency detected: ${avgEfficiency.toFixed(1)}%`,
+          currentEfficiency: avgEfficiency.toFixed(1),
+          timestamp: now
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      alertCount: alerts.length,
+      data: alerts
+    });
+  } catch (error) {
+    console.error('Error checking production alerts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking production alerts'
+    });
+  }
+};
+
+// @desc    Get energy independence analytics
+// @route   GET /api/renewable/independence
+// @access  Private
+const getEnergyIndependence = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { period = '30d' } = req.query;
+
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch (period) {
+      case '7d':
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(now.getDate() - 90);
+        break;
+      case '1y':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      default:
+        startDate.setDate(now.getDate() - 30);
+    }
+
+    // Get renewable energy generated
+    const renewableProduction = await RenewableEnergyRecord.aggregate([
+      {
+        $match: {
+          user: userId,
+          recordDate: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalGenerated: { $sum: '$energyGenerated' },
+          totalCostSavings: { $sum: '$costSavings' },
+          totalCarbonOffset: { $sum: '$carbonOffset' },
+          avgEfficiency: { $avg: '$efficiency' }
+        }
+      }
+    ]);
+
+    // Get energy consumption data (if available)
+    const EnergyConsumption = mongoose.model('EnergyConsumption');
+    const energyConsumption = await EnergyConsumption.aggregate([
+      {
+        $match: {
+          user: userId,
+          consumptionDate: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalConsumed: { $sum: '$consumption' }
+        }
+      }
+    ]);
+
+    const totalGenerated = renewableProduction[0]?.totalGenerated || 0;
+    const totalConsumed = energyConsumption[0]?.totalConsumed || 0;
+    
+    // Calculate independence metrics
+    const selfSufficiencyRatio = totalConsumed > 0 
+      ? (totalGenerated / totalConsumed) * 100 
+      : 0;
+    
+    const gridDependency = 100 - Math.min(selfSufficiencyRatio, 100);
+    
+    const excessEnergy = Math.max(0, totalGenerated - totalConsumed);
+    const energyDeficit = Math.max(0, totalConsumed - totalGenerated);
+
+    // Daily breakdown
+    const dailyAnalysis = await RenewableEnergyRecord.aggregate([
+      {
+        $match: {
+          user: userId,
+          recordDate: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$recordDate' } },
+          generated: { $sum: '$energyGenerated' }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 90 }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      period,
+      data: {
+        totalGenerated: parseFloat(totalGenerated.toFixed(2)),
+        totalConsumed: parseFloat(totalConsumed.toFixed(2)),
+        selfSufficiencyRatio: parseFloat(selfSufficiencyRatio.toFixed(2)),
+        gridDependency: parseFloat(gridDependency.toFixed(2)),
+        excessEnergy: parseFloat(excessEnergy.toFixed(2)),
+        energyDeficit: parseFloat(energyDeficit.toFixed(2)),
+        costSavings: renewableProduction[0]?.totalCostSavings || 0,
+        carbonOffset: renewableProduction[0]?.totalCarbonOffset || 0,
+        averageEfficiency: renewableProduction[0]?.avgEfficiency || 0,
+        dailyAnalysis,
+        independenceLevel: selfSufficiencyRatio >= 100 ? 'fully_independent' :
+                          selfSufficiencyRatio >= 75 ? 'highly_independent' :
+                          selfSufficiencyRatio >= 50 ? 'moderately_independent' :
+                          selfSufficiencyRatio >= 25 ? 'partially_independent' : 'grid_dependent'
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating energy independence:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error calculating energy independence'
+    });
+  }
+};
+
+// @desc    Get smart optimization recommendations
+// @route   GET /api/renewable/recommendations
+// @access  Private
+const getOptimizationRecommendations = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const recommendations = [];
+
+    // Get all sources and their recent performance
+    const sources = await RenewableSource.find({ user: userId });
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    for (const source of sources) {
+      const records = await RenewableEnergyRecord.find({
+        user: userId,
+        source: source._id,
+        recordDate: { $gte: thirtyDaysAgo }
+      });
+
+      if (records.length === 0) continue;
+
+      const avgEfficiency = records.reduce((sum, r) => sum + (r.efficiency || 0), 0) / records.length;
+      const totalGeneration = records.reduce((sum, r) => sum + r.energyGenerated, 0);
+      const avgGeneration = totalGeneration / records.length;
+
+      // Recommendation 1: Low Efficiency
+      if (avgEfficiency < 75) {
+        recommendations.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          category: 'efficiency',
+          priority: avgEfficiency < 50 ? 'high' : 'medium',
+          title: 'Improve System Efficiency',
+          description: `Current efficiency is ${avgEfficiency.toFixed(1)}%. Consider maintenance or system optimization.`,
+          suggestions: [
+            'Schedule professional maintenance',
+            'Clean panels/turbines',
+            'Check for shading or obstructions',
+            'Verify inverter performance'
+          ],
+          potentialImprovement: `Up to ${(20 - (100 - avgEfficiency)).toFixed(0)}% efficiency gain`,
+          estimatedImpact: 'high'
+        });
+      }
+
+      // Recommendation 2: Underutilization
+      const utilizationRate = (avgGeneration / source.capacity) * 100;
+      if (utilizationRate < 50) {
+        recommendations.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          category: 'utilization',
+          priority: 'medium',
+          title: 'Increase System Utilization',
+          description: `System is operating at ${utilizationRate.toFixed(1)}% of capacity.`,
+          suggestions: source.sourceType === 'Solar' ? [
+            'Optimize panel angle for seasonal changes',
+            'Remove shading obstacles',
+            'Consider adding more panels',
+            'Check for panel degradation'
+          ] : [
+            'Review operational schedule',
+            'Check for mechanical issues',
+            'Optimize based on weather patterns'
+          ],
+          potentialImprovement: `${(100 - utilizationRate).toFixed(0)}% capacity available`,
+          estimatedImpact: 'medium'
+        });
+      }
+
+      // Recommendation 3: Weather-based optimization
+      const weatherPerformance = {};
+      records.forEach(r => {
+        if (!weatherPerformance[r.weatherCondition]) {
+          weatherPerformance[r.weatherCondition] = { total: 0, count: 0 };
+        }
+        weatherPerformance[r.weatherCondition].total += r.energyGenerated;
+        weatherPerformance[r.weatherCondition].count += 1;
+      });
+
+      const bestWeather = Object.entries(weatherPerformance)
+        .map(([weather, data]) => ({ weather, avg: data.total / data.count }))
+        .sort((a, b) => b.avg - a.avg)[0];
+
+      if (bestWeather && source.sourceType === 'Solar') {
+        recommendations.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          category: 'optimization',
+          priority: 'low',
+          title: 'Weather-Based Optimization',
+          description: `Best performance during ${bestWeather.weather} conditions.`,
+          suggestions: [
+            'Monitor weather forecasts for peak production days',
+            'Schedule high-energy tasks during optimal conditions',
+            'Consider battery storage for peak production periods'
+          ],
+          potentialImprovement: 'Optimize energy usage timing',
+          estimatedImpact: 'medium'
+        });
+      }
+
+      // Recommendation 4: Maintenance Check
+      const daysSinceInstall = Math.floor(
+        (Date.now() - source.installationDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      
+      const maintenanceRecords = records.filter(r => r.maintenancePerformed);
+      const daysSinceLastMaintenance = maintenanceRecords.length > 0
+        ? Math.floor((Date.now() - maintenanceRecords[0].recordDate.getTime()) / (1000 * 60 * 60 * 24))
+        : daysSinceInstall;
+
+      if (daysSinceLastMaintenance > 180) {
+        recommendations.push({
+          sourceId: source._id,
+          sourceName: source.sourceName,
+          sourceType: source.sourceType,
+          category: 'maintenance',
+          priority: daysSinceLastMaintenance > 365 ? 'high' : 'medium',
+          title: 'Schedule Maintenance',
+          description: `Last maintenance was ${daysSinceLastMaintenance} days ago.`,
+          suggestions: [
+            'Schedule professional inspection',
+            'Check all electrical connections',
+            'Clean and inspect components',
+            'Update firmware/software if applicable'
+          ],
+          potentialImprovement: 'Prevent performance degradation',
+          estimatedImpact: 'high'
+        });
+      }
+    }
+
+    // General recommendations
+    const totalSources = sources.length;
+    if (totalSources === 1) {
+      recommendations.push({
+        category: 'expansion',
+        priority: 'low',
+        title: 'Diversify Energy Sources',
+        description: 'Consider adding different types of renewable sources for better reliability.',
+        suggestions: [
+          'Add complementary renewable sources (e.g., wind + solar)',
+          'Increase energy independence',
+          'Reduce weather-dependent variability'
+        ],
+        potentialImprovement: 'Increased energy security',
+        estimatedImpact: 'medium'
+      });
+    }
+
+    // Sort by priority
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    recommendations.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+
+    res.status(200).json({
+      success: true,
+      count: recommendations.length,
+      data: recommendations
+    });
+  } catch (error) {
+    console.error('Error generating recommendations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating optimization recommendations'
+    });
+  }
+};
+
 module.exports = {
   // Source controllers
   createSource,
@@ -577,5 +1160,12 @@ module.exports = {
   
   // Statistics controllers
   getStatistics,
-  getDashboardSummary
+  getDashboardSummary,
+
+  // Advanced analytics controllers
+  getGenerationMeters,
+  getPeakGeneration,
+  getProductionAlerts,
+  getEnergyIndependence,
+  getOptimizationRecommendations
 };

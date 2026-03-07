@@ -11,6 +11,7 @@ import EditBill from './components/energyReports/EditBill';
 import RenewableDashboard from './components/Renewable/RenewableDashboard';
 import RenewableSource from './components/Renewable/RenewableSource';
 import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
+import RenewableAnalytics from './components/Renewable/RenewableAnalytics';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -69,6 +70,13 @@ function App() {
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
                   <RenewableDashboard />
+                </div>
+              </PrivateRoute>
+            } />
+            <Route path="/renewable/analytics" element={
+              <PrivateRoute>
+                <div className="container mx-auto px-4 py-8">
+                  <RenewableAnalytics />
                 </div>
               </PrivateRoute>
             } />
