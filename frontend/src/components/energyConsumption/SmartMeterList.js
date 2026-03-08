@@ -5,9 +5,11 @@ import CreateConsumptionModal from './CreateConsumptionModal';
 import EditConsumptionModal from './EditConsumptionModal';
 import { Column, Pie } from '@ant-design/charts';
 import './SmartMeterAnimations.css';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const ConsumptionList = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -326,6 +328,7 @@ const ConsumptionList = () => {
     xAxis: { label: { autoRotate: true, style: { fontSize: 11 } } },
     tooltip: { formatter: datum => ({ name: 'Energy', value: `${datum.value} kWh` }) },
     height: 220,
+    theme: isDarkMode ? 'dark' : 'default',
   };
 
   const pieConfig = {
@@ -342,6 +345,7 @@ const ConsumptionList = () => {
     },
     legend: { position: 'bottom', offsetY: 4 },
     height: 220,
+    theme: isDarkMode ? 'dark' : 'default',
   };
 
   return (

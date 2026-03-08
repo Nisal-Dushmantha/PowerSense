@@ -612,18 +612,6 @@ const EnergyAnalytics = () => {
                     <StatCard icon="💰" label="Peak Cost" value={`Rs. ${(peakData.peak * TARIFF_RATE).toFixed(0)}`} color="purple" />
                   </div>
 
-                  {/* Bar Chart */}
-                  <div className="mb-6">
-                    <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">Top Readings (kWh)</h3>
-                    <BarChart
-                      data={peakData.records.map(r => ({
-                        label: new Date(r.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-                        value: r.energy_used_kwh,
-                        color: r.energy_used_kwh === peakData.peak ? 'linear-gradient(to top, #dc2626, #f87171)' : 'linear-gradient(to top, #16a34a, #4ade80)'
-                      }))}
-                    />
-                  </div>
-
                   {/* Table */}
                   <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                     <table className="min-w-full text-sm">
@@ -696,7 +684,7 @@ const EnergyAnalytics = () => {
                   )}
                 </div>
                 {thresholdMsg && (
-                  <p className={`mt-2 text-xs font-medium ${thresholdMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`mt-2 text-xs font-medium ${thresholdMsg.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {thresholdMsg.text}
                   </p>
                 )}
@@ -704,7 +692,7 @@ const EnergyAnalytics = () => {
 
               {alertData && (
                 alertData.threshold == null ? (
-                  <div className="text-center py-10 text-gray-400">
+                  <div className="text-center py-10 text-gray-400 dark:text-gray-500">
                     <div className="text-5xl mb-3">🔔</div>
                     <p className="font-medium">No threshold set yet.</p>
                     <p className="text-sm">Set a threshold above to start receiving alerts.</p>
@@ -894,8 +882,8 @@ const EnergyAnalytics = () => {
                       <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-4">Current Period</h3>
                       <div className="space-y-3">
                         <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Energy</span><span className="font-bold text-blue-700 dark:text-blue-300">{compData.current.kwh} kWh</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600">{compData.current.co2_kg} kg</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Est. Cost</span><span className="font-bold text-purple-600">Rs. {compData.current.cost}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600 dark:text-green-400">{compData.current.co2_kg} kg</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Est. Cost</span><span className="font-bold text-purple-600 dark:text-purple-400">Rs. {compData.current.cost}</span></div>
                         <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Readings</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.current.count}</span></div>
                       </div>
                     </div>
@@ -904,8 +892,8 @@ const EnergyAnalytics = () => {
                       <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">Previous Period</h3>
                       <div className="space-y-3">
                         <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Energy</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.previous.kwh} kWh</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600">{compData.previous.co2_kg} kg</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Est. Cost</span><span className="font-bold text-purple-600">Rs. {compData.previous.cost}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600 dark:text-green-400">{compData.previous.co2_kg} kg</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Est. Cost</span><span className="font-bold text-purple-600 dark:text-purple-400">Rs. {compData.previous.cost}</span></div>
                         <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Readings</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.previous.count}</span></div>
                       </div>
                     </div>
@@ -916,7 +904,7 @@ const EnergyAnalytics = () => {
                     compData.change_kwh > 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
                   }`}>
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Change</p>
-                    <p className={`text-3xl font-bold ${compData.change_kwh > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <p className={`text-3xl font-bold ${compData.change_kwh > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                       {compData.change_kwh > 0 ? '+' : ''}{compData.change_kwh} kWh
                     </p>
                     {compData.change_pct !== null && (
