@@ -5,11 +5,9 @@ import CreateConsumptionModal from './CreateConsumptionModal';
 import EditConsumptionModal from './EditConsumptionModal';
 import { Column, Pie } from '@ant-design/charts';
 import './SmartMeterAnimations.css';
-import { useTheme } from '../../contexts/ThemeContext';
 
 const ConsumptionList = () => {
   const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -328,7 +326,6 @@ const ConsumptionList = () => {
     xAxis: { label: { autoRotate: true, style: { fontSize: 11 } } },
     tooltip: { formatter: datum => ({ name: 'Energy', value: `${datum.value} kWh` }) },
     height: 220,
-    theme: isDarkMode ? 'dark' : 'default',
   };
 
   const pieConfig = {
@@ -345,7 +342,6 @@ const ConsumptionList = () => {
     },
     legend: { position: 'bottom', offsetY: 4 },
     height: 220,
-    theme: isDarkMode ? 'dark' : 'default',
   };
 
   return (
@@ -583,7 +579,9 @@ const ConsumptionList = () => {
                         </span>
                       </div>
                       {columnChartData.length > 0 ? (
-                        <Column {...columnConfig} />
+                        <div className="bg-white rounded-lg overflow-hidden">
+                          <Column {...columnConfig} />
+                        </div>
                       ) : (
                         <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">No data</div>
                       )}
@@ -596,7 +594,9 @@ const ConsumptionList = () => {
                         <p className="text-xs text-gray-400 dark:text-gray-500">Low / Moderate / High / Critical</p>
                       </div>
                       {pieChartData.length > 0 ? (
-                        <Pie {...pieConfig} />
+                        <div className="bg-white rounded-lg overflow-hidden">
+                          <Pie {...pieConfig} />
+                        </div>
                       ) : (
                         <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">No data</div>
                       )}
