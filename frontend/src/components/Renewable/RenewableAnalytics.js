@@ -101,57 +101,6 @@ const RenewableAnalytics = () => {
           {activeTab === 'recommendations' && <SmartRecommendations />}
         </div>
       </div>
-
-      {/* Feature Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-          <h3 className="text-lg font-bold text-gray-800 mb-3">📚 About These Features</h3>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
-              <span className="text-green-600 mt-1">✓</span>
-              <span><strong>Generation Meters:</strong> Real-time monitoring of all your renewable energy sources with utilization tracking</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-green-600 mt-1">✓</span>
-              <span><strong>Peak Detection:</strong> Analyze peak generation periods and receive production alerts</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-green-600 mt-1">✓</span>
-              <span><strong>Energy Independence:</strong> Track your self-sufficiency ratio and grid dependency</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-green-600 mt-1">✓</span>
-              <span><strong>Smart Recommendations:</strong> AI-powered insights to optimize your renewable energy systems</span>
-            </li>
-          </ul>
-        </div>
-
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
-          <h3 className="text-lg font-bold mb-3">🎯 Maximize Your Impact</h3>
-          <p className="text-sm text-blue-100 mb-4">
-            Use these analytics tools to optimize your renewable energy production, reduce grid dependency, 
-            and maximize your environmental and financial benefits.
-          </p>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🌱</span>
-              <span>Reduce carbon emissions</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">💰</span>
-              <span>Lower energy costs</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">⚡</span>
-              <span>Increase energy independence</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">📈</span>
-              <span>Optimize system performance</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
