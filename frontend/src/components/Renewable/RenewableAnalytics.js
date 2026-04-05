@@ -5,6 +5,7 @@ import PeakDetectionAlerts from './PeakDetectionAlerts';
 import EnergyIndependence from './EnergyIndependence';
 import SmartRecommendations from './SmartRecommendations';
 import GenerationForecast from './GenerationForecast';
+import MaintenancePlanner from './MaintenancePlanner';
 
 const RenewableAnalytics = () => {
   const [activeTab, setActiveTab] = useState('meters');
@@ -13,6 +14,7 @@ const RenewableAnalytics = () => {
     { id: 'meters', name: '⚡ Generation Meters', icon: '⚡' },
     { id: 'forecast', name: '🔮 Forecast', icon: '🔮' },
     { id: 'peaks', name: '📈 Peak & Alerts', icon: '📈' },
+    { id: 'maintenance', name: '🛠️ Maintenance Planner', icon: '🛠️' },
     { id: 'independence', name: '🌍 Energy Independence', icon: '🌍' },
     { id: 'recommendations', name: '🤖 Smart Recommendations', icon: '🤖' }
   ];
@@ -100,6 +102,7 @@ const RenewableAnalytics = () => {
           {activeTab === 'meters' && <GenerationMeters />}
           {activeTab === 'forecast' && <GenerationForecast />}
           {activeTab === 'peaks' && <PeakDetectionAlerts />}
+          {activeTab === 'maintenance' && <MaintenancePlanner />}
           {activeTab === 'independence' && <EnergyIndependence />}
           {activeTab === 'recommendations' && <SmartRecommendations />}
         </div>

@@ -1,6 +1,8 @@
 const RenewableSource = require('../models/RenewableSource');
 const RenewableEnergyRecord = require('../models/RenewableEnergyRecord');
+const RenewableMaintenanceTask = require('../models/RenewableMaintenanceTask');
 const mongoose = require('mongoose');
+const { syncMaintenanceTaskStatuses } = require('../services/maintenanceScheduler');
 
 const getForecastHorizonDays = (period) => {
   const periodMap = {
@@ -46,6 +48,12 @@ const calculateStandardDeviation = (values) => {
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
   const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
   return Math.sqrt(variance);
+};
+
+const getStartOfToday = () => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
 };
 
 // ============ RENEWABLE SOURCE CONTROLLERS ============
@@ -1395,6 +1403,244 @@ const getForecastAccuracy = async (req, res) => {
   }
 };
 
+// ============ MAINTENANCE TASK CONTROLLERS ============
+
+// @desc    Create a maintenance task
+// @route   POST /api/renewable/maintenance
+// @access  Private
+const createMaintenanceTask = async (req, res) => {
+  try {
+    const {
+      sourceId,
+      scheduledDate,
+      completedDate,
+      status,
+      taskType,
+      technician,
+      notes,
+      cost,
+      reminderSent
+    } = req.body;
+
+    const source = await RenewableSource.findOne({ _id: sourceId, user: req.user._id });
+    if (!source) {
+      return res.status(404).json({
+        success: false,
+        message: 'Renewable source not found or does not belong to you'
+      });
+    }
+
+    const maintenanceTask = await RenewableMaintenanceTask.create({
+      user: req.user._id,
+      sourceId,
+      scheduledDate,
+      completedDate: completedDate || null,
+      status,
+      taskType,
+      technician,
+      notes,
+      cost,
+      reminderSent
+    });
+
+    await maintenanceTask.populate('sourceId', 'sourceName sourceType');
+
+    res.status(201).json({
+      success: true,
+      message: 'Maintenance task created successfully',
+      data: maintenanceTask
+    });
+  } catch (error) {
+    console.error('Error creating maintenance task:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error creating maintenance task'
+    });
+  }
+};
+
+// @desc    Get maintenance tasks with filters
+// @route   GET /api/renewable/maintenance
+// @access  Private
+const getMaintenanceTasks = async (req, res) => {
+  try {
+    await syncMaintenanceTaskStatuses();
+
+    const { status, sourceId, from, to } = req.query;
+    const query = { user: req.user._id };
+
+    if (status) query.status = status;
+    if (sourceId && mongoose.Types.ObjectId.isValid(sourceId)) {
+      query.sourceId = new mongoose.Types.ObjectId(sourceId);
+    }
+
+    if (from || to) {
+      query.scheduledDate = {};
+      if (from && !Number.isNaN(Date.parse(from))) {
+        query.scheduledDate.$gte = new Date(from);
+      }
+      if (to && !Number.isNaN(Date.parse(to))) {
+        const toDate = new Date(to);
+        toDate.setHours(23, 59, 59, 999);
+        query.scheduledDate.$lte = toDate;
+      }
+    }
+
+    const tasks = await RenewableMaintenanceTask.find(query)
+      .populate('sourceId', 'sourceName sourceType')
+      .sort({ status: 1, scheduledDate: 1, createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: tasks.length,
+      data: tasks
+    });
+  } catch (error) {
+    console.error('Error fetching maintenance tasks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching maintenance tasks'
+    });
+  }
+};
+
+// @desc    Update maintenance task
+// @route   PUT /api/renewable/maintenance/:id
+// @access  Private
+const updateMaintenanceTask = async (req, res) => {
+  try {
+    if (req.body.sourceId) {
+      const source = await RenewableSource.findOne({ _id: req.body.sourceId, user: req.user._id });
+      if (!source) {
+        return res.status(404).json({
+          success: false,
+          message: 'Renewable source not found or does not belong to you'
+        });
+      }
+    }
+
+    const task = await RenewableMaintenanceTask.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },
+      req.body,
+      { new: true, runValidators: true }
+    ).populate('sourceId', 'sourceName sourceType');
+
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: 'Maintenance task not found'
+      });
+    }
+
+    await syncMaintenanceTaskStatuses();
+
+    res.status(200).json({
+      success: true,
+      message: 'Maintenance task updated successfully',
+      data: task
+    });
+  } catch (error) {
+    console.error('Error updating maintenance task:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Error updating maintenance task'
+    });
+  }
+};
+
+// @desc    Delete maintenance task
+// @route   DELETE /api/renewable/maintenance/:id
+// @access  Private
+const deleteMaintenanceTask = async (req, res) => {
+  try {
+    const task = await RenewableMaintenanceTask.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        message: 'Maintenance task not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Maintenance task deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting maintenance task:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting maintenance task'
+    });
+  }
+};
+
+// @desc    Get maintenance task summary
+// @route   GET /api/renewable/maintenance/summary
+// @access  Private
+const getMaintenanceSummary = async (req, res) => {
+  try {
+    await syncMaintenanceTaskStatuses();
+
+    const userId = req.user._id;
+    const startOfToday = getStartOfToday();
+    const endOfWeek = new Date(startOfToday);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const monthStart = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), 1);
+    const monthEnd = new Date(startOfToday.getFullYear(), startOfToday.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const [totalScheduled, overdue, dueThisWeek, completedThisMonth, nextTask] = await Promise.all([
+      RenewableMaintenanceTask.countDocuments({ user: userId, status: 'scheduled' }),
+      RenewableMaintenanceTask.countDocuments({ user: userId, status: 'overdue' }),
+      RenewableMaintenanceTask.countDocuments({
+        user: userId,
+        status: { $in: ['scheduled', 'overdue'] },
+        scheduledDate: { $gte: startOfToday, $lte: endOfWeek }
+      }),
+      RenewableMaintenanceTask.countDocuments({
+        user: userId,
+        status: 'completed',
+        completedDate: { $gte: monthStart, $lte: monthEnd }
+      }),
+      RenewableMaintenanceTask.findOne({
+        user: userId,
+        status: { $in: ['scheduled', 'overdue'] },
+        scheduledDate: { $gte: startOfToday }
+      })
+        .populate('sourceId', 'sourceName')
+        .sort({ scheduledDate: 1 })
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalScheduled,
+        overdue,
+        dueThisWeek,
+        completedThisMonth,
+        nextTask: nextTask
+          ? {
+              sourceName: nextTask.sourceId?.sourceName || 'Unknown Source',
+              scheduledDate: nextTask.scheduledDate,
+              taskType: nextTask.taskType
+            }
+          : null
+      }
+    });
+  } catch (error) {
+    console.error('Error generating maintenance summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating maintenance summary'
+    });
+  }
+};
+
 module.exports = {
   // Source controllers
   createSource,
@@ -1421,5 +1667,12 @@ module.exports = {
   getEnergyIndependence,
   getOptimizationRecommendations,
   getGenerationForecast,
-  getForecastAccuracy
+  getForecastAccuracy,
+
+  // Maintenance controllers
+  createMaintenanceTask,
+  getMaintenanceTasks,
+  updateMaintenanceTask,
+  deleteMaintenanceTask,
+  getMaintenanceSummary
 };

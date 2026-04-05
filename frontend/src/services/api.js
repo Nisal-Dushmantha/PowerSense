@@ -87,6 +87,13 @@ export const renewableService = {
   getOptimizationRecommendations: () => api.get('/renewable/recommendations'),
   getGenerationForecast: (params) => api.get('/renewable/forecast', { params }),
   getForecastAccuracy: (params) => api.get('/renewable/forecast/accuracy', { params }),
+
+  // Maintenance Planner
+  createMaintenanceTask: (taskData) => api.post('/renewable/maintenance', taskData),
+  getMaintenanceTasks: (params) => api.get('/renewable/maintenance', { params }),
+  updateMaintenanceTask: (id, taskData) => api.put(`/renewable/maintenance/${id}`, taskData),
+  deleteMaintenanceTask: (id) => api.delete(`/renewable/maintenance/${id}`),
+  getMaintenanceSummary: () => api.get('/renewable/maintenance/summary'),
   
   // Report Generation
   generateRecordsPDF: (params) => {

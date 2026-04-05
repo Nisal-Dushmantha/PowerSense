@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/app');
+const { startMaintenanceStatusScheduler } = require('./services/maintenanceScheduler');
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +21,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Connect to database
 connectDB();
+startMaintenanceStatusScheduler();
 
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');

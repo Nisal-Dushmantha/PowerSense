@@ -27,7 +27,12 @@ const {
   getEnergyIndependence,
   getOptimizationRecommendations,
   getGenerationForecast,
-  getForecastAccuracy
+  getForecastAccuracy,
+  createMaintenanceTask,
+  getMaintenanceTasks,
+  updateMaintenanceTask,
+  deleteMaintenanceTask,
+  getMaintenanceSummary
 } = require('../controllers/renewableController');
 
 const {
@@ -141,6 +146,33 @@ router.get('/forecast', protect, getGenerationForecast);
 // @desc    Get forecast model accuracy metrics
 // @access  Private
 router.get('/forecast/accuracy', protect, getForecastAccuracy);
+
+// ============ MAINTENANCE ROUTES ============
+
+// @route   POST /api/renewable/maintenance
+// @desc    Create a maintenance task
+// @access  Private
+router.post('/maintenance', protect, createMaintenanceTask);
+
+// @route   GET /api/renewable/maintenance
+// @desc    Get maintenance tasks with filters
+// @access  Private
+router.get('/maintenance', protect, getMaintenanceTasks);
+
+// @route   GET /api/renewable/maintenance/summary
+// @desc    Get maintenance summary counters
+// @access  Private
+router.get('/maintenance/summary', protect, getMaintenanceSummary);
+
+// @route   PUT /api/renewable/maintenance/:id
+// @desc    Update maintenance task
+// @access  Private
+router.put('/maintenance/:id', protect, updateMaintenanceTask);
+
+// @route   DELETE /api/renewable/maintenance/:id
+// @desc    Delete maintenance task
+// @access  Private
+router.delete('/maintenance/:id', protect, deleteMaintenanceTask);
 
 // ============ REPORT ROUTES ============
 
