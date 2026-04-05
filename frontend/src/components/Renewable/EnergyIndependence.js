@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { renewableService } from '../../services/api';
 
 const EnergyIndependence = () => {
@@ -7,11 +7,7 @@ const EnergyIndependence = () => {
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('30d');
 
-  useEffect(() => {
-    fetchIndependenceData();
-  }, [period]);
-
-  const fetchIndependenceData = async () => {
+  const fetchIndependenceData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await renewableService.getEnergyIndependence({ period });
@@ -23,7 +19,11 @@ const EnergyIndependence = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    fetchIndependenceData();
+  }, [fetchIndependenceData]);
 
   const getIndependenceColor = (level) => {
     switch (level) {

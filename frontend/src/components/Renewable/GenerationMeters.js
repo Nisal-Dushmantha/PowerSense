@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { renewableService } from '../../services/api';
 
 const GenerationMeters = () => {
@@ -6,17 +6,11 @@ const GenerationMeters = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState('24h');
-  const [selectedSource, setSelectedSource] = useState('');
 
-  useEffect(() => {
-    fetchMetersData();
-  }, [period, selectedSource]);
-
-  const fetchMetersData = async () => {
+  const fetchMetersData = useCallback(async () => {
     try {
       setLoading(true);
       const params = { period };
-      if (selectedSource) params.sourceId = selectedSource;
       
       const response = await renewableService.getGenerationMeters(params);
       setMetersData(response.data.data);
@@ -27,7 +21,11 @@ const GenerationMeters = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    fetchMetersData();
+  }, [fetchMetersData]);
 
   const getStatusColor = (utilizationRate) => {
     if (utilizationRate >= 80) return 'bg-green-500';

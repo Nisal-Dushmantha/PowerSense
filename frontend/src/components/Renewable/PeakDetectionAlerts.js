@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { renewableService } from '../../services/api';
 
 const PeakDetectionAlerts = () => {
@@ -10,12 +10,7 @@ const PeakDetectionAlerts = () => {
   const [threshold, setThreshold] = useState(50);
   const [activeTab, setActiveTab] = useState('peaks');
 
-  useEffect(() => {
-    fetchPeakData();
-    fetchAlerts();
-  }, [days, threshold]);
-
-  const fetchPeakData = async () => {
+  const fetchPeakData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await renewableService.getPeakGeneration({ days });
@@ -27,16 +22,21 @@ const PeakDetectionAlerts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [days]);
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
       const response = await renewableService.getProductionAlerts({ thresholdPercentage: threshold });
       setAlerts(response.data.data);
     } catch (err) {
       console.error('Error fetching alerts:', err);
     }
-  };
+  }, [threshold]);
+
+  useEffect(() => {
+    fetchPeakData();
+    fetchAlerts();
+  }, [fetchPeakData, fetchAlerts]);
 
   const getSeverityColor = (severity) => {
     switch (severity) {

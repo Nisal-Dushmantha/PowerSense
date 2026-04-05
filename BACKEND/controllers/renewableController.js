@@ -2,6 +2,52 @@ const RenewableSource = require('../models/RenewableSource');
 const RenewableEnergyRecord = require('../models/RenewableEnergyRecord');
 const mongoose = require('mongoose');
 
+const getForecastHorizonDays = (period) => {
+  const periodMap = {
+    '7d': 7,
+    '30d': 30
+  };
+
+  return periodMap[period] || 7;
+};
+
+const calculateMovingAverageSeries = (values, windowSize) => {
+  const result = [];
+  for (let index = 0; index < values.length; index += 1) {
+    const start = Math.max(0, index - windowSize + 1);
+    const window = values.slice(start, index + 1);
+    const avg = window.reduce((sum, value) => sum + value, 0) / window.length;
+    result.push(avg);
+  }
+  return result;
+};
+
+const calculateLinearTrendSlope = (values) => {
+  if (values.length < 2) return 0;
+
+  const n = values.length;
+  const xMean = (n - 1) / 2;
+  const yMean = values.reduce((sum, value) => sum + value, 0) / n;
+
+  let numerator = 0;
+  let denominator = 0;
+
+  for (let i = 0; i < n; i += 1) {
+    const xDiff = i - xMean;
+    numerator += xDiff * (values[i] - yMean);
+    denominator += xDiff * xDiff;
+  }
+
+  return denominator === 0 ? 0 : numerator / denominator;
+};
+
+const calculateStandardDeviation = (values) => {
+  if (!values.length) return 0;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+  return Math.sqrt(variance);
+};
+
 // ============ RENEWABLE SOURCE CONTROLLERS ============
 
 // @desc    Create a new renewable source
@@ -1143,6 +1189,212 @@ const getOptimizationRecommendations = async (req, res) => {
   }
 };
 
+// @desc    Get renewable generation forecast
+// @route   GET /api/renewable/forecast
+// @access  Private
+const getGenerationForecast = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { sourceId, period = '7d' } = req.query;
+    const horizonDays = getForecastHorizonDays(period);
+
+    const query = { user: userId };
+    if (sourceId && mongoose.Types.ObjectId.isValid(sourceId)) {
+      query.source = new mongoose.Types.ObjectId(sourceId);
+    }
+
+    const historyLookbackDays = Math.max(90, horizonDays * 6);
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - historyLookbackDays);
+    query.recordDate = { $gte: startDate };
+
+    const dailySeries = await RenewableEnergyRecord.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$recordDate' } },
+          actualGeneration: { $sum: '$energyGenerated' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    if (dailySeries.length < 7) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          sourceId: sourceId || null,
+          period,
+          model: 'moving_average_v1',
+          confidence: 0,
+          historyPoints: dailySeries.length,
+          forecast: [],
+          baseline: {
+            avgLast30Days: 0,
+            trend: 'flat'
+          },
+          message: 'Insufficient historical data. Add at least 7 days of records for forecasting.'
+        }
+      });
+    }
+
+    const values = dailySeries.map((entry) => entry.actualGeneration);
+    const windowSize = Math.min(7, values.length);
+    const movingAverageSeries = calculateMovingAverageSeries(values, windowSize);
+    const recentValues = values.slice(-30);
+    const recentAvg = recentValues.reduce((sum, value) => sum + value, 0) / recentValues.length;
+    const slopeWindowValues = values.slice(-Math.min(30, values.length));
+    const slope = calculateLinearTrendSlope(slopeWindowValues);
+    const volatility = calculateStandardDeviation(slopeWindowValues);
+
+    const trendLabel = slope > 0.2 ? 'up' : slope < -0.2 ? 'down' : 'flat';
+    const confidenceBase = Math.min(1, values.length / 45);
+    const volatilityPenalty = Math.min(0.45, volatility / (recentAvg || 1));
+    const confidence = Math.max(0.15, confidenceBase - volatilityPenalty);
+
+    const lastDate = new Date(dailySeries[dailySeries.length - 1]._id);
+    const lastMovingAverage = movingAverageSeries[movingAverageSeries.length - 1];
+    const forecast = [];
+
+    for (let day = 1; day <= horizonDays; day += 1) {
+      const forecastDate = new Date(lastDate);
+      forecastDate.setDate(forecastDate.getDate() + day);
+
+      const predicted = Math.max(0, lastMovingAverage + slope * day);
+      const margin = 1.28 * volatility;
+
+      forecast.push({
+        date: forecastDate.toISOString().split('T')[0],
+        predictedGeneration: parseFloat(predicted.toFixed(2)),
+        lowerBound: parseFloat(Math.max(0, predicted - margin).toFixed(2)),
+        upperBound: parseFloat((predicted + margin).toFixed(2))
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        sourceId: sourceId || null,
+        period,
+        model: 'moving_average_v1',
+        confidence: parseFloat(confidence.toFixed(2)),
+        historyPoints: values.length,
+        forecast,
+        historical: dailySeries.map((entry, index) => ({
+          date: entry._id,
+          actualGeneration: parseFloat(entry.actualGeneration.toFixed(2)),
+          smoothedGeneration: parseFloat(movingAverageSeries[index].toFixed(2))
+        })),
+        baseline: {
+          avgLast30Days: parseFloat(recentAvg.toFixed(2)),
+          trend: trendLabel
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error generating renewable forecast:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating renewable forecast'
+    });
+  }
+};
+
+// @desc    Get forecast model accuracy metrics
+// @route   GET /api/renewable/forecast/accuracy
+// @access  Private
+const getForecastAccuracy = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { sourceId, period = '30d' } = req.query;
+
+    const validPeriods = {
+      '30d': 30,
+      '90d': 90
+    };
+    const lookbackDays = validPeriods[period] || 30;
+
+    const query = { user: userId };
+    if (sourceId && mongoose.Types.ObjectId.isValid(sourceId)) {
+      query.source = new mongoose.Types.ObjectId(sourceId);
+    }
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - Math.max(lookbackDays + 30, 120));
+    query.recordDate = { $gte: startDate };
+
+    const dailySeries = await RenewableEnergyRecord.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$recordDate' } },
+          actualGeneration: { $sum: '$energyGenerated' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    const values = dailySeries.map((entry) => entry.actualGeneration);
+    if (values.length < 15) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          mape: null,
+          rmse: null,
+          samples: 0,
+          message: 'Insufficient historical data. Add at least 15 days of records to evaluate accuracy.'
+        }
+      });
+    }
+
+    const evaluationWindow = Math.min(lookbackDays, values.length - 7);
+    const startIndex = values.length - evaluationWindow;
+    const windowSize = 7;
+
+    const errors = [];
+    const squaredErrors = [];
+
+    for (let index = startIndex; index < values.length; index += 1) {
+      const trainStart = Math.max(0, index - windowSize);
+      const trainSlice = values.slice(trainStart, index);
+      if (trainSlice.length < 3) continue;
+
+      const prediction = trainSlice.reduce((sum, value) => sum + value, 0) / trainSlice.length;
+      const actual = values[index];
+      const absError = Math.abs(actual - prediction);
+
+      if (actual > 0) {
+        errors.push((absError / actual) * 100);
+      }
+      squaredErrors.push(absError ** 2);
+    }
+
+    const sampleCount = Math.min(errors.length, squaredErrors.length);
+    const mape = sampleCount
+      ? errors.slice(0, sampleCount).reduce((sum, value) => sum + value, 0) / sampleCount
+      : null;
+    const rmse = sampleCount
+      ? Math.sqrt(squaredErrors.slice(0, sampleCount).reduce((sum, value) => sum + value, 0) / sampleCount)
+      : null;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        mape: mape !== null ? parseFloat(mape.toFixed(2)) : null,
+        rmse: rmse !== null ? parseFloat(rmse.toFixed(2)) : null,
+        samples: sampleCount,
+        model: 'moving_average_v1'
+      }
+    });
+  } catch (error) {
+    console.error('Error evaluating forecast accuracy:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error evaluating forecast accuracy'
+    });
+  }
+};
+
 module.exports = {
   // Source controllers
   createSource,
@@ -1167,5 +1419,7 @@ module.exports = {
   getPeakGeneration,
   getProductionAlerts,
   getEnergyIndependence,
-  getOptimizationRecommendations
+  getOptimizationRecommendations,
+  getGenerationForecast,
+  getForecastAccuracy
 };

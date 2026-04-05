@@ -25,7 +25,9 @@ const {
   getPeakGeneration,
   getProductionAlerts,
   getEnergyIndependence,
-  getOptimizationRecommendations
+  getOptimizationRecommendations,
+  getGenerationForecast,
+  getForecastAccuracy
 } = require('../controllers/renewableController');
 
 const {
@@ -129,6 +131,16 @@ router.get('/independence', protect, getEnergyIndependence);
 // @desc    Get smart optimization recommendations
 // @access  Private
 router.get('/recommendations', protect, getOptimizationRecommendations);
+
+// @route   GET /api/renewable/forecast
+// @desc    Get generation forecast for selected period
+// @access  Private
+router.get('/forecast', protect, getGenerationForecast);
+
+// @route   GET /api/renewable/forecast/accuracy
+// @desc    Get forecast model accuracy metrics
+// @access  Private
+router.get('/forecast/accuracy', protect, getForecastAccuracy);
 
 // ============ REPORT ROUTES ============
 

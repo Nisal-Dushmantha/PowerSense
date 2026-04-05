@@ -85,6 +85,8 @@ export const renewableService = {
   getProductionAlerts: (params) => api.get('/renewable/alerts', { params }),
   getEnergyIndependence: (params) => api.get('/renewable/independence', { params }),
   getOptimizationRecommendations: () => api.get('/renewable/recommendations'),
+  getGenerationForecast: (params) => api.get('/renewable/forecast', { params }),
+  getForecastAccuracy: (params) => api.get('/renewable/forecast/accuracy', { params }),
   
   // Report Generation
   generateRecordsPDF: (params) => {
