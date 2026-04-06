@@ -32,7 +32,9 @@ const {
   getMaintenanceTasks,
   updateMaintenanceTask,
   deleteMaintenanceTask,
-  getMaintenanceSummary
+  getMaintenanceSummary,
+  getVarianceAnalytics,
+  getVarianceTrend
 } = require('../controllers/renewableController');
 
 const {
@@ -173,6 +175,16 @@ router.put('/maintenance/:id', protect, updateMaintenanceTask);
 // @desc    Delete maintenance task
 // @access  Private
 router.delete('/maintenance/:id', protect, deleteMaintenanceTask);
+
+// @route   GET /api/renewable/variance
+// @desc    Get expected vs actual variance analytics
+// @access  Private
+router.get('/variance', protect, getVarianceAnalytics);
+
+// @route   GET /api/renewable/variance/trend
+// @desc    Get monthly variance trend
+// @access  Private
+router.get('/variance/trend', protect, getVarianceTrend);
 
 // ============ REPORT ROUTES ============
 

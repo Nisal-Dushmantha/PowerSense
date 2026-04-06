@@ -56,6 +56,16 @@ const getStartOfToday = () => {
   return date;
 };
 
+const getVariancePeriodDays = (period) => {
+  const map = {
+    '30d': 30,
+    '90d': 90,
+    '1y': 365
+  };
+
+  return map[period] || 30;
+};
+
 // ============ RENEWABLE SOURCE CONTROLLERS ============
 
 // @desc    Create a new renewable source
@@ -1641,6 +1651,244 @@ const getMaintenanceSummary = async (req, res) => {
   }
 };
 
+// @desc    Get expected vs actual variance summary
+// @route   GET /api/renewable/variance
+// @access  Private
+const getVarianceAnalytics = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { period = '30d', sourceId, underperformingThreshold = 15 } = req.query;
+    const threshold = Number(underperformingThreshold) || 15;
+    const periodDays = getVariancePeriodDays(period);
+
+    const sourceQuery = { user: userId };
+    if (sourceId) {
+      if (!mongoose.Types.ObjectId.isValid(sourceId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid sourceId provided'
+        });
+      }
+      sourceQuery._id = new mongoose.Types.ObjectId(sourceId);
+    }
+
+    const sources = await RenewableSource.find(sourceQuery).select('sourceName sourceType estimatedAnnualProduction');
+
+    if (!sources.length) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          period,
+          threshold,
+          formula: 'expectedEnergy = estimatedAnnualProduction * (periodDays / 365)',
+          overall: {
+            expectedEnergy: 0,
+            actualEnergy: 0,
+            variance: 0,
+            variancePercent: 0
+          },
+          bySource: [],
+          insights: ['No renewable sources found for the selected filters.']
+        }
+      });
+    }
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - periodDays);
+
+    const sourceIds = sources.map((source) => source._id);
+
+    const actualBySource = await RenewableEnergyRecord.aggregate([
+      {
+        $match: {
+          user: userId,
+          source: { $in: sourceIds },
+          recordDate: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$source',
+          actualEnergy: { $sum: '$energyGenerated' }
+        }
+      }
+    ]);
+
+    const actualMap = new Map(actualBySource.map((entry) => [String(entry._id), entry.actualEnergy]));
+
+    const bySource = sources.map((source) => {
+      const expectedEnergy = ((source.estimatedAnnualProduction || 0) * periodDays) / 365;
+      const actualEnergy = actualMap.get(String(source._id)) || 0;
+      const variance = actualEnergy - expectedEnergy;
+      const variancePercent = expectedEnergy > 0 ? (variance / expectedEnergy) * 100 : 0;
+
+      let status = 'on_target';
+      if (variancePercent < -threshold) status = 'underperforming';
+      if (variancePercent > threshold) status = 'overperforming';
+
+      return {
+        sourceId: source._id,
+        sourceName: source.sourceName,
+        sourceType: source.sourceType,
+        expectedEnergy: parseFloat(expectedEnergy.toFixed(2)),
+        actualEnergy: parseFloat(actualEnergy.toFixed(2)),
+        variance: parseFloat(variance.toFixed(2)),
+        variancePercent: parseFloat(variancePercent.toFixed(2)),
+        status
+      };
+    });
+
+    const overallExpected = bySource.reduce((sum, item) => sum + item.expectedEnergy, 0);
+    const overallActual = bySource.reduce((sum, item) => sum + item.actualEnergy, 0);
+    const overallVariance = overallActual - overallExpected;
+    const overallVariancePercent = overallExpected > 0 ? (overallVariance / overallExpected) * 100 : 0;
+
+    const underperformingCount = bySource.filter((item) => item.variancePercent < -threshold).length;
+    const overperformingSources = bySource
+      .filter((item) => item.variancePercent > 0)
+      .sort((a, b) => b.variancePercent - a.variancePercent);
+
+    const insights = [];
+    insights.push(`${underperformingCount} sources are underperforming by more than ${threshold}%`);
+
+    if (overperformingSources.length > 0) {
+      const top = overperformingSources[0];
+      insights.push(`${top.sourceType} source exceeded expected output by ${top.variancePercent.toFixed(1)}%`);
+    } else {
+      insights.push('No sources exceeded expected output in the selected period.');
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        period,
+        threshold,
+        formula: 'expectedEnergy = estimatedAnnualProduction * (periodDays / 365)',
+        overall: {
+          expectedEnergy: parseFloat(overallExpected.toFixed(2)),
+          actualEnergy: parseFloat(overallActual.toFixed(2)),
+          variance: parseFloat(overallVariance.toFixed(2)),
+          variancePercent: parseFloat(overallVariancePercent.toFixed(2))
+        },
+        bySource,
+        insights
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating variance analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error calculating variance analytics'
+    });
+  }
+};
+
+// @desc    Get monthly variance trend
+// @route   GET /api/renewable/variance/trend
+// @access  Private
+const getVarianceTrend = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { sourceId, months = 12, underperformingThreshold = 15 } = req.query;
+    const monthCount = Math.max(1, Math.min(36, Number(months) || 12));
+    const threshold = Number(underperformingThreshold) || 15;
+
+    const sourceQuery = { user: userId };
+    if (sourceId) {
+      if (!mongoose.Types.ObjectId.isValid(sourceId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid sourceId provided'
+        });
+      }
+      sourceQuery._id = new mongoose.Types.ObjectId(sourceId);
+    }
+
+    const sources = await RenewableSource.find(sourceQuery).select('estimatedAnnualProduction');
+    const sourceIds = sources.map((source) => source._id);
+
+    if (!sources.length) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          months: monthCount,
+          threshold,
+          trend: []
+        }
+      });
+    }
+
+    const startDate = new Date();
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setMonth(startDate.getMonth() - (monthCount - 1));
+
+    const monthlyActual = await RenewableEnergyRecord.aggregate([
+      {
+        $match: {
+          user: userId,
+          source: { $in: sourceIds },
+          recordDate: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$recordDate' },
+            month: { $month: '$recordDate' }
+          },
+          actualEnergy: { $sum: '$energyGenerated' }
+        }
+      }
+    ]);
+
+    const actualMap = new Map(
+      monthlyActual.map((entry) => {
+        const key = `${entry._id.year}-${String(entry._id.month).padStart(2, '0')}`;
+        return [key, entry.actualEnergy];
+      })
+    );
+
+    const totalAnnualEstimate = sources.reduce((sum, source) => sum + (source.estimatedAnnualProduction || 0), 0);
+    const expectedPerMonth = totalAnnualEstimate / 12;
+
+    const trend = [];
+    for (let index = 0; index < monthCount; index += 1) {
+      const cursor = new Date(startDate);
+      cursor.setMonth(startDate.getMonth() + index);
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+
+      const actualEnergy = actualMap.get(key) || 0;
+      const variance = actualEnergy - expectedPerMonth;
+      const variancePercent = expectedPerMonth > 0 ? (variance / expectedPerMonth) * 100 : 0;
+
+      trend.push({
+        month: key,
+        expectedEnergy: parseFloat(expectedPerMonth.toFixed(2)),
+        actualEnergy: parseFloat(actualEnergy.toFixed(2)),
+        variance: parseFloat(variance.toFixed(2)),
+        variancePercent: parseFloat(variancePercent.toFixed(2)),
+        status: variancePercent < -threshold ? 'underperforming' : variancePercent > threshold ? 'overperforming' : 'on_target'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        months: monthCount,
+        threshold,
+        trend
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating variance trend:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error calculating variance trend'
+    });
+  }
+};
+
 module.exports = {
   // Source controllers
   createSource,
@@ -1674,5 +1922,9 @@ module.exports = {
   getMaintenanceTasks,
   updateMaintenanceTask,
   deleteMaintenanceTask,
-  getMaintenanceSummary
+  getMaintenanceSummary,
+
+  // Variance analytics controllers
+  getVarianceAnalytics,
+  getVarianceTrend
 };
