@@ -41,7 +41,7 @@ const DeviceChartsPage = () => {
         return (
             <div className="container mx-auto px-4 py-8">
                 <div className="text-center py-12">
-                    <div className="text-red-600 mb-4">{error}</div>
+                    <div className="text-red-600 dark:text-red-400 mb-4">{error}</div>
                     <button 
                         onClick={fetchDevices}
                         className="btn-primary"
@@ -58,12 +58,12 @@ const DeviceChartsPage = () => {
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Energy Consumption Charts</h1>
-                    <p className="text-gray-600 mt-2">Visualize your device energy consumption by type</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Energy Consumption Charts</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">Visualize your device energy consumption by type</p>
                 </div>
                 <Link 
                     to="/devices" 
-                    className="btn-secondary flex items-center space-x-2"
+                    className="btn-secondary flex items-center space-x-2 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -73,9 +73,9 @@ const DeviceChartsPage = () => {
             </div>
 
             {devices.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                    <h3 className="text-xl text-gray-600 mb-4">No devices found</h3>
-                    <p className="text-gray-500 mb-6">Add some devices first to see consumption charts.</p>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+                    <h3 className="text-xl text-gray-600 dark:text-gray-300 mb-4">No devices found</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">Add some devices first to see consumption charts.</p>
                     <Link 
                         to="/devices" 
                         className="btn-primary"

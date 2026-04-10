@@ -361,7 +361,7 @@ const handleDownloadPDF = () => {
 				   onDeviceUpdated={handleDeviceUpdated}
 			   />
 			   <div className="flex justify-between items-center mb-6">
-				   <h1 className="text-3xl font-bold text-gray-900">Devices</h1>
+			   <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Devices</h1>
 			   <div className="flex items-center space-x-4">
 				   {/* Search Bar */}
 				   <div className="relative">
@@ -370,7 +370,7 @@ const handleDownloadPDF = () => {
 					   placeholder="Search"
 						   value={searchTerm}
 						   onChange={(e) => setSearchTerm(e.target.value)}
-						   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+					   className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 					   />
 					   <svg 
 						   className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" 
@@ -383,7 +383,7 @@ const handleDownloadPDF = () => {
 				   </div>
 				   <Link
 					   to="/devices/charts"
-					   className="btn-secondary min-w-[120px] flex items-center space-x-2"
+					   className="btn-secondary min-w-[120px] flex items-center space-x-2 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white"
 				   >
 					   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -391,7 +391,7 @@ const handleDownloadPDF = () => {
 					   <span>View Charts</span>
 				   </Link>
 				   <button
-					   className="btn-secondary min-w-[120px] flex items-center space-x-2"
+					   className="btn-secondary min-w-[120px] flex items-center space-x-2 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:text-white"
 					   onClick={handleDownloadPDF}
 				   >
 					   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -409,11 +409,11 @@ const handleDownloadPDF = () => {
 				   </div>
 		   {filteredDevices.length === 0 && devices.length > 0 ? (
 			   <div className="text-center py-12">
-				   <h3 className="text-xl text-gray-600 mb-4">No devices found matching "{searchTerm}"</h3>
+				   <h3 className="text-xl text-gray-600 dark:text-gray-400 mb-4">No devices found matching \"{searchTerm}\"</h3>
 			   </div>
 		   ) : filteredDevices.length === 0 ? (
 				   <div className="text-center py-12">
-					   <h3 className="text-xl text-gray-600 mb-4">No devices found</h3>
+				   <h3 className="text-xl text-gray-600 dark:text-gray-400 mb-4">No devices found</h3>
 					   <button
 						   className="btn-primary min-w-[120px]"
 						   onClick={() => setShowModal(true)}
@@ -423,27 +423,27 @@ const handleDownloadPDF = () => {
 				   </div>
 			   ) : (
 				   <>
-					   <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-						   <div className="overflow-x-auto">
-							   <table className="min-w-full divide-y divide-gray-200">
-								   <thead className="bg-gray-50">
+			   <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-100 dark:border-gray-700">
+				   <div className="overflow-x-auto">
+					   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+						   <thead className="bg-gray-50 dark:bg-gray-900">
 									   <tr>
-										   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device ID</th>
-										   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-										   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-										   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Power (W)</th>
-										   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Daily (hrs)</th>
-										   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+								   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Device ID</th>
+								   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+								   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+								   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Power (W)</th>
+								   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Daily (hrs)</th>
+								   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
 									   </tr>
 								   </thead>
-								   <tbody className="bg-white divide-y divide-gray-200">
+								   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
 								   {filteredDevices.map(device => (
-										   <tr key={device._id || device.deviceId} className="hover:bg-gray-50">
-											   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{device.deviceId || device._id}</td>
-											   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{device.name}</td>
-											   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{device.type}</td>
-											   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{device.powerRating}</td>
-											   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{device.expectedDailyUsage}</td>
+								   <tr key={device._id || device.deviceId} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+							   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{device.deviceId || device._id}</td>
+							   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{device.name}</td>
+							   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{device.type}</td>
+							   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{device.powerRating}</td>
+							   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{device.expectedDailyUsage}</td>
 											   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
 												   <button
 													   className="btn-ghost btn-sm text-secondary hover:text-primary dark:text-secondary dark:hover:text-primary-light"
@@ -481,33 +481,33 @@ const handleDownloadPDF = () => {
 								   {/* ── Stat cards row ─────────────────────────── */}
 								   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 									   {/* Daily */}
-									   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+									   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex items-center gap-4">
+										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center">
 											   <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z"/>
 											   </svg>
 										   </div>
 										   <div>
-											   <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Daily Usage</p>
-											   <p className="text-2xl font-bold text-gray-800">{totalDailyKwh.toFixed(2)} <span className="text-sm font-normal text-gray-400">kWh</span></p>
+											   <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">Daily Usage</p>
+											   <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{totalDailyKwh.toFixed(2)} <span className="text-sm font-normal text-gray-400 dark:text-gray-500">kWh</span></p>
 										   </div>
 									   </div>
 
 									   {/* Monthly */}
-									   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
-										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+									   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 flex items-center gap-4">
+										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
 											   <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 												   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
 											   </svg>
 										   </div>
 										   <div>
-											   <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Monthly Usage</p>
-											   <p className="text-2xl font-bold text-gray-800">{totalMonthlyKwh.toFixed(2)} <span className="text-sm font-normal text-gray-400">kWh</span></p>
+											   <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">Monthly Usage</p>
+											   <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{totalMonthlyKwh.toFixed(2)} <span className="text-sm font-normal text-gray-400 dark:text-gray-500">kWh</span></p>
 										   </div>
 									   </div>
 
 									   {/* Estimated Bill highlight */}
-									   <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-md p-5 flex items-center gap-4">
+									   <div className="bg-gradient-to-br from-green-500 to-emerald-600 dark:from-green-700 dark:to-emerald-800 rounded-2xl shadow-md p-5 flex items-center gap-4">
 										   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-white bg-opacity-20 flex items-center justify-center">
 											   <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
 												   <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
@@ -521,12 +521,12 @@ const handleDownloadPDF = () => {
 								   </div>
 
 								   {/* ── CEB Bill Detail Card ────────────────────── */}
-								   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+								   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
 									   {/* Card header */}
-									   <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+									   <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
 										   <div className="flex items-center gap-2">
 											   <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
-											   <h3 className="font-semibold text-gray-700">CEB Bill Estimate — Sri Lanka Domestic Tariff</h3>
+											   <h3 className="font-semibold text-gray-700 dark:text-gray-200">CEB Bill Estimate — Sri Lanka Domestic Tariff</h3>
 										   </div>
 										   <span className="text-xs bg-green-50 text-green-600 font-semibold px-3 py-1 rounded-full border border-green-200">
 											   Tariff Block: Rs. {bill.slab.rate.toFixed(2)}/kWh
@@ -537,37 +537,37 @@ const handleDownloadPDF = () => {
 
 										   {/* ── Bill breakdown ──────────────────────── */}
 										   <div className="space-y-2">
-											   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-xl">
-												   <div className="flex items-center gap-2">
-													   <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-													   <span className="text-sm text-gray-600">Energy Charge</span>
-													   <span className="text-xs text-gray-400">({bill.units} kWh × Rs. {bill.slab.rate.toFixed(2)})</span>
-												   </div>
-												   <span className="text-sm font-semibold text-gray-700">Rs. {Number(bill.energyCharge).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+										   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+											   <div className="flex items-center gap-2">
+												   <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+												   <span className="text-sm text-gray-600 dark:text-gray-400">Energy Charge</span>
+												   <span className="text-xs text-gray-400 dark:text-gray-500">({bill.units} kWh × Rs. {bill.slab.rate.toFixed(2)})</span>
 											   </div>
-											   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-xl">
-												   <div className="flex items-center gap-2">
-													   <div className="w-2 h-2 rounded-full bg-purple-400"></div>
-													   <span className="text-sm text-gray-600">Fixed / Service Charge</span>
-												   </div>
-												   <span className="text-sm font-semibold text-gray-700">Rs. {Number(bill.fixedCharge).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Rs. {Number(bill.energyCharge).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
 											   </div>
-											   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 rounded-xl">
-												   <div className="flex items-center gap-2">
-													   <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-													   <span className="text-sm text-gray-600">VAT (10%)</span>
-												   </div>
-												   <span className="text-sm font-semibold text-gray-700">Rs. {Number(bill.vat).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+										   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+											   <div className="flex items-center gap-2">
+												   <div className="w-2 h-2 rounded-full bg-purple-400"></div>
+												   <span className="text-sm text-gray-600 dark:text-gray-400">Fixed / Service Charge</span>
 											   </div>
-											   <div className="flex items-center justify-between py-3 px-4 bg-green-50 border border-green-200 rounded-xl">
-												   <span className="font-bold text-green-700">Estimated Total</span>
-												   <span className="text-xl font-extrabold text-green-600">Rs. {Number(bill.total).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Rs. {Number(bill.fixedCharge).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   </div>
+										   <div className="flex items-center justify-between py-2.5 px-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+											   <div className="flex items-center gap-2">
+												   <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+												   <span className="text-sm text-gray-600 dark:text-gray-400">VAT (10%)</span>
+											   </div>
+											   <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Rs. {Number(bill.vat).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+											   </div>
+										   <div className="flex items-center justify-between py-3 px-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl">
+											   <span className="font-bold text-green-700 dark:text-green-400">Estimated Total</span>
+											   <span className="text-xl font-extrabold text-green-600 dark:text-green-400">Rs. {Number(bill.total).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
 											   </div>
 										   </div>
 
 										   {/* ── Slab rate reference ─────────────────── */}
 										   <div>
-											   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">CEB Slab Rate Reference</p>
+										   <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">CEB Slab Rate Reference</p>
 											   <div className="flex gap-1.5 flex-wrap">
 												   {[
 													   { label: '≤ 30',    rate: 7.85,   color: 'bg-green-100 text-green-700 border-green-200'  },
@@ -580,7 +580,7 @@ const handleDownloadPDF = () => {
 												   ].map(s => {
 													   const active = Math.abs(bill.slab.rate - s.rate) < 0.01;
 													   return (
-														   <div key={s.label} className={`border rounded-lg px-3 py-2 text-center text-xs ${active ? 'ring-2 ring-green-500 bg-green-500 !text-white border-green-500 font-bold scale-105' : s.color} transition-transform`}>
+													   <div key={s.label} className={`border rounded-lg px-3 py-2 text-center text-xs dark:border-gray-600 ${active ? 'ring-2 ring-green-500 bg-green-500 dark:bg-green-600 !text-white border-green-500 font-bold scale-105' : s.color} transition-transform`}>
 															   <div className="font-semibold">{s.label} kWh</div>
 															   <div className="mt-0.5">Rs. {s.rate.toFixed(2)}</div>
 															   {active && <div className="mt-1 text-green-100 font-normal">← your block</div>}

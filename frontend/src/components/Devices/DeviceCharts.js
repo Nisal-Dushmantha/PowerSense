@@ -94,28 +94,28 @@ const DeviceCharts = ({ devices }) => {
 
     if (!devices || devices.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Device Consumption Charts</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Device Consumption Charts</h3>
                 <div className="text-center py-8">
-                    <p className="text-gray-500">No devices available to display charts</p>
+                    <p className="text-gray-500 dark:text-gray-400">No devices available to display charts</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Device Type Consumption Charts</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Device Type Consumption Charts</h3>
                 
                 {/* Tab Selector */}
-                <div className="flex bg-gray-100 rounded-lg p-1">
+                <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                     <button
                         onClick={() => setActiveTab('daily')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                             activeTab === 'daily'
-                                ? 'bg-white text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                         }`}
                     >
                         Daily View
@@ -124,8 +124,8 @@ const DeviceCharts = ({ devices }) => {
                         onClick={() => setActiveTab('monthly')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                             activeTab === 'monthly'
-                                ? 'bg-white text-blue-600 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                         }`}
                     >
                         Monthly View
@@ -135,8 +135,8 @@ const DeviceCharts = ({ devices }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Bar Chart */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-md font-medium text-gray-700 mb-4">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">
                         {activeTab === 'daily' ? 'Daily Consumption (W)' : 'Monthly Consumption (W)'}
                     </h4>
                     <div className="h-64">
@@ -148,8 +148,8 @@ const DeviceCharts = ({ devices }) => {
                 </div>
 
                 {/* Pie Chart */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-md font-medium text-gray-700 mb-4">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">
                         {activeTab === 'daily' ? 'Daily' : 'Monthly'} Consumption Distribution
                     </h4>
                     <div className="h-64">
@@ -159,17 +159,17 @@ const DeviceCharts = ({ devices }) => {
             </div>
 
             {/* Statistics Summary */}
-            <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                <h4 className="text-md font-medium text-gray-700 mb-4">Device Type Statistics</h4>
+            <div className="mt-6 bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+                <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-4">Device Type Statistics</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {chartData.map((item, index) => (
-                        <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
-                            <h5 className="font-medium text-gray-800 mb-2">{item.type}</h5>
-                            <div className="space-y-1 text-sm text-gray-600">
-                                <p>Daily: <span className="font-medium text-green-600">{item.dailyW} W</span></p>
-                                <p>Monthly: <span className="font-medium text-blue-600">{item.monthlyW} W</span></p>
-                                <p>Devices: <span className="font-medium">{item.deviceCount}</span></p>
-                                <p>Avg Power: <span className="font-medium">{item.averagePower}W</span></p>
+                        <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                            <h5 className="font-medium text-gray-800 dark:text-gray-100 mb-2">{item.type}</h5>
+                            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                                <p>Daily: <span className="font-medium text-green-600 dark:text-green-400">{item.dailyW} W</span></p>
+                                <p>Monthly: <span className="font-medium text-blue-600 dark:text-blue-400">{item.monthlyW} W</span></p>
+                                <p>Devices: <span className="font-medium text-gray-800 dark:text-gray-100">{item.deviceCount}</span></p>
+                                <p>Avg Power: <span className="font-medium text-gray-800 dark:text-gray-100">{item.averagePower}W</span></p>
                             </div>
                         </div>
                     ))}
@@ -177,14 +177,14 @@ const DeviceCharts = ({ devices }) => {
             </div>
 
             {/* Chart Legend/Info */}
-            <div className="mt-6 bg-blue-50 rounded-lg p-4">
+            <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                 <div className="flex items-start">
-                    <svg className="w-5 h-5 text-blue-500 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                     <div>
-                        <p className="text-sm text-blue-800 font-medium">Chart Information</p>
-                        <p className="text-sm text-blue-600 mt-1">
+                        <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">Chart Information</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
                             Charts show energy consumption grouped by device type. Data is pre-calculated on the backend from device power ratings and daily usage hours. 
                             Each device type may include multiple devices. 
                             Hover over chart elements for detailed information. Use the tabs to switch between daily and monthly views.

@@ -94,19 +94,19 @@ const DeviceCharts = ({ devices }) => {
 
     if (!devices || devices.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Device Consumption Charts</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Device Consumption Charts</h3>
                 <div className="text-center py-8">
-                    <p className="text-gray-500">No devices available to display charts</p>
+                    <p className="text-gray-500 dark:text-gray-400">No devices available to display charts</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800">Device Type Consumption Charts</h3>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Device Type Consumption Charts</h3>
                 
                 {/* Tab Selector */}
                 <div className="flex bg-gray-100 rounded-lg p-1">

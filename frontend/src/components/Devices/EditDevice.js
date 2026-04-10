@@ -69,41 +69,41 @@ const EditDevice = () => {
   };
 
   if (loading) return <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div></div>;
-  if (error) return <div className="text-red-600">{error}</div>;
+  if (error) return <div className="text-red-600 dark:text-red-400">{error}</div>;
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Edit Device</h1>
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6">Edit Device</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Device ID</label>
-            <input name="deviceId" value={formData.deviceId} disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Device ID</label>
+            <input name="deviceId" value={formData.deviceId} disabled className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Device Name *</label>
-            <input name="name" value={formData.name} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Device Name *</label>
+            <input name="name" value={formData.name} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Device Type *</label>
-            <input name="type" value={formData.type} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Device Type *</label>
+            <input name="type" value={formData.type} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Power Rating (W) *</label>
-            <input name="powerRating" value={formData.powerRating} onChange={handleChange} required type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Power Rating (W) *</label>
+            <input name="powerRating" value={formData.powerRating} onChange={handleChange} required type="number" min="0" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Expected Daily Usage (hours) *</label>
-            <input name="expectedDailyUsage" value={formData.expectedDailyUsage} onChange={handleChange} required type="number" min="0" step="0.1" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Expected Daily Usage (hours) *</label>
+            <input name="expectedDailyUsage" value={formData.expectedDailyUsage} onChange={handleChange} required type="number" min="0" step="0.1" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
 
           <div className="flex justify-end space-x-4">
-            <button type="button" onClick={() => navigate('/devices')} className="px-4 py-2 border border-gray-300 rounded-md bg-white text-sm">Cancel</button>
+            <button type="button" onClick={() => navigate('/devices')} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm hover:bg-gray-50 dark:hover:bg-gray-600">Cancel</button>
             <button type="submit" disabled={saving} className="btn-primary min-w-[120px]">{saving ? 'Saving...' : 'Save Changes'}</button>
           </div>
         </form>
