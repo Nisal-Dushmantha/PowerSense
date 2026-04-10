@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getEnergyRecords, deleteEnergyRecord } from '../../services/energyApi';
+import { getEnergyRecords, deleteEnergyRecord, getConsumptionIntegration } from '../../services/energyApi';
 import CreateConsumptionModal from './CreateConsumptionModal';
 import EditConsumptionModal from './EditConsumptionModal';
 import { Column, Pie } from '@ant-design/charts';
@@ -23,6 +23,17 @@ const ConsumptionList = () => {
   });
   const [activeSummaryTab, setActiveSummaryTab] = useState('all');
   const [showSummary, setShowSummary] = useState(false);
+  const [integrationData, setIntegrationData] = useState(null);
+
+  const fetchIntegration = useCallback(async () => {
+    try {
+      const response = await getConsumptionIntegration();
+      setIntegrationData(response.data || null);
+    } catch (err) {
+      console.error('Error fetching integration metrics:', err);
+      setIntegrationData(null);
+    }
+  }, []);
 
   const fetchRecords = useCallback(async () => {
     try {
@@ -59,6 +70,12 @@ const ConsumptionList = () => {
   useEffect(() => {
     fetchRecords();
   }, [filters, fetchRecords]);
+
+  useEffect(() => {
+    if (showSummary) {
+      fetchIntegration();
+    }
+  }, [showSummary, fetchIntegration]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
@@ -106,10 +123,13 @@ const ConsumptionList = () => {
         return newSet;
       });
     }, 800);
+
+    fetchIntegration();
   };
 
   const handleRecordUpdated = () => {
     fetchRecords();
+    fetchIntegration();
   };
 
   const handleEditClick = (recordId) => {
@@ -128,9 +148,41 @@ const ConsumptionList = () => {
     const dialAngle = getMeterDialAngle(record.energy_used_kwh);
     const usagePercentage = Math.min((record.energy_used_kwh / 500) * 100, 100);
     const isUpdating = updatingIds.has(record._id);
+    const periodType = record.period_type || 'N/A';
+
+    const usageTone = {
+      low: {
+        badge: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
+        cardAccent: 'from-emerald-500/10 to-transparent'
+      },
+      moderate: {
+        badge: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-800',
+        cardAccent: 'from-yellow-500/10 to-transparent'
+      },
+      high: {
+        badge: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
+        cardAccent: 'from-orange-500/10 to-transparent'
+      },
+      critical: {
+        badge: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
+        cardAccent: 'from-red-500/10 to-transparent'
+      }
+    };
+
+    const periodTone = {
+      hourly: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      daily: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+      weekly: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+      monthly: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+    };
+
+    const tone = usageTone[usageLevel] || usageTone.moderate;
+    const periodPill = periodTone[periodType] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
     
     return (
-      <div className="smart-meter bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-lg theme-transition">
+      <div className="smart-meter relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/80 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 theme-transition">
+        <div className={`absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${tone.cardAccent} pointer-events-none`}></div>
+
         {/* High usage sparkle effects */}
         {usageLevel === 'critical' && (
           <>
@@ -141,27 +193,26 @@ const ConsumptionList = () => {
         )}
         
         {/* Header with status */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-3">
-            <div 
-              className={`status-indicator w-4 h-4 rounded-full usage-level-${usageLevel} meter-pulse`}
-            ></div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+        <div className="relative flex items-start justify-between mb-6">
+          <div>
+            <div className="flex items-center space-x-2">
+              <div className={`status-indicator w-3 h-3 rounded-full usage-level-${usageLevel} meter-pulse`}></div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-textSecondary dark:text-gray-400">Smart Meter</p>
+            </div>
+            <h3 className="mt-1 text-lg font-bold text-gray-900 dark:text-white">
               {record.meter_id || `Meter #${record._id.slice(-4)}`}
             </h3>
+            <p className="text-xs text-textSecondary dark:text-gray-400 mt-1">
+              Last updated {formatDate(record.consumption_date)}
+            </p>
           </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-            usageLevel === 'low' ? 'bg-primary/10 text-primary border-primary/20' :
-            usageLevel === 'moderate' ? 'bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400' :
-            usageLevel === 'high' ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400' :
-            'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400'
-          }`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${tone.badge}`}>
             {usageLevel.toUpperCase()}
           </span>
         </div>
 
         {/* Meter Visualization */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between gap-4 mb-6">
           {/* Dial Meter */}
           <div className="meter-dial float-animation">
             <div 
@@ -172,7 +223,7 @@ const ConsumptionList = () => {
           </div>
           
           {/* Digital Reading */}
-          <div className="text-center">
+          <div className="text-right">
             <div 
               className={`meter-reading text-3xl font-bold text-gray-900 dark:text-white mb-1 ${
                 isUpdating ? 'updating' : ''
@@ -181,14 +232,17 @@ const ConsumptionList = () => {
               {record.energy_used_kwh?.toLocaleString() || '0'}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">kWh consumed</div>
+            <span className={`inline-flex mt-2 px-2.5 py-1 rounded-full text-xs font-semibold ${periodPill}`}>
+              {periodType}
+            </span>
           </div>
         </div>
 
         {/* Usage Progress Bar */}
-        <div className="mb-4">
+        <div className="mb-5">
           <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-            <span>Usage Level</span>
-            <span>{usagePercentage.toFixed(1)}%</span>
+            <span className="font-medium">Usage Intensity</span>
+            <span className="font-semibold">{usagePercentage.toFixed(1)}%</span>
           </div>
           <div className="usage-bar h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div 
@@ -199,30 +253,22 @@ const ConsumptionList = () => {
         </div>
 
         {/* Details Grid */}
-        <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Date</span>
-            <p className="font-medium text-gray-900 dark:text-white">
-              {formatDate(record.consumption_date)}
-            </p>
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3 border border-gray-100 dark:border-gray-700">
+            <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Date</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{formatDate(record.consumption_date)}</p>
           </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Period</span>
-            <p className="font-medium text-gray-900 dark:text-white capitalize">
-              {record.period_type || 'N/A'}
-            </p>
+          <div className="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3 border border-gray-100 dark:border-gray-700">
+            <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">Meter Profile</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-white capitalize">{periodType} tracking</p>
           </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">🌿 CO₂ Emission</span>
-            <p className="font-medium text-green-600 dark:text-green-400">
-              {(record.energy_used_kwh * 0.527).toFixed(2)} kg
-            </p>
+          <div className="rounded-xl bg-green-50 dark:bg-green-900/20 p-3 border border-green-100 dark:border-green-800/50">
+            <p className="text-[11px] uppercase tracking-wide text-green-700 dark:text-green-300 font-semibold">CO₂ Emission</p>
+            <p className="mt-1 text-sm font-bold text-green-700 dark:text-green-300">{(record.energy_used_kwh * 0.527).toFixed(2)} kg</p>
           </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">💰 Est. Cost</span>
-            <p className="font-medium text-blue-600 dark:text-blue-400">
-              Rs. {(record.energy_used_kwh * 35).toFixed(2)}
-            </p>
+          <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-3 border border-blue-100 dark:border-blue-800/50">
+            <p className="text-[11px] uppercase tracking-wide text-blue-700 dark:text-blue-300 font-semibold">Estimated Cost</p>
+            <p className="mt-1 text-sm font-bold text-blue-700 dark:text-blue-300">Rs. {(record.energy_used_kwh * 35).toFixed(2)}</p>
           </div>
         </div>
 
@@ -230,17 +276,17 @@ const ConsumptionList = () => {
         <div className="flex justify-end space-x-2 pt-4 border-t border-gray-100 dark:border-gray-700">
           <button
             onClick={() => onEdit(record._id)}
-            className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-all duration-200 hover:scale-110"
+            className="px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors"
             title="Edit Reading"
           >
-            ✏️
+            Edit
           </button>
           <button
             onClick={() => onDelete(record._id)}
-            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 hover:scale-110"
+            className="px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             title="Delete Reading"
           >
-            🗑️
+            Delete
           </button>
         </div>
       </div>
@@ -476,6 +522,7 @@ const ConsumptionList = () => {
                 {[
                   { key: 'all',     label: 'All' },
                   { key: 'hourly',  label: 'Hourly' },
+                  { key: 'daily',   label: 'Daily' },
                   { key: 'weekly',  label: 'Weekly' },
                   { key: 'monthly', label: 'Monthly' },
                 ].map(tab => (
@@ -502,6 +549,43 @@ const ConsumptionList = () => {
                 </div>
               ) : (
                 <>
+                  {/* Cross-component integration metrics */}
+                  {integrationData && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                      <div className="rounded-xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50 dark:bg-cyan-900/20 p-4">
+                        <p className="text-xs uppercase tracking-wide text-cyan-700 dark:text-cyan-300 font-semibold">Net Grid Usage</p>
+                        <p className="text-xl font-bold text-cyan-800 dark:text-cyan-200 mt-1">
+                          {integrationData.overview?.thisMonthNetGridKwh || 0} kWh
+                        </p>
+                        <p className="text-xs text-cyan-600 dark:text-cyan-400 mt-1">Consumption - renewable this month</p>
+                      </div>
+
+                      <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 p-4">
+                        <p className="text-xs uppercase tracking-wide text-emerald-700 dark:text-emerald-300 font-semibold">Renewable Offset</p>
+                        <p className="text-xl font-bold text-emerald-800 dark:text-emerald-200 mt-1">
+                          {integrationData.overview?.thisMonthRenewableKwh || 0} kWh
+                        </p>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">From renewable tracking component</p>
+                      </div>
+
+                      <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 p-4">
+                        <p className="text-xs uppercase tracking-wide text-violet-700 dark:text-violet-300 font-semibold">Billed This Month</p>
+                        <p className="text-xl font-bold text-violet-800 dark:text-violet-200 mt-1">
+                          Rs. {integrationData.overview?.thisMonthBilledAmount || 0}
+                        </p>
+                        <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">From energy reports & bills component</p>
+                      </div>
+
+                      <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                        <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300 font-semibold">Device Link Coverage</p>
+                        <p className="text-xl font-bold text-amber-800 dark:text-amber-200 mt-1">
+                          {integrationData.links?.recentCoveragePercent || 0}%
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Records connected to devices</p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* KPI Strip */}
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                     {[

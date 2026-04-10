@@ -21,6 +21,16 @@ export const getTotalConsumption = async (params = {}) => {
   return response.data;
 };
 
+export const getConsumptionSummary = async () => {
+  const response = await api.get(`${ENERGY_URL}/summary`);
+  return response.data;
+};
+
+export const getConsumptionIntegration = async () => {
+  const response = await api.get(`${ENERGY_URL}/integration`);
+  return response.data;
+};
+
 // Update energy consumption record
 export const updateEnergyRecord = async (id, recordData) => {
   const response = await api.put(`${ENERGY_URL}/${id}`, recordData);

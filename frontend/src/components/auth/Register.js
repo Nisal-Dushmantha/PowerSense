@@ -10,6 +10,7 @@ const Register = () => {
     firstName: '',
     lastName: '',
     email: '',
+    contactNumber: '',
     password: '',
     confirmPassword: ''
   });
@@ -41,6 +42,13 @@ const Register = () => {
       return;
     }
 
+    // Validate contact number
+    if (!/^\+?[0-9]{10,15}$/.test(formData.contactNumber)) {
+      setError('Please enter a valid contact number (10-15 digits, optional +)');
+      setLoading(false);
+      return;
+    }
+
     try {
       const { confirmPassword, ...registerData } = formData;
       const response = await authService.register(registerData);
@@ -48,9 +56,11 @@ const Register = () => {
       
       // Store token and user data
       authService.storeUser(user, token);
+
+      const redirectPath = authService.getPostAuthRedirectPath(user);
       
-      // Redirect to bills page
-      navigate('/bills');
+      // Redirect based on role
+      navigate(redirectPath, { replace: true });
       window.location.reload(); // Reload to update navbar
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
@@ -126,6 +136,22 @@ const Register = () => {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                 placeholder="your.email@example.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="contactNumber" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                Contact Number
+              </label>
+              <input
+                type="tel"
+                id="contactNumber"
+                name="contactNumber"
+                value={formData.contactNumber}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                placeholder="+94771234567"
               />
             </div>
 

@@ -29,7 +29,8 @@ const ConsumptionStats = () => {
       };
 
       const response = await getTotalConsumption(params);
-      const data = response.data || [];
+      const payload = response?.data || {};
+      const data = Array.isArray(payload.data) ? payload.data : [];
       
       // Calculate peak consumption
       const peakConsumption = data.length > 0 
@@ -37,8 +38,8 @@ const ConsumptionStats = () => {
         : 0;
       
       setStats({
-        totalConsumption: response.total_consumption || 0,
-        averageDaily: response.average_daily || 0,
+        totalConsumption: payload.total_consumption || 0,
+        averageDaily: payload.average_daily || 0,
         peakConsumption,
         data,
       });

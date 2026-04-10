@@ -17,7 +17,14 @@ const generateToken = (userId) => {
 // @access  Public
 const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, contactNumber, password } = req.body;
+
+    if (!contactNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact number is required'
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -33,8 +40,9 @@ const register = async (req, res) => {
       firstName,
       lastName,
       email,
+      contactNumber,
       password,
-      role: role || 'user' // Default to 'user' if not specified
+      role: 'user'
     });
 
     await user.save();
@@ -51,6 +59,7 @@ const register = async (req, res) => {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          contactNumber: user.contactNumber,
           role: user.role
         },
         token
@@ -125,6 +134,7 @@ const login = async (req, res) => {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          contactNumber: user.contactNumber,
           role: user.role,
           lastLogin: user.lastLogin
         },
@@ -167,7 +177,7 @@ const getMe = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, contactNumber } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -193,6 +203,7 @@ const updateProfile = async (req, res) => {
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
     user.email = email || user.email;
+    user.contactNumber = contactNumber || user.contactNumber;
 
     await user.save();
 

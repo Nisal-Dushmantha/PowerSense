@@ -19,6 +19,7 @@ import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
 import DevicesList from './components/Devices/DevicesList';
 import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import EditDevice from './components/Devices/EditDevice';
+import AdminDashboard from './components/admin/AdminDashboard';
 
 // Initialize auth service
 authService.init();
@@ -112,6 +113,14 @@ function App() {
                   </div>
                 </PrivateRoute>
               } />
+
+            <Route path="/admin" element={
+              <PrivateRoute roles={['admin']}>
+                <div className="container mx-auto px-4 py-8">
+                  <AdminDashboard />
+                </div>
+              </PrivateRoute>
+            } />
           </Routes>
         </div>
       </Router>

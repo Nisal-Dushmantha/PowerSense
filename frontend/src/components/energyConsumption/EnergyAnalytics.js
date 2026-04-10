@@ -6,7 +6,6 @@ import {
   getPeakUsage,
   getThresholdAlerts,
   getCarbonFootprint,
-  getUsageComparison,
   getRecommendations,
   updateEnergyThreshold,
   getEnergyRecords
@@ -65,6 +64,36 @@ const BarChart = ({ data, maxVal }) => {
       ))}
     </div>
   );
+};
+
+const toDateOnly = (value) => new Date(`${value}T00:00:00`);
+
+const toIsoDate = (date) => {
+  const fixed = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return fixed.toISOString().split('T')[0];
+};
+
+const getDaysInclusive = (start, end) => {
+  if (!start || !end) return 0;
+  const diff = end.getTime() - start.getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+};
+
+const summarizePeriod = (records, startDate, endDate) => {
+  const totalKwh = records.reduce((sum, record) => sum + (record.energy_used_kwh || 0), 0);
+  const days = getDaysInclusive(startDate, endDate);
+  const avgPerDay = days > 0 ? totalKwh / days : 0;
+  const peak = records.length ? Math.max(...records.map((record) => record.energy_used_kwh || 0)) : 0;
+
+  return {
+    totalKwh: Number(totalKwh.toFixed(2)),
+    count: records.length,
+    days,
+    avgPerDay: Number(avgPerDay.toFixed(2)),
+    peak: Number(peak.toFixed(2)),
+    co2: Number((totalKwh * CO2_FACTOR).toFixed(2)),
+    cost: Number((totalKwh * TARIFF_RATE).toFixed(2))
+  };
 };
 
 // ── Main component ────────────────────────────────────────────
@@ -137,14 +166,114 @@ const EnergyAnalytics = () => {
     finally { setLoading(false); }
   }, [carbonFilter]);
 
-  const loadComparison = useCallback(async () => {
+  const loadComparison = useCallback(async (overrideFilter) => {
     setLoading(true); setError(null);
     try {
-      const res = await getUsageComparison(compFilter);
-      setCompData(res.data);
-    } catch { setError('Failed to load comparison'); }
+      const effectiveFilter = overrideFilter || compFilter;
+      const currentStart = effectiveFilter.currentStart ? toDateOnly(effectiveFilter.currentStart) : null;
+      const currentEnd = effectiveFilter.currentEnd ? toDateOnly(effectiveFilter.currentEnd) : null;
+      const previousStart = effectiveFilter.previousStart ? toDateOnly(effectiveFilter.previousStart) : null;
+      const previousEnd = effectiveFilter.previousEnd ? toDateOnly(effectiveFilter.previousEnd) : null;
+
+      if (!currentStart || !currentEnd || !previousStart || !previousEnd) {
+        setCompData(null);
+        setError('Please select all date fields for both periods.');
+        return;
+      }
+
+      if (currentStart > currentEnd) {
+        setCompData(null);
+        setError('Current period start date cannot be after end date.');
+        return;
+      }
+
+      if (previousStart > previousEnd) {
+        setCompData(null);
+        setError('Previous period start date cannot be after end date.');
+        return;
+      }
+
+      const [currentRes, previousRes] = await Promise.all([
+        getEnergyRecords({
+          startDate: effectiveFilter.currentStart,
+          endDate: effectiveFilter.currentEnd,
+          limit: 1000
+        }),
+        getEnergyRecords({
+          startDate: effectiveFilter.previousStart,
+          endDate: effectiveFilter.previousEnd,
+          limit: 1000
+        })
+      ]);
+
+      const currentRecords = Array.isArray(currentRes?.data) ? currentRes.data : [];
+      const previousRecords = Array.isArray(previousRes?.data) ? previousRes.data : [];
+
+      const current = summarizePeriod(currentRecords, currentStart, currentEnd);
+      const previous = summarizePeriod(previousRecords, previousStart, previousEnd);
+
+      const deltaTotalKwh = Number((current.totalKwh - previous.totalKwh).toFixed(2));
+      const deltaAvgPerDay = Number((current.avgPerDay - previous.avgPerDay).toFixed(2));
+      const totalChangePct = previous.totalKwh > 0 ? Number(((deltaTotalKwh / previous.totalKwh) * 100).toFixed(1)) : null;
+      const avgDailyChangePct = previous.avgPerDay > 0 ? Number(((deltaAvgPerDay / previous.avgPerDay) * 100).toFixed(1)) : null;
+      const trendValue = avgDailyChangePct !== null ? avgDailyChangePct : totalChangePct;
+      const trend = trendValue === null ? 'no-data' : trendValue > 0 ? 'up' : trendValue < 0 ? 'down' : 'stable';
+
+      const chartData = [
+        {
+          label: 'Current',
+          value: current.avgPerDay,
+          color: 'linear-gradient(to top, #4f46e5, #818cf8)'
+        },
+        {
+          label: 'Previous',
+          value: previous.avgPerDay,
+          color: 'linear-gradient(to top, #0d9488, #5eead4)'
+        }
+      ];
+
+      setCompData({
+        current,
+        previous,
+        deltaTotalKwh,
+        deltaAvgPerDay,
+        totalChangePct,
+        avgDailyChangePct,
+        trend,
+        trendBasis: avgDailyChangePct !== null ? 'avg_daily_kwh' : 'total_kwh',
+        sameLength: current.days === previous.days,
+        chartData
+      });
+    } catch (err) {
+      setCompData(null);
+      setError(err?.response?.data?.message || 'Failed to load comparison data');
+    }
     finally { setLoading(false); }
   }, [compFilter]);
+
+  const applyComparePreset = (days) => {
+    const currentEndDate = new Date();
+    const currentStartDate = new Date(currentEndDate);
+    currentStartDate.setDate(currentEndDate.getDate() - (days - 1));
+
+    const previousEndDate = new Date(currentStartDate);
+    previousEndDate.setDate(currentStartDate.getDate() - 1);
+
+    const previousStartDate = new Date(previousEndDate);
+    previousStartDate.setDate(previousEndDate.getDate() - (days - 1));
+
+    const nextFilter = {
+      currentStart: toIsoDate(currentStartDate),
+      currentEnd: toIsoDate(currentEndDate),
+      previousStart: toIsoDate(previousStartDate),
+      previousEnd: toIsoDate(previousEndDate)
+    };
+
+    setCompFilter(nextFilter);
+    if (activeSection === 'compare') {
+      loadComparison(nextFilter);
+    }
+  };
 
   const loadRecs = useCallback(async () => {
     setLoading(true); setError(null);
@@ -519,24 +648,27 @@ const EnergyAnalytics = () => {
 
   // ── Nav tabs ──
   const tabs = [
-    { id: 'peak',    icon: '⚡', label: 'Peak Usage' },
-    { id: 'alerts',  icon: '🔔', label: 'Threshold Alerts' },
-    { id: 'carbon',  icon: '🌿', label: 'Carbon Footprint' },
-    { id: 'compare', icon: '📊', label: 'Usage Comparison' },
-    { id: 'recs',    icon: '💡', label: 'Recommendations' },
-    { id: 'pdf',     icon: '📄', label: 'PDF Report' },
+    { id: 'peak',    icon: '⚡', label: 'Peak Usage', subtitle: 'Top consumption patterns' },
+    { id: 'alerts',  icon: '🔔', label: 'Threshold Alerts', subtitle: 'Outlier detection' },
+    { id: 'carbon',  icon: '🌿', label: 'Carbon Footprint', subtitle: 'Environmental impact' },
+    { id: 'compare', icon: '📊', label: 'Usage Comparison', subtitle: 'Period-over-period view' },
+    { id: 'recs',    icon: '💡', label: 'Recommendations', subtitle: 'Optimization guidance' },
+    { id: 'pdf',     icon: '📄', label: 'PDF Report', subtitle: 'Executive export' },
   ];
+
+  const activeTabMeta = tabs.find((tab) => tab.id === activeSection);
 
   const recColors = { warning: 'yellow', alert: 'red', success: 'green', tip: 'blue', info: 'purple' };
 
   // ── Render ──
   return (
     <div className="min-h-screen bg-gradient-to-br from-light-mint via-white to-background dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
 
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
+        <div className="card p-6 lg:p-7">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+            <div>
             <button
               onClick={() => navigate('/consumption')}
               className="flex items-center text-sm text-gray-500 dark:text-gray-400 hover:text-primary mb-2 transition-colors"
@@ -546,50 +678,75 @@ const EnergyAnalytics = () => {
               </svg>
               Back to Readings
             </button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">📈 Energy Analytics</h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">Insights, alerts and reports from your meter data</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Energy Analytics Center</h1>
+              <p className="text-gray-500 dark:text-gray-400 mt-1">Professional insights, alerts, sustainability metrics and export-ready reports</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 min-w-[280px]">
+              <div className="rounded-xl border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wide text-blue-700 dark:text-blue-300 font-semibold">Active Module</p>
+                <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mt-0.5">{activeTabMeta?.label || 'Analytics'}</p>
+              </div>
+              <div className="rounded-xl border border-violet-200 dark:border-violet-700 bg-violet-50 dark:bg-violet-900/20 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wide text-violet-700 dark:text-violet-300 font-semibold">Focus</p>
+                <p className="text-sm font-bold text-violet-800 dark:text-violet-200 mt-0.5">{activeTabMeta?.subtitle || 'Operational review'}</p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 mb-8 bg-white dark:bg-gray-800 p-2 rounded-2xl shadow border border-gray-100 dark:border-gray-700">
+        <div className="card p-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-2">
           {tabs.map(t => (
             <button
               key={t.id}
               onClick={() => setActiveSection(t.id)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border ${
                 activeSection === t.id
-                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/30 scale-105'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md shadow-primary/30 border-primary scale-[1.01]'
+                  : 'text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60'
               }`}
             >
-              <span>{t.icon}</span>
-              <span>{t.label}</span>
+              <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-base ${
+                activeSection === t.id ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700'
+              }`}>{t.icon}</span>
+              <span className="text-left leading-tight">
+                <span className="block font-bold">{t.label}</span>
+                <span className={`block text-[11px] font-medium ${activeSection === t.id ? 'text-white/80' : 'text-gray-400 dark:text-gray-500'}`}>
+                  {t.subtitle}
+                </span>
+              </span>
             </button>
           ))}
+          </div>
         </div>
 
         {/* Error banner */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 mb-6 text-sm">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">
             ⚠️ {error}
           </div>
         )}
 
         {/* Loading */}
         {loading && (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-            <span className="ml-3 text-gray-500 dark:text-gray-400">Loading…</span>
+          <div className="card py-20">
+            <div className="flex justify-center items-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+              <span className="ml-3 text-gray-500 dark:text-gray-400">Loading analytics data…</span>
+            </div>
           </div>
         )}
 
         {/* ──────── PEAK USAGE ──────── */}
         {activeSection === 'peak' && !loading && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+            <div className="card p-6 lg:p-7">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">⚡ Peak Usage Detection</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">⚡ Peak Usage Detection</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Identify the highest consumption readings and estimated impact</p>
+                </div>
                 <select
                   value={peakFilter}
                   onChange={e => setPeakFilter(e.target.value)}
@@ -614,23 +771,23 @@ const EnergyAnalytics = () => {
 
                   {/* Table */}
                   <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-                    <table className="min-w-full text-sm">
-                      <thead className="bg-gray-50 dark:bg-gray-700">
+                    <table className="table">
+                      <thead className="table-header">
                         <tr>
                           {['Meter ID','Date','kWh','Period','CO₂ (kg)','Cost (Rs.)'].map(h => (
-                            <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">{h}</th>
+                            <th key={h}>{h}</th>
                           ))}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      <tbody>
                         {peakData.records.map((r, i) => (
-                          <tr key={i} className={i === 0 ? 'bg-red-50 dark:bg-red-900/10' : 'bg-white dark:bg-gray-800'}>
-                            <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{r.meter_id || '—'}</td>
-                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{new Date(r.date).toLocaleDateString('en-GB')}</td>
-                            <td className="px-4 py-3 font-bold text-gray-900 dark:text-white">{r.energy_used_kwh}</td>
-                            <td className="px-4 py-3 capitalize text-gray-600 dark:text-gray-400">{r.period_type}</td>
-                            <td className="px-4 py-3 text-green-600 dark:text-green-400">{r.co2_kg}</td>
-                            <td className="px-4 py-3 text-blue-600 dark:text-blue-400">{(r.energy_used_kwh * TARIFF_RATE).toFixed(2)}</td>
+                          <tr key={i} className={`table-row ${i === 0 ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
+                            <td className="table-cell font-mono text-xs font-semibold text-primary">{r.meter_id || '—'}</td>
+                            <td className="table-cell text-gray-700 dark:text-gray-300">{new Date(r.date).toLocaleDateString('en-GB')}</td>
+                            <td className="table-cell font-bold text-gray-900 dark:text-white">{r.energy_used_kwh}</td>
+                            <td className="table-cell capitalize text-gray-600 dark:text-gray-400">{r.period_type}</td>
+                            <td className="table-cell text-green-600 dark:text-green-400">{r.co2_kg}</td>
+                            <td className="table-cell text-blue-600 dark:text-blue-400">{(r.energy_used_kwh * TARIFF_RATE).toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -645,8 +802,9 @@ const EnergyAnalytics = () => {
         {/* ──────── THRESHOLD ALERTS ──────── */}
         {activeSection === 'alerts' && !loading && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">🔔 Energy Threshold Alerts</h2>
+            <div className="card p-6 lg:p-7">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">🔔 Energy Threshold Alerts</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Configure guardrails and monitor readings that exceed your threshold</p>
 
               {/* Threshold setter */}
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-5 mb-6">
@@ -711,17 +869,17 @@ const EnergyAnalytics = () => {
                       <StatCard icon="📈" label="Max Exceeded" value={`+${Math.max(...alertData.alerts.map(a => a.exceeded_by))} kWh`} color="red" />
                     </div>
                     <div className="overflow-x-auto rounded-xl border border-red-200 dark:border-red-700">
-                      <table className="min-w-full text-sm">
-                        <thead className="bg-red-50 dark:bg-red-900/20">
+                      <table className="table">
+                        <thead className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-700">
                           <tr>
                             {['Meter ID','Date','kWh','Exceeded By','Period'].map(h => (
                               <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-red-600 dark:text-red-400 uppercase">{h}</th>
                             ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-red-100 dark:divide-red-900/30">
+                        <tbody>
                           {alertData.alerts.map((a, i) => (
-                            <tr key={i} className="bg-white dark:bg-gray-800">
+                            <tr key={i} className="table-row bg-white dark:bg-gray-800">
                               <td className="px-4 py-3 font-mono text-xs font-semibold text-primary">{a.meter_id || '—'}</td>
                               <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{new Date(a.date).toLocaleDateString('en-GB')}</td>
                               <td className="px-4 py-3 font-bold text-red-600 dark:text-red-400">{a.energy_used_kwh}</td>
@@ -742,8 +900,9 @@ const EnergyAnalytics = () => {
         {/* ──────── CARBON FOOTPRINT ──────── */}
         {activeSection === 'carbon' && !loading && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">🌿 Carbon Footprint Calculation</h2>
+            <div className="card p-6 lg:p-7">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">🌿 Carbon Footprint Calculation</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Track emissions derived from your electricity usage across selected dates</p>
 
               {/* Date filter */}
               <div className="flex flex-wrap gap-3 mb-6">
@@ -819,8 +978,39 @@ const EnergyAnalytics = () => {
         {/* ──────── USAGE COMPARISON ──────── */}
         {activeSection === 'compare' && !loading && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">📊 Energy Usage Comparison</h2>
+            <div className="card p-6 lg:p-7">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">📊 Energy Usage Comparison</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Professional period benchmarking using normalized daily consumption and operating impact</p>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                <button
+                  onClick={() => applyComparePreset(7)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Last 7 vs Prior 7
+                </button>
+                <button
+                  onClick={() => applyComparePreset(30)}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Last 30 vs Prior 30
+                </button>
+                <button
+                  onClick={() => {
+                    const nextFilter = {
+                      currentStart: new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0],
+                      currentEnd: today.toISOString().split('T')[0],
+                      previousStart: new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0],
+                      previousEnd: new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0]
+                    };
+                    setCompFilter(nextFilter);
+                    loadComparison(nextFilter);
+                  }}
+                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  This Month vs Last Month
+                </button>
+              </div>
 
               {/* Period selectors */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
@@ -869,10 +1059,19 @@ const EnergyAnalytics = () => {
                       <span>{compData.trend === 'up' ? '📈' : compData.trend === 'down' ? '📉' : '➡️'}</span>
                       <span>
                         {compData.trend === 'no-data' ? 'No previous data'
-                          : compData.change_pct === null ? 'No change data'
-                          : `${compData.change_pct > 0 ? '+' : ''}${compData.change_pct}% vs previous period`}
+                          : compData.avgDailyChangePct === null
+                            ? 'Insufficient baseline for fair trend'
+                            : `${compData.avgDailyChangePct > 0 ? '+' : ''}${compData.avgDailyChangePct}% avg/day vs previous period`}
                       </span>
                     </div>
+                  </div>
+
+                  <div className="rounded-xl border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 p-4 mb-6">
+                    <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">Comparison Framework</p>
+                    <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
+                      Trend basis: <span className="font-semibold">{compData.trendBasis === 'avg_daily_kwh' ? 'Average daily kWh' : 'Total kWh'}</span>.
+                      {compData.sameLength ? ' Period lengths are aligned for a fair benchmark.' : ' Period lengths differ; normalized daily metric is prioritized.'}
+                    </p>
                   </div>
 
                   {/* Side-by-side cards */}
@@ -881,37 +1080,65 @@ const EnergyAnalytics = () => {
                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-5">
                       <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-4">Current Period</h3>
                       <div className="space-y-3">
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Energy</span><span className="font-bold text-blue-700 dark:text-blue-300">{compData.current.kwh} kWh</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600 dark:text-green-400">{compData.current.co2_kg} kg</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Total Energy</span><span className="font-bold text-blue-700 dark:text-blue-300">{compData.current.totalKwh} kWh</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Average / Day</span><span className="font-bold text-indigo-700 dark:text-indigo-300">{compData.current.avgPerDay} kWh</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Peak Reading</span><span className="font-bold text-amber-700 dark:text-amber-300">{compData.current.peak} kWh</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600 dark:text-green-400">{compData.current.co2} kg</span></div>
                         <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Est. Cost</span><span className="font-bold text-purple-600 dark:text-purple-400">Rs. {compData.current.cost}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Readings</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.current.count}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Duration / Records</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.current.days} days · {compData.current.count} records</span></div>
                       </div>
                     </div>
                     {/* Previous */}
                     <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-5">
                       <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">Previous Period</h3>
                       <div className="space-y-3">
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Energy</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.previous.kwh} kWh</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600 dark:text-green-400">{compData.previous.co2_kg} kg</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Total Energy</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.previous.totalKwh} kWh</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Average / Day</span><span className="font-bold text-indigo-700 dark:text-indigo-300">{compData.previous.avgPerDay} kWh</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Peak Reading</span><span className="font-bold text-amber-700 dark:text-amber-300">{compData.previous.peak} kWh</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">CO₂</span><span className="font-bold text-green-600 dark:text-green-400">{compData.previous.co2} kg</span></div>
                         <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Est. Cost</span><span className="font-bold text-purple-600 dark:text-purple-400">Rs. {compData.previous.cost}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Readings</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.previous.count}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-400 text-sm">Duration / Records</span><span className="font-bold text-gray-700 dark:text-gray-300">{compData.previous.days} days · {compData.previous.count} records</span></div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Delta card */}
-                  <div className={`rounded-xl p-4 border text-center ${
-                    compData.change_kwh > 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
-                  }`}>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Change</p>
-                    <p className={`text-3xl font-bold ${compData.change_kwh > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                      {compData.change_kwh > 0 ? '+' : ''}{compData.change_kwh} kWh
-                    </p>
-                    {compData.change_pct !== null && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{compData.change_kwh > 0 ? '+' : ''}{compData.change_pct}% change</p>
-                    )}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className={`rounded-xl p-4 border text-center ${
+                      compData.deltaTotalKwh > 0 ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700' : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+                    }`}>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Total Consumption Change</p>
+                      <p className={`text-3xl font-bold ${compData.deltaTotalKwh > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                        {compData.deltaTotalKwh > 0 ? '+' : ''}{compData.deltaTotalKwh} kWh
+                      </p>
+                      {compData.totalChangePct !== null && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{compData.totalChangePct > 0 ? '+' : ''}{compData.totalChangePct}%</p>
+                      )}
+                    </div>
+
+                    <div className={`rounded-xl p-4 border text-center ${
+                      compData.deltaAvgPerDay > 0 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700'
+                    }`}>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-1">Normalized Daily Change</p>
+                      <p className={`text-3xl font-bold ${compData.deltaAvgPerDay > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
+                        {compData.deltaAvgPerDay > 0 ? '+' : ''}{compData.deltaAvgPerDay} kWh/day
+                      </p>
+                      {compData.avgDailyChangePct !== null && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{compData.avgDailyChangePct > 0 ? '+' : ''}{compData.avgDailyChangePct}%</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-5 mt-6">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Average Daily Benchmark</h4>
+                    <BarChart data={compData.chartData} />
                   </div>
                 </>
+              )}
+
+              {!compData && (
+                <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  Select both periods and click <span className="font-semibold">Compare Periods</span> to generate benchmark insights.
+                </div>
               )}
             </div>
           </div>
@@ -920,9 +1147,12 @@ const EnergyAnalytics = () => {
         {/* ──────── RECOMMENDATIONS ──────── */}
         {activeSection === 'recs' && !loading && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
+            <div className="card p-6 lg:p-7">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">💡 Smart Recommendations</h2>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">💡 Smart Recommendations</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Actionable guidance generated from your consumption behavior</p>
+                </div>
                 <button onClick={loadRecs} className="text-sm text-primary font-medium hover:underline">Refresh</button>
               </div>
               {recData && (
@@ -970,76 +1200,130 @@ const EnergyAnalytics = () => {
         {/* ──────── PDF REPORT ──────── */}
         {activeSection === 'pdf' && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">📄 Monthly PDF Report Export</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-                Download a full monthly energy report including consumption table, totals, CO₂ and cost breakdown.
-              </p>
-
-              {/* Month / Year picker */}
-              <div className="max-w-sm bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-xl p-6">
-                <div className="space-y-4">
+            <div className="card overflow-hidden">
+              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 lg:px-7 py-6 border-b border-slate-700">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Month</label>
-                    <select
-                      value={pdfMonth}
-                      onChange={e => setPdfMonth(parseInt(e.target.value))}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      {MONTH_NAMES.map((m, i) => (
-                        <option key={i + 1} value={i + 1}>{m}</option>
-                      ))}
-                    </select>
+                    <h2 className="text-2xl font-bold text-white">PDF Report Export</h2>
+                    <p className="text-sm text-slate-300 mt-1">Generate a presentation-ready monthly report for reviews, submissions and record keeping</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Year</label>
-                    <select
-                      value={pdfYear}
-                      onChange={e => setPdfYear(parseInt(e.target.value))}
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
-                    </select>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-slate-200 w-fit">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    Export Engine Ready
                   </div>
-                  <button
-                    onClick={handleDownloadPdf}
-                    disabled={pdfLoading}
-                    className="w-full flex items-center justify-center space-x-3 px-6 py-3 bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50"
-                  >
-                    {pdfLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>Generating PDF…</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                        </svg>
-                        <span>Download {MONTH_NAMES[pdfMonth - 1]} {pdfYear} Report</span>
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
 
-              {/* What's included */}
-              <div className="mt-8">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">📋 Report includes:</h3>
-                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  {[
-                    'Summary: Total kWh, CO₂ emissions, estimated cost, peak reading',
-                    'Full meter-by-meter reading table with dates and period types',
-                    'Per-reading CO₂ and cost breakdown',
-                    'CO₂ factor and tariff rate used',
-                    'Date & time of report generation'
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center space-x-2">
-                      <span className="w-4 h-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 text-xs">✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="p-6 lg:p-7">
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div className="xl:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => {
+                          setPdfMonth(today.getMonth() + 1);
+                          setPdfYear(today.getFullYear());
+                        }}
+                        className="text-left border border-gray-200 dark:border-gray-600 rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Quick Select</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">Current Month</p>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const prevMonth = today.getMonth() === 0 ? 12 : today.getMonth();
+                          const prevYear = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+                          setPdfMonth(prevMonth);
+                          setPdfYear(prevYear);
+                        }}
+                        className="text-left border border-gray-200 dark:border-gray-600 rounded-xl p-3 hover:bg-gray-50 dark:hover:bg-gray-700/60 transition-colors"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Quick Select</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">Previous Month</p>
+                      </button>
+                      <div className="border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Selected Period</p>
+                        <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mt-1">{MONTH_NAMES[pdfMonth - 1]} {pdfYear}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 dark:bg-gray-700/40 border border-gray-200 dark:border-gray-600 rounded-2xl p-5">
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">Report Configuration</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Month</label>
+                          <select
+                            value={pdfMonth}
+                            onChange={e => setPdfMonth(parseInt(e.target.value))}
+                            className="input-field"
+                          >
+                            {MONTH_NAMES.map((m, i) => (
+                              <option key={i + 1} value={i + 1}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Year</label>
+                          <select
+                            value={pdfYear}
+                            onChange={e => setPdfYear(parseInt(e.target.value))}
+                            className="input-field"
+                          >
+                            {Array.from({ length: 6 }, (_, i) => today.getFullYear() - 3 + i).map(y => (
+                              <option key={y} value={y}>{y}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleDownloadPdf}
+                        disabled={pdfLoading}
+                        className="mt-5 w-full sm:w-auto inline-flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-primary to-secondary hover:from-primary-dark hover:to-secondary-dark text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+                      >
+                        {pdfLoading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span>Generating PDF…</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                            </svg>
+                            <span>Download {MONTH_NAMES[pdfMonth - 1]} {pdfYear} Report</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Included in Export</h3>
+                      <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                        {[
+                          'Executive KPI summary (kWh, CO₂, cost, peak)',
+                          'Detailed meter-level reading table',
+                          'Per-reading CO₂ and cost estimates',
+                          'Calculation basis and report metadata',
+                          'Generation timestamp and report identifier'
+                        ].map((item, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="mt-0.5 w-4 h-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 text-xs">✓</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="rounded-2xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-5">
+                      <h4 className="text-sm font-semibold text-amber-700 dark:text-amber-300 mb-2">Export Tips</h4>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                        Use a full completed month for accurate trend and cost interpretation. Reports are generated from your authenticated meter records.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
