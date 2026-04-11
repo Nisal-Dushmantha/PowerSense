@@ -18,7 +18,23 @@ const {
   
   // Statistics controllers
   getStatistics,
-  getDashboardSummary
+  getDashboardSummary,
+
+  // Advanced analytics controllers
+  getGenerationMeters,
+  getPeakGeneration,
+  getProductionAlerts,
+  getEnergyIndependence,
+  getOptimizationRecommendations,
+  getGenerationForecast,
+  getForecastAccuracy,
+  createMaintenanceTask,
+  getMaintenanceTasks,
+  updateMaintenanceTask,
+  deleteMaintenanceTask,
+  getMaintenanceSummary,
+  getVarianceAnalytics,
+  getVarianceTrend
 } = require('../controllers/renewableController');
 
 const {
@@ -95,6 +111,80 @@ router.get('/dashboard', protect, getDashboardSummary);
 // @desc    Get renewable energy statistics
 // @access  Private
 router.get('/stats', protect, getStatistics);
+
+// ============ ADVANCED ANALYTICS ROUTES ============
+
+// @route   GET /api/renewable/meters
+// @desc    Get generation meters monitoring data
+// @access  Private
+router.get('/meters', protect, getGenerationMeters);
+
+// @route   GET /api/renewable/peak-detection
+// @desc    Detect peak generation periods
+// @access  Private
+router.get('/peak-detection', protect, getPeakGeneration);
+
+// @route   GET /api/renewable/alerts
+// @desc    Check production thresholds and get alerts
+// @access  Private
+router.get('/alerts', protect, getProductionAlerts);
+
+// @route   GET /api/renewable/independence
+// @desc    Get energy independence analytics
+// @access  Private
+router.get('/independence', protect, getEnergyIndependence);
+
+// @route   GET /api/renewable/recommendations
+// @desc    Get smart optimization recommendations
+// @access  Private
+router.get('/recommendations', protect, getOptimizationRecommendations);
+
+// @route   GET /api/renewable/forecast
+// @desc    Get generation forecast for selected period
+// @access  Private
+router.get('/forecast', protect, getGenerationForecast);
+
+// @route   GET /api/renewable/forecast/accuracy
+// @desc    Get forecast model accuracy metrics
+// @access  Private
+router.get('/forecast/accuracy', protect, getForecastAccuracy);
+
+// ============ MAINTENANCE ROUTES ============
+
+// @route   POST /api/renewable/maintenance
+// @desc    Create a maintenance task
+// @access  Private
+router.post('/maintenance', protect, createMaintenanceTask);
+
+// @route   GET /api/renewable/maintenance
+// @desc    Get maintenance tasks with filters
+// @access  Private
+router.get('/maintenance', protect, getMaintenanceTasks);
+
+// @route   GET /api/renewable/maintenance/summary
+// @desc    Get maintenance summary counters
+// @access  Private
+router.get('/maintenance/summary', protect, getMaintenanceSummary);
+
+// @route   PUT /api/renewable/maintenance/:id
+// @desc    Update maintenance task
+// @access  Private
+router.put('/maintenance/:id', protect, updateMaintenanceTask);
+
+// @route   DELETE /api/renewable/maintenance/:id
+// @desc    Delete maintenance task
+// @access  Private
+router.delete('/maintenance/:id', protect, deleteMaintenanceTask);
+
+// @route   GET /api/renewable/variance
+// @desc    Get expected vs actual variance analytics
+// @access  Private
+router.get('/variance', protect, getVarianceAnalytics);
+
+// @route   GET /api/renewable/variance/trend
+// @desc    Get monthly variance trend
+// @access  Private
+router.get('/variance/trend', protect, getVarianceTrend);
 
 // ============ REPORT ROUTES ============
 

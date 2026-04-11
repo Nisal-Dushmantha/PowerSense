@@ -17,6 +17,9 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
+    "dev": "set \"GENERATE_SOURCEMAP=false\" && react-scripts start",
+    "start": "set \"GENERATE_SOURCEMAP=false\" && react-scripts start",
+    "build": "set \"GENERATE_SOURCEMAP=false\" && react-scripts build",
     "start": "set DISABLE_ESLINT_PLUGIN=true && set NODE_OPTIONS=--max_old_space_size=4096 --no-deprecation && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
