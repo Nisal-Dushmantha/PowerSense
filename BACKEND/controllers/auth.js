@@ -262,10 +262,33 @@ const changePassword = async (req, res) => {
   }
 };
 
+// @desc    Update energy alert threshold
+// @route   PUT /api/auth/threshold
+// @access  Private
+const updateThreshold = async (req, res) => {
+  try {
+    const { energyThreshold } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { energyThreshold: energyThreshold === '' || energyThreshold === null ? null : parseFloat(energyThreshold) },
+      { new: true, runValidators: true }
+    );
+    res.json({
+      success: true,
+      message: 'Energy threshold updated',
+      data: { energyThreshold: user.energyThreshold }
+    });
+  } catch (error) {
+    console.error('Update threshold error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
   updateProfile,
-  changePassword
+  changePassword,
+  updateThreshold
 };

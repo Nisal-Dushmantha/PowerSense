@@ -290,7 +290,15 @@
 }
 
 .dark .meter-dial::before {
-  background: #374151;
+  background: #1f2937;
+}
+
+.dark .meter-needle {
+  background: #f9fafb;
+}
+
+.dark .meter-center {
+  background: #e5e7eb;
 }
 
 /* Responsive meter scaling */

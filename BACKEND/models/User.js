@@ -37,6 +37,11 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
+  },
+  energyThreshold: {
+    type: Number,
+    default: null,
+    min: [0, 'Threshold cannot be negative']
   }
 }, {
   timestamps: true
