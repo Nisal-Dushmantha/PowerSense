@@ -5,6 +5,12 @@ const CounterSchema = new mongoose.Schema({ _id: String, seq: Number });
 const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
 
 const DeviceSchema = new mongoose.Schema({
+	user: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		required: [true, 'User is required'],
+		index: true,
+	},
 	deviceId: {
 		type: String,
 		required: true,
@@ -36,6 +42,8 @@ const DeviceSchema = new mongoose.Schema({
 }, {
 	timestamps: true,
 });
+
+DeviceSchema.index({ user: 1, createdAt: -1 });
 
 // Virtual properties for energy consumption calculations
 DeviceSchema.virtual('dailyW').get(function() {

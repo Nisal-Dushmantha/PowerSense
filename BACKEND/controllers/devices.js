@@ -6,7 +6,13 @@ exports.createDevice = async (req, res) => {
 	try {
 		// Ignore deviceId from client, always auto-generate
 		const { name, type, powerRating, expectedDailyUsage } = req.body;
-		const device = new Device({ name, type, powerRating, expectedDailyUsage });
+		const device = new Device({
+			user: req.user.id,
+			name,
+			type,
+			powerRating,
+			expectedDailyUsage,
+		});
 		await device.save();
 		return res.status(201).json(device);
 	} catch (error) {
@@ -21,7 +27,7 @@ exports.createDevice = async (req, res) => {
 // Get all devices
 exports.getDevices = async (req, res) => {
 	try {
-		const devices = await Device.find().sort({ createdAt: -1 });
+		const devices = await Device.find({ user: req.user.id }).sort({ createdAt: -1 });
 		return res.json(devices);
 	} catch (error) {
 		console.error('getDevices error:', error);
@@ -33,7 +39,7 @@ exports.getDevices = async (req, res) => {
 exports.getDeviceById = async (req, res) => {
 	try {
 		const { deviceId } = req.params;
-		const device = await Device.findOne({ deviceId });
+		const device = await Device.findOne({ deviceId, user: req.user.id });
 		if (!device) return res.status(404).json({ message: 'Device not found' });
 		return res.json(device);
 	} catch (error) {
@@ -48,7 +54,11 @@ exports.updateDevice = async (req, res) => {
 		const { deviceId } = req.params;
 		const updates = (({ name, type, powerRating, expectedDailyUsage }) => ({ name, type, powerRating, expectedDailyUsage }))(req.body);
 
-		const device = await Device.findOneAndUpdate({ deviceId }, { $set: updates }, { new: true, runValidators: true });
+		const device = await Device.findOneAndUpdate(
+			{ deviceId, user: req.user.id },
+			{ $set: updates },
+			{ new: true, runValidators: true }
+		);
 		if (!device) return res.status(404).json({ message: 'Device not found' });
 		return res.json(device);
 	} catch (error) {
@@ -62,10 +72,10 @@ exports.deleteDevice = async (req, res) => {
 	try {
 		const { deviceId } = req.params;
 		// Try by deviceId first
-		let device = await Device.findOneAndDelete({ deviceId });
+		let device = await Device.findOneAndDelete({ deviceId, user: req.user.id });
 		// If not found, try by _id(mongoDB ObjectId)
 		if (!device && deviceId.match(/^[a-fA-F0-9]{24}$/)) {
-			device = await Device.findByIdAndDelete(deviceId);
+			device = await Device.findOneAndDelete({ _id: deviceId, user: req.user.id });
 		}
 		if (!device) return res.status(404).json({ message: 'Device not found' });
 		return res.json({ message: 'Device deleted' });
@@ -78,7 +88,7 @@ exports.deleteDevice = async (req, res) => {
 // Generate PDF report for devices consumption
 exports.generateDevicesPDFReport = async (req, res) => {
 	try {
-		const devices = await Device.find().sort({ createdAt: -1 });
+		const devices = await Device.find({ user: req.user.id }).sort({ createdAt: -1 });
 		
 		// Create a new PDF document
 		const doc = new PDFDocument({ margin: 50 });
