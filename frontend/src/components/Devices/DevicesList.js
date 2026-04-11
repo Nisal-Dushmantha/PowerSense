@@ -48,10 +48,12 @@ const DevicesList = () => {
 	const [searchTerm, setSearchTerm] = useState('');
 
 	   // Filter devices based on search term
-	   const filteredDevices = devices.filter(device => 
-		   device.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-		   device.type.toLowerCase().includes(searchTerm.toLowerCase())
-	   );
+	   const filteredDevices = devices.filter(device => {
+		   const name = (device?.name || '').toLowerCase();
+		   const type = (device?.type || '').toLowerCase();
+		   const term = searchTerm.toLowerCase();
+		   return name.includes(term) || type.includes(term);
+	   });
 
 	   useEffect(() => {
 		   fetchDevices();
@@ -67,7 +69,8 @@ const DevicesList = () => {
 			   setError(null);
 		   } catch (err) {
 			   console.error('Error fetching devices', err);
-			   setError('Failed to load devices');
+			   setDevices([]);
+			   setError(err?.response?.data?.message || 'Failed to load devices');
 		   } finally {
 			   setLoading(false);
 		   }
@@ -80,7 +83,7 @@ const DevicesList = () => {
 			   setDevices(devices.filter(d => d.deviceId !== deviceId));
 		   } catch (err) {
 			   console.error('Error deleting device', err);
-			   setError('Failed to delete device');
+			   setError(err?.response?.data?.message || 'Failed to delete device');
 		   }
 	   };
 
@@ -454,7 +457,7 @@ const handleDownloadPDF = () => {
 													   </svg>
 												   </button>
 												   <button
-													   onClick={() => handleDelete(device.deviceId)}
+													   onClick={() => handleDelete(device.deviceId || device._id)}
 													   className="btn-ghost btn-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
 												   >
 													   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

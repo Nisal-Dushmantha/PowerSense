@@ -12,6 +12,9 @@ import RenewableDashboard from './components/Renewable/RenewableDashboard';
 import RenewableSource from './components/Renewable/RenewableSource';
 import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
 import RenewableAnalytics from './components/Renewable/RenewableAnalytics';
+import EnergyConsumption from './components/energyConsumption';
+import DevicesList from './components/Devices/DevicesList';
+import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
 
@@ -57,12 +60,7 @@ function App() {
             {/* Consumption Route */}
             <Route path="/consumption" element={
               <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Energy Consumption</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
-                </div>
+                <EnergyConsumption />
               </PrivateRoute>
             } />
             
@@ -107,14 +105,17 @@ function App() {
             <Route path="/devices" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Device Management</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <DevicesList />
                 </div>
               </PrivateRoute>
             } />
+            <Route path="/devices/charts" element={
+              <PrivateRoute>
+                <DeviceChartsPage />
+              </PrivateRoute>
+            } />
           </Routes>
+          </main>
         </div>
       </Router>
     </ThemeProvider>

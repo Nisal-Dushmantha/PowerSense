@@ -10,6 +10,12 @@ const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [profileStats, setProfileStats] = useState({
+    totalRecords: 0,
+    monthlyConsumption: 0,
+    loading: false
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
@@ -71,11 +77,24 @@ const Navbar = () => {
     return () => window.removeEventListener('storage', checkAuth);
   }, [location]);
 
+  useEffect(() => {
+    fetchProfileStats();
+  }, [fetchProfileStats]);
+
+  const toggleProfileDropdown = () => {
+    setIsProfileDropdownOpen(prev => !prev);
+  };
+
+  const closeProfileDropdown = () => {
+    setIsProfileDropdownOpen(false);
+  };
+
   const handleLogout = () => {
     authService.logout();
     setIsAuthenticated(false);
     setUser(null);
     setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
     navigate('/login');
   };
 
@@ -243,21 +262,6 @@ const Navbar = () => {
                           </div>
                         </div>
                       </div>
-              <>
-                {/* User Info - Desktop */}
-                <div className="hidden md:flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-textPrimary dark:text-gray-200">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-textSecondary dark:text-gray-400">{user?.email}</p>
-                  </div>
-                  <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </span>
-                  </div>
-                </div>
 
                       {/* Profile Stats */}
                       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
