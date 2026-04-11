@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { dashboardService } from '../services/api';
 import { getRecommendations } from '../services/energyApi';
 import { billService } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
@@ -26,10 +25,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
-
-  const alertCount = recommendations.filter(
-    (item) => item?.type === 'alert' || item?.type === 'warning'
-  ).length;
 
   const fetchProfileStats = useCallback(async () => {
     if (!isAuthenticated) {
@@ -60,12 +55,10 @@ const Navbar = () => {
         .reduce((total, record) => {
           return total + (parseFloat(record.totalKWh) || 0);
         }, 0);
-      const response = await dashboardService.getSummary();
-      const summary = response.data?.data;
       
       setProfileStats({
-        totalRecords: summary?.consumption?.totalRecords || 0,
-        monthlyConsumption: summary?.consumption?.thisMonthKwh || 0,
+        totalRecords,
+        monthlyConsumption: Math.round(monthlyConsumption * 100) / 100,
         loading: false
       });
     } catch (error) {
@@ -73,20 +66,6 @@ const Navbar = () => {
       setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
     }
   }, [isAuthenticated]);
-
-  const closeProfileDropdown = () => {
-    setIsProfileDropdownOpen(false);
-  };
-
-  const toggleProfileDropdown = () => {
-    setIsProfileDropdownOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        fetchProfileStats();
-      }
-      return next;
-    });
-  };
 
   const fetchRecommendations = useCallback(async (options = {}) => {
     const { markAsRead = false } = options;

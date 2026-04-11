@@ -133,6 +133,15 @@ export const renewableService = {
   }
 };
 
+export const deviceService = {
+  getAllDevices: () => api.get('/devices'),
+  getDeviceById: (id) => api.get(`/devices/${id}`),
+  createDevice: (deviceData) => api.post('/devices', deviceData),
+  updateDevice: (id, deviceData) => api.put(`/devices/${id}`, deviceData),
+  deleteDevice: (id) => api.delete(`/devices/${id}`),
+  exportDevicesPdf: () => api.get('/devices/export/pdf', { responseType: 'blob' })
+};
+
 export const dashboardService = {
   getSummary: () => api.get('/dashboard/summary')
 };

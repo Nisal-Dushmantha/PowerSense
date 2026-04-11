@@ -39,15 +39,14 @@ exports.getDevices = async (req, res) => {
 exports.getDeviceById = async (req, res) => {
 	try {
 		const { deviceId } = req.params;
-		const device = await Device.findOne({ deviceId, user: req.user.id });
-		if (!device) return res.status(404).json({ message: 'Device not found' });
-		return res.json(device);
 		let device = await Device.findOne({ deviceId, user: req.user.id });
-		if (!device && deviceId.match(/^[a-fA-F0-9]{24}$/)) {
+
+		if (!device && /^[a-fA-F0-9]{24}$/.test(deviceId)) {
 			device = await Device.findOne({ _id: deviceId, user: req.user.id });
 		}
-		if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
-		return res.json({ success: true, data: device });
+
+		if (!device) return res.status(404).json({ message: 'Device not found' });
+		return res.json(device);
 	} catch (error) {
 		console.error('getDeviceById error:', error);
 		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -60,20 +59,13 @@ exports.updateDevice = async (req, res) => {
 		const { deviceId } = req.params;
 		const updates = (({ name, type, powerRating, expectedDailyUsage }) => ({ name, type, powerRating, expectedDailyUsage }))(req.body);
 
-		const device = await Device.findOneAndUpdate(
-			{ deviceId, user: req.user.id },
-			{ $set: updates },
-			{ new: true, runValidators: true }
-		);
-		if (!device) return res.status(404).json({ message: 'Device not found' });
-		return res.json(device);
 		let device = await Device.findOneAndUpdate(
 			{ deviceId, user: req.user.id },
 			{ $set: updates },
 			{ new: true, runValidators: true }
 		);
 
-		if (!device && deviceId.match(/^[a-fA-F0-9]{24}$/)) {
+		if (!device && /^[a-fA-F0-9]{24}$/.test(deviceId)) {
 			device = await Device.findOneAndUpdate(
 				{ _id: deviceId, user: req.user.id },
 				{ $set: updates },
@@ -81,8 +73,8 @@ exports.updateDevice = async (req, res) => {
 			);
 		}
 
-		if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
-		return res.json({ success: true, message: 'Device updated', data: device });
+		if (!device) return res.status(404).json({ message: 'Device not found' });
+		return res.json(device);
 	} catch (error) {
 		console.error('updateDevice error:', error);
 		return res.status(500).json({ success: false, message: 'Server error', error: error.message });

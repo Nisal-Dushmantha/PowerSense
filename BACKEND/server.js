@@ -1,3 +1,6 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/app');
 const { startMaintenanceStatusScheduler } = require('./services/maintenanceScheduler');
@@ -15,13 +18,8 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (uploaded images)
 app.use('/uploads', express.static('uploads'));
 
-// Connect to database
-connectDB();
-startMaintenanceStatusScheduler();
-
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
-//const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
@@ -29,32 +27,47 @@ const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
 
 // Basic route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'PowerSense Backend API is running!',
     status: 'Connected to MongoDB',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
     endpoints: {
-      bills: '/api/bills'
-      //energy: '/api/energy-consumption'
+      bills: '/api/bills',
+      auth: '/api/auth',
+      renewable: '/api/renewable'
     }
   });
 });
 
 // API Routes
 app.use('/api/bills', monthlyBillRoutes);
-//app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/renewable', renewableRoutes);
 
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  try {
-    await connectDB();
+  await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🌐 API URL: http://localhost:${PORT}`);
+
+    startBillReminderJob();
+    startMaintenanceStatusScheduler();
+
+    // Initialize WhatsApp client only when explicitly requested.
+    if (process.env.WHATSAPP_WEB_AUTO_START === 'true') {
+      initializeWhatsAppClient();
+    } else {
+      console.log('[WhatsApp OTP] Auto-start disabled. Client will initialize when OTP/WhatsApp send is requested.');
+    }
+  });
+};
+
+startServer().catch((error) => {
+  console.error('Failed to start server:', error.message);
+  process.exit(1);
 });
 
 module.exports = app;
