@@ -4,7 +4,7 @@ const Device = require('../models/devices');
 const MonthlyBill = require('../models/monthlyBill');
 const RenewableEnergyRecord = require('../models/RenewableEnergyRecord');
 const User = require('../models/User');
-const whatsappService = require('../services/whatsappService');
+const whatsappService = require('../services/energyWhatsAppService');
 
 const triggerAutoThresholdWhatsAppAlert = async ({ userId, record }) => {
     try {

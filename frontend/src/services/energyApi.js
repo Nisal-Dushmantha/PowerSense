@@ -70,6 +70,31 @@ export const getRecommendations = async () => {
   return response.data;
 };
 
+export const startEnergyWhatsApp = async () => {
+  const response = await api.post(`${ANALYTICS_URL}/whatsapp/start`);
+  return response.data;
+};
+
+export const getEnergyWhatsAppStatus = async () => {
+  const response = await api.get(`${ANALYTICS_URL}/whatsapp/status`);
+  return response.data;
+};
+
+export const getEnergyWhatsAppQr = async () => {
+  const response = await api.get(`${ANALYTICS_URL}/whatsapp/qr`);
+  return response.data;
+};
+
+export const sendEnergyWhatsAppSummary = async (payload = {}) => {
+  const response = await api.post(`${ANALYTICS_URL}/whatsapp/send-summary`, payload);
+  return response.data;
+};
+
+export const sendEnergyWhatsAppThresholdAlerts = async (payload = {}) => {
+  const response = await api.post(`${ANALYTICS_URL}/whatsapp/send-threshold-alerts`, payload);
+  return response.data;
+};
+
 export const updateEnergyThreshold = async (energyThreshold) => {
   const response = await api.put('/auth/threshold', { energyThreshold });
   return response.data;
