@@ -149,56 +149,84 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-light-mint py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-4xl font-extrabold text-primary flex items-center justify-center space-x-2">
-            <span className="text-5xl">⚡</span>
-            <span>PowerSense</span>
-          </h2>
-          <p className="mt-2 text-center text-lg text-dark-charcoal font-medium">
-            Create your account
-          </p>
-        </div>
-        
-        <div className="bg-white shadow-xl rounded-lg p-8 border border-background-dark">
-          {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#eef8ff] to-[#fff8ef] px-4 py-4 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-accent/20 blur-3xl animate-pulse"></div>
+      <div className="pointer-events-none absolute -bottom-24 left-0 h-80 w-80 rounded-full bg-primary/20 blur-3xl animate-pulse"></div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-semibold text-dark-charcoal mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="John"
-              />
+      <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
+        <section className="hidden lg:flex lg:flex-col lg:justify-center slide-up">
+          <div className="max-w-lg">
+            <p className="mb-4 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold tracking-wide text-secondary shadow-sm backdrop-blur-sm">
+              New Account Setup
+            </p>
+            <h1 className="text-5xl font-extrabold leading-tight text-textPrimary">
+              Build your
+              <span className="block text-gradient">energy dashboard</span>
+            </h1>
+            <p className="mt-5 text-base text-textSecondary">
+              Join PowerSense to track bills, monitor your monthly kWh usage, and receive payment reminders via WhatsApp.
+            </p>
+
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              {['Real-time tracking', 'Smart reminders', 'Monthly insights', 'Secure account'].map((item, index) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-white/60 bg-white/60 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="flex items-center justify-center scale-in">
+          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-7">
+            <div className="mb-4 text-center">
+              <h2 className="text-3xl font-bold text-textPrimary">Create account</h2>
+              <p className="mt-1 text-sm text-textSecondary">Start managing your energy smarter</p>
             </div>
 
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-semibold text-dark-charcoal mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Doe"
-              />
+            {error && (
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-shake">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  placeholder="John"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  placeholder="Doe"
+                />
+              </div>
             </div>
 
             <div>
@@ -235,7 +263,7 @@ const Register = () => {
                   type="button"
                   onClick={handleSendOtp}
                   disabled={otpLoading}
-                  className="px-4 py-3 rounded-lg text-sm font-semibold text-white bg-secondary hover:opacity-90 transition-colors whitespace-nowrap"
+                  className="px-4 py-3 rounded-lg text-sm font-semibold text-white bg-secondary hover:opacity-90 transition-colors whitespace-nowrap disabled:opacity-60"
                 >
                   {otpLoading ? 'Sending...' : 'Send OTP'}
                 </button>
@@ -245,37 +273,39 @@ const Register = () => {
               )}
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-dark-charcoal mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength="6"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="At least 6 characters"
-              />
-            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  minLength="6"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  placeholder="At least 6 characters"
+                />
+              </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-dark-charcoal mb-2">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Re-enter your password"
-              />
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  placeholder="Re-enter"
+                />
+              </div>
             </div>
 
             <div>
@@ -289,7 +319,7 @@ const Register = () => {
             </div>
           </form>
 
-          <div className="mt-6">
+          <div className="mt-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
@@ -301,7 +331,7 @@ const Register = () => {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-4">
               <Link
                 to="/login"
                 className="w-full flex justify-center py-3 px-4 border-2 border-primary rounded-lg shadow-sm text-base font-semibold text-primary bg-white hover:bg-light-mint focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
@@ -310,7 +340,8 @@ const Register = () => {
               </Link>
             </div>
           </div>
-        </div>
+          </div>
+        </section>
       </div>
 
       <Modal
