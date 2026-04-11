@@ -30,7 +30,7 @@ const devicesRoutes = require('./routes/devices');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
 const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
-
+const energyAnalyticsRoutes = require('./routes/energyAnalytics');
 // Basic route
 app.get('/', (req, res) => {
   res.json({ 
