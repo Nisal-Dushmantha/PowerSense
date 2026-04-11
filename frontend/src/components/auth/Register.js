@@ -149,14 +149,14 @@ const Register = () => {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9] px-4 py-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 px-4 py-4 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-secondary/18 blur-3xl animate-pulse"></div>
       <div className="pointer-events-none absolute -bottom-24 left-0 h-80 w-80 rounded-full bg-primary/18 blur-3xl animate-pulse"></div>
 
       <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
         <section className="hidden lg:flex lg:flex-col lg:justify-center slide-up">
           <div className="max-w-lg">
-            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold tracking-wide text-secondary shadow-sm backdrop-blur-sm">
+            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 dark:border-gray-700 bg-white/80 dark:bg-gray-800/75 px-4 py-1 text-xs font-semibold tracking-wide text-secondary shadow-sm backdrop-blur-sm">
               New Account Setup
             </p>
             <h1 className="text-5xl font-extrabold leading-tight text-textPrimary">
@@ -171,7 +171,7 @@ const Register = () => {
               {['Real-time tracking', 'Smart reminders', 'Monthly insights', 'Secure account'].map((item, index) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-primary/15 bg-white/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
+                  className="rounded-2xl border border-primary/15 dark:border-gray-700 bg-white/75 dark:bg-gray-800/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {item}
@@ -182,14 +182,14 @@ const Register = () => {
         </section>
 
         <section className="flex items-center justify-center scale-in">
-          <div className="w-full max-w-md rounded-3xl border border-primary/15 bg-white/90 p-6 shadow-2xl backdrop-blur-md sm:p-7">
+          <div className="w-full max-w-md rounded-3xl border border-primary/15 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 p-6 shadow-2xl backdrop-blur-md sm:p-7">
             <div className="mb-4 text-center">
               <h2 className="text-3xl font-bold text-textPrimary">Create account</h2>
               <p className="mt-1 text-sm text-textSecondary">Start managing your energy smarter</p>
             </div>
 
             {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-shake">
+              <div className="mb-5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300 animate-shake">
                 {error}
               </div>
             )}
@@ -197,7 +197,7 @@ const Register = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                <label htmlFor="firstName" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                   First Name
                 </label>
                 <input
@@ -207,13 +207,13 @@ const Register = () => {
                   value={formData.firstName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="input-field"
                   placeholder="John"
                 />
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                <label htmlFor="lastName" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                   Last Name
                 </label>
                 <input
@@ -223,14 +223,14 @@ const Register = () => {
                   value={formData.lastName}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="input-field"
                   placeholder="Doe"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-dark-charcoal mb-2">
+              <label htmlFor="email" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                 Email Address
               </label>
               <input
@@ -240,13 +240,13 @@ const Register = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="input-field"
                 placeholder="your.email@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-semibold text-dark-charcoal mb-2">
+              <label htmlFor="phoneNumber" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                 WhatsApp Number
               </label>
               <div className="flex gap-2">
@@ -256,7 +256,7 @@ const Register = () => {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="input-field flex-1"
                   placeholder="+94771234567"
                 />
                 <button
@@ -269,13 +269,13 @@ const Register = () => {
                 </button>
               </div>
               {isWhatsappVerified && (
-                <p className="mt-2 text-sm text-green-600 font-medium">WhatsApp number verified</p>
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">WhatsApp number verified</p>
               )}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                   Password
                 </label>
                 <input
@@ -286,13 +286,13 @@ const Register = () => {
                   onChange={handleChange}
                   required
                   minLength="6"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="input-field"
                   placeholder="At least 6 characters"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-dark-charcoal mb-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                   Confirm Password
                 </label>
                 <input
@@ -302,7 +302,7 @@ const Register = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="input-field"
                   placeholder="Re-enter"
                 />
               </div>
@@ -312,7 +312,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 transition-colors"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-white dark:focus:ring-offset-gray-900 disabled:opacity-50 transition-colors"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
@@ -322,10 +322,10 @@ const Register = () => {
           <div className="mt-4">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-gray-300 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-text-light">
+                <span className="px-2 bg-white dark:bg-gray-800 text-textSecondary dark:text-gray-400">
                   Already have an account?
                 </span>
               </div>
@@ -334,7 +334,7 @@ const Register = () => {
             <div className="mt-4">
               <Link
                 to="/login"
-                className="w-full flex justify-center py-3 px-4 border-2 border-primary rounded-lg shadow-sm text-base font-semibold text-primary bg-white hover:bg-light-mint focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
+                className="w-full flex justify-center py-3 px-4 border-2 border-primary rounded-lg shadow-sm text-base font-semibold text-primary bg-white dark:bg-gray-800 dark:text-primary hover:bg-light-mint dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-white dark:focus:ring-offset-gray-900 transition-colors"
               >
                 Sign In Instead
               </Link>
@@ -351,7 +351,7 @@ const Register = () => {
         size="small"
       >
         <div className="space-y-5">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Enter the 6-digit OTP sent to your WhatsApp number.
           </p>
 
@@ -366,7 +366,7 @@ const Register = () => {
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                className="w-11 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-11 h-12 text-center text-lg font-bold border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
               />
             ))}
           </div>

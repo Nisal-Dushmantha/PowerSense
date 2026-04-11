@@ -42,14 +42,14 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9]">
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/18 blur-3xl animate-pulse"></div>
       <div className="pointer-events-none absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-secondary/18 blur-3xl animate-pulse"></div>
 
       <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
         <section className="hidden lg:flex lg:flex-col lg:justify-center slide-up">
           <div className="max-w-lg">
-            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold tracking-wide text-primary shadow-sm backdrop-blur-sm">
+            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 bg-white/80 dark:bg-gray-800/75 dark:border-gray-700 px-4 py-1 text-xs font-semibold tracking-wide text-primary shadow-sm backdrop-blur-sm">
               Energy Intelligence Platform
             </p>
             <h1 className="text-5xl font-extrabold leading-tight text-textPrimary">
@@ -64,7 +64,7 @@ const Login = () => {
               {['Fast', 'Reliable', 'Insightful'].map((tag, index) => (
                 <div
                   key={tag}
-                  className="rounded-2xl border border-primary/15 bg-white/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
+                  className="rounded-2xl border border-primary/15 dark:border-gray-700 bg-white/75 dark:bg-gray-800/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
                   style={{ animationDelay: `${index * 120}ms` }}
                 >
                   {tag}
@@ -75,14 +75,14 @@ const Login = () => {
         </section>
 
         <section className="flex items-center justify-center scale-in">
-          <div className="w-full max-w-md rounded-3xl border border-primary/15 bg-white/90 p-7 shadow-2xl backdrop-blur-md sm:p-8">
+          <div className="w-full max-w-md rounded-3xl border border-primary/15 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 p-7 shadow-2xl backdrop-blur-md sm:p-8">
             <div className="mb-6 text-center">
               <h2 className="text-3xl font-bold text-textPrimary">Welcome back</h2>
               <p className="mt-1 text-sm text-textSecondary">Sign in to continue</p>
             </div>
 
             {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-shake">
+              <div className="mb-5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300 animate-shake">
                 {error}
               </div>
             )}
@@ -129,9 +129,9 @@ const Login = () => {
             </form>
 
             <div className="my-6 flex items-center gap-3 text-xs text-textSecondary">
-              <div className="h-px flex-1 bg-gray-200"></div>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
               <span>New to PowerSense?</span>
-              <div className="h-px flex-1 bg-gray-200"></div>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
             </div>
 
             <Link to="/register" className="btn-secondary w-full">
