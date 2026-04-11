@@ -13,6 +13,8 @@ projects:
       envVars:
       - key: JWT_SECRET
         sync: false
+      - key: WHATSAPP_WEB_ENABLED
+        value: "true"
       - key: GENERATE_SOURCEMAP
         sync: false
       - key: MONGO_URI

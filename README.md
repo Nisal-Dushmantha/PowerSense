@@ -103,9 +103,9 @@ MONGO_URI=<your_mongodb_connection_string>
 JWT_SECRET=<your_jwt_secret>
 NODE_ENV=development
 
-# Keep disabled in cloud unless persistent WhatsApp session handling is configured
-WHATSAPP_ENABLED=false
-WHATSAPP_WEB_ENABLED=false
+# Enable WhatsApp Web OTP/session features
+WHATSAPP_ENABLED=true
+WHATSAPP_WEB_ENABLED=true
 ```
 
 Start backend:
