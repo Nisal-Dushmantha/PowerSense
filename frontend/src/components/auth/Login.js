@@ -77,11 +77,6 @@ const Login = () => {
         <section className="flex items-center justify-center scale-in">
           <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/85 p-7 shadow-2xl backdrop-blur-md sm:p-8">
             <div className="mb-6 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-r from-primary to-secondary shadow-lg">
-                <svg className="h-7 w-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-              </div>
               <h2 className="text-3xl font-bold text-textPrimary">Welcome back</h2>
               <p className="mt-1 text-sm text-textSecondary">Sign in to continue</p>
             </div>

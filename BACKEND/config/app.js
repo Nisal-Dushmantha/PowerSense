@@ -19,6 +19,13 @@ const connectDB = async () => {
   } catch (error) {
     console.error('Error connecting to MongoDB:', error.message);
     console.error('Full error:', error);
+
+    if (String(error.message || '').includes('ENOTFOUND')) {
+      console.error('DNS resolution failed for MongoDB Atlas host.');
+      console.error('Try changing your network DNS to 8.8.8.8 / 8.8.4.4 or 1.1.1.1 / 1.0.0.1, then run: ipconfig /flushdns');
+      console.error('You can verify with: nslookup ac-bscuvdd-shard-00-00.s2xc238.mongodb.net 8.8.8.8');
+    }
+
     process.exit(1);
   }
 };
