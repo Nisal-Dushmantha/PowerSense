@@ -120,27 +120,42 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 transition-colors duration-300">
+    <nav className="sticky top-0 z-40 border-b border-primary/15 dark:border-gray-700/70 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl transition-colors duration-300 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="max-w-7xl mx-auto container-padding">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20 gap-4">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
               <img 
                 src={logo} 
                 alt="PowerSense Logo" 
-                className="w-16 h-16 transform group-hover:scale-105 transition-transform"
+                className="w-12 h-12 rounded-xl transform group-hover:scale-105 transition-transform"
               />
               <div>
-                <h1 className="text-xl font-bold text-gradient">PowerSense</h1>
-                <p className="text-xs text-textSecondary dark:text-gray-400 -mt-1">Energy Management</p>
+                <h1 className="text-lg font-extrabold text-gradient leading-tight">PowerSense</h1>
+                <p className="text-[11px] text-textSecondary dark:text-gray-400 -mt-0.5">Energy Analytics</p>
               </div>
             </Link>
           </div>
 
+          {isAuthenticated && (
+            <div className="hidden lg:flex flex-1 max-w-xl">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search bills, consumption, devices..."
+                  className="w-full rounded-2xl border border-primary/15 bg-primary/5 py-2.5 pl-10 pr-4 text-sm text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                />
+                <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+                </svg>
+              </div>
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           {isAuthenticated && (
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden md:flex items-center space-x-1 rounded-2xl border border-primary/15 bg-white/80 p-1">
               <Link
                 to="/"
                 className={`${
@@ -196,7 +211,7 @@ const Navbar = () => {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+              className="p-2.5 rounded-xl bg-primary/5 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 border border-primary/15 dark:border-gray-700"
               aria-label="Toggle dark mode"
               title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -219,7 +234,7 @@ const Navbar = () => {
                 <div className="hidden md:flex items-center space-x-3 relative profile-dropdown">
                   <button
                     onClick={toggleProfileDropdown}
-                    className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex items-center space-x-3 p-2 rounded-2xl hover:bg-primary/5 transition-colors cursor-pointer border border-primary/15 bg-white/80"
                   >
                     <div className="text-right">
                       <p className="text-sm font-semibold text-textPrimary">
@@ -227,7 +242,7 @@ const Navbar = () => {
                       </p>
                       <p className="text-xs text-textSecondary">{user?.email}</p>
                     </div>
-                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center shadow-sm">
                       <span className="text-white font-semibold text-sm">
                         {user?.firstName?.[0]}{user?.lastName?.[0]}
                       </span>
@@ -243,7 +258,7 @@ const Navbar = () => {
 
                   {/* Dropdown Menu */}
                   {isProfileDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 fade-in">
+                    <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-primary/15 py-2 z-50 fade-in">
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center space-x-3">

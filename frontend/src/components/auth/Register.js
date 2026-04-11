@@ -149,14 +149,14 @@ const Register = () => {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#eef8ff] to-[#fff8ef] px-4 py-4 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-accent/20 blur-3xl animate-pulse"></div>
-      <div className="pointer-events-none absolute -bottom-24 left-0 h-80 w-80 rounded-full bg-primary/20 blur-3xl animate-pulse"></div>
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9] px-4 py-4 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-secondary/18 blur-3xl animate-pulse"></div>
+      <div className="pointer-events-none absolute -bottom-24 left-0 h-80 w-80 rounded-full bg-primary/18 blur-3xl animate-pulse"></div>
 
       <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-10">
         <section className="hidden lg:flex lg:flex-col lg:justify-center slide-up">
           <div className="max-w-lg">
-            <p className="mb-4 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold tracking-wide text-secondary shadow-sm backdrop-blur-sm">
+            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold tracking-wide text-secondary shadow-sm backdrop-blur-sm">
               New Account Setup
             </p>
             <h1 className="text-5xl font-extrabold leading-tight text-textPrimary">
@@ -171,7 +171,7 @@ const Register = () => {
               {['Real-time tracking', 'Smart reminders', 'Monthly insights', 'Secure account'].map((item, index) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-white/60 bg-white/60 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
+                  className="rounded-2xl border border-primary/15 bg-white/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {item}
@@ -182,7 +182,7 @@ const Register = () => {
         </section>
 
         <section className="flex items-center justify-center scale-in">
-          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-7">
+          <div className="w-full max-w-md rounded-3xl border border-primary/15 bg-white/90 p-6 shadow-2xl backdrop-blur-md sm:p-7">
             <div className="mb-4 text-center">
               <h2 className="text-3xl font-bold text-textPrimary">Create account</h2>
               <p className="mt-1 text-sm text-textSecondary">Start managing your energy smarter</p>

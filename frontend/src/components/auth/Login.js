@@ -42,14 +42,14 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#eef8ff] to-[#fff8ef]">
-      <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl animate-pulse"></div>
-      <div className="pointer-events-none absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-secondary/20 blur-3xl animate-pulse"></div>
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9]">
+      <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/18 blur-3xl animate-pulse"></div>
+      <div className="pointer-events-none absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-secondary/18 blur-3xl animate-pulse"></div>
 
       <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
         <section className="hidden lg:flex lg:flex-col lg:justify-center slide-up">
           <div className="max-w-lg">
-            <p className="mb-4 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold tracking-wide text-primary shadow-sm backdrop-blur-sm">
+            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 bg-white/80 px-4 py-1 text-xs font-semibold tracking-wide text-primary shadow-sm backdrop-blur-sm">
               Energy Intelligence Platform
             </p>
             <h1 className="text-5xl font-extrabold leading-tight text-textPrimary">
@@ -64,7 +64,7 @@ const Login = () => {
               {['Fast', 'Reliable', 'Insightful'].map((tag, index) => (
                 <div
                   key={tag}
-                  className="rounded-2xl border border-white/60 bg-white/60 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
+                  className="rounded-2xl border border-primary/15 bg-white/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
                   style={{ animationDelay: `${index * 120}ms` }}
                 >
                   {tag}
@@ -75,7 +75,7 @@ const Login = () => {
         </section>
 
         <section className="flex items-center justify-center scale-in">
-          <div className="w-full max-w-md rounded-3xl border border-white/60 bg-white/85 p-7 shadow-2xl backdrop-blur-md sm:p-8">
+          <div className="w-full max-w-md rounded-3xl border border-primary/15 bg-white/90 p-7 shadow-2xl backdrop-blur-md sm:p-8">
             <div className="mb-6 text-center">
               <h2 className="text-3xl font-bold text-textPrimary">Welcome back</h2>
               <p className="mt-1 text-sm text-textSecondary">Sign in to continue</p>

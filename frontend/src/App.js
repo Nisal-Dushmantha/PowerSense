@@ -27,9 +27,10 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-background dark:bg-gray-900 transition-colors duration-300">
+        <div className="app-shell min-h-screen transition-colors duration-300">
           <Navbar />
-          <Routes>
+          <main className="relative z-10">
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -112,7 +113,8 @@ function App() {
                   </div>
                 </PrivateRoute>
               } />
-          </Routes>
+            </Routes>
+          </main>
         </div>
       </Router>
     </ThemeProvider>
