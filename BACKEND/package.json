@@ -4,7 +4,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon --watch server.js --watch routes --watch controllers --watch models --watch middleware --watch services --ext js,json --ignore uploads/** --ignore .wwebjs_auth/** --ignore *.log server.js",
     "test": "jest --runInBand",
     "test:unit": "jest --runInBand tests/unit",
     "test:integration": "jest --runInBand tests/integration",
