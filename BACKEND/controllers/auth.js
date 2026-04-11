@@ -66,6 +66,7 @@ const register = async (req, res) => {
       firstName,
       lastName,
       email,
+      contactNumber,
       password,
       phoneNumber: normalizedPhone,
       role: role || 'user' // Default to 'user' if not specified
@@ -86,6 +87,7 @@ const register = async (req, res) => {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          contactNumber: user.contactNumber,
           role: user.role
         },
         token
@@ -229,6 +231,7 @@ const login = async (req, res) => {
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
+          contactNumber: user.contactNumber,
           role: user.role,
           lastLogin: user.lastLogin
         },
@@ -367,6 +370,28 @@ const changePassword = async (req, res) => {
   }
 };
 
+// @desc    Update energy alert threshold
+// @route   PUT /api/auth/threshold
+// @access  Private
+const updateThreshold = async (req, res) => {
+  try {
+    const { energyThreshold } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { energyThreshold: energyThreshold === '' || energyThreshold === null ? null : parseFloat(energyThreshold) },
+      { new: true, runValidators: true }
+    );
+    res.json({
+      success: true,
+      message: 'Energy threshold updated',
+      data: { energyThreshold: user.energyThreshold }
+    });
+  } catch (error) {
+    console.error('Update threshold error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   register,
   sendWhatsAppOtp,
@@ -374,5 +399,6 @@ module.exports = {
   login,
   getMe,
   updateProfile,
-  changePassword
+  changePassword,
+  updateThreshold
 };

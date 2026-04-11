@@ -1,11 +1,7 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/app');
 const { startMaintenanceStatusScheduler } = require('./services/maintenanceScheduler');
 
-// Load environment variables
 dotenv.config();
 
 // Initialize express app
@@ -52,15 +48,13 @@ app.use('/api/renewable', renewableRoutes);
 
 const PORT = process.env.PORT || 5000;
 
+const startServer = async () => {
+  try {
+    await connectDB();
+
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
-
-  // Start scheduled jobs
-  startBillReminderJob();
-
-  // Start WhatsApp Web client for OTP
-  initializeWhatsAppClient();
 });
 
 module.exports = app;

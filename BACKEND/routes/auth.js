@@ -6,7 +6,8 @@ const {
   login,
   getMe,
   updateProfile,
-  changePassword
+  changePassword,
+  updateThreshold
 } = require('../controllers/auth');
 const { protect } = require('../middleware/auth');
 
@@ -46,5 +47,10 @@ router.put('/profile', protect, updateProfile);
 // @desc    Change user password
 // @access  Private
 router.put('/change-password', protect, changePassword);
+
+// @route   PUT /api/auth/threshold
+// @desc    Update energy alert threshold
+// @access  Private
+router.put('/threshold', protect, updateThreshold);
 
 module.exports = router;
