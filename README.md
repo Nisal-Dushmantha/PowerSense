@@ -202,39 +202,31 @@ Detailed test instructions and commands are available in [TESTING.md](TESTING.md
 
 ### Deployment Evidence
 - [x] Render dashboard live: [docs/screenshots/deployment/render-dashboard-live.png](docs/screenshots/deployment/render-dashboard-live.png)
+	<img src="docs/screenshots/deployment/render-dashboard-live.png" alt="Render Dashboard Live" width="520" />
 - [x] Vercel deployment ready: [docs/screenshots/deployment/vercel-deployment-ready.png](docs/screenshots/deployment/vercel-deployment-ready.png)
+	<img src="docs/screenshots/deployment/vercel-deployment-ready.png" alt="Vercel Deployment Ready" width="520" />
 - [x] Backend health response: [docs/screenshots/deployment/backend-health-response.png](docs/screenshots/deployment/backend-health-response.png)
+	<img src="docs/screenshots/deployment/backend-health-response.png" alt="Backend Health Response" width="520" />
 
 ### Application Evidence
 - [x] Frontend homepage live: [docs/screenshots/app/frontend-homepage-live.png](docs/screenshots/app/frontend-homepage-live.png)
+	<img src="docs/screenshots/app/frontend-homepage-live.png" alt="Frontend Homepage" width="520" />
 - [x] Frontend login page: [docs/screenshots/app/frontend-login-page.png](docs/screenshots/app/frontend-login-page.png)
+	<img src="docs/screenshots/app/frontend-login-page.png" alt="Frontend Login Page" width="520" />
 - [x] Authenticated analytics page: [docs/screenshots/app/frontend-authenticated-analytics-page.png](docs/screenshots/app/frontend-authenticated-analytics-page.png)
+	<img src="docs/screenshots/app/frontend-authenticated-analytics-page.png" alt="Authenticated Analytics Page" width="520" />
 
 ### Testing Evidence
 - [x] Postman login 200: [docs/screenshots/testing/postman-auth-login-200.png](docs/screenshots/testing/postman-auth-login-200.png)
+	<img src="docs/screenshots/testing/postman-auth-login-200.png" alt="Postman Auth Login 200" width="520" />
 - [x] Postman alerts 200: [docs/screenshots/testing/postman-energy-alerts-200.png](docs/screenshots/testing/postman-energy-alerts-200.png)
+	<img src="docs/screenshots/testing/postman-energy-alerts-200.png" alt="Postman Energy Alerts 200" width="520" />
 - [x] Unit tests pass: [docs/screenshots/testing/unit-tests-pass.png](docs/screenshots/testing/unit-tests-pass.png)
+	<img src="docs/screenshots/testing/unit-tests-pass.png" alt="Unit Tests Pass" width="520" />
 - [x] Integration tests pass: [docs/screenshots/testing/integration-tests-pass.png](docs/screenshots/testing/integration-tests-pass.png)
+	<img src="docs/screenshots/testing/integration-tests-pass.png" alt="Integration Tests Pass" width="520" />
 - [x] Artillery performance summary: [docs/screenshots/testing/artillery-performance-summary.png](docs/screenshots/testing/artillery-performance-summary.png)
-
-### Screenshot Preview Gallery
-
-#### Deployment Preview
-<img src="docs/screenshots/deployment/render-dashboard-live.png" alt="Render Dashboard Live" width="420" />
-<img src="docs/screenshots/deployment/vercel-deployment-ready.png" alt="Vercel Deployment Ready" width="420" />
-<img src="docs/screenshots/deployment/backend-health-response.png" alt="Backend Health Response" width="420" />
-
-#### Application Preview
-<img src="docs/screenshots/app/frontend-homepage-live.png" alt="Frontend Homepage" width="420" />
-<img src="docs/screenshots/app/frontend-login-page.png" alt="Frontend Login Page" width="420" />
-<img src="docs/screenshots/app/frontend-authenticated-analytics-page.png" alt="Authenticated Analytics Page" width="420" />
-
-#### Testing Preview
-<img src="docs/screenshots/testing/postman-auth-login-200.png" alt="Postman Auth Login 200" width="420" />
-<img src="docs/screenshots/testing/postman-energy-alerts-200.png" alt="Postman Energy Alerts 200" width="420" />
-<img src="docs/screenshots/testing/unit-tests-pass.png" alt="Unit Tests Pass" width="420" />
-<img src="docs/screenshots/testing/integration-tests-pass.png" alt="Integration Tests Pass" width="420" />
-<img src="docs/screenshots/testing/artillery-performance-summary.png" alt="Artillery Performance Summary" width="420" />
+	<img src="docs/screenshots/testing/artillery-performance-summary.png" alt="Artillery Performance Summary" width="520" />
 
 ---
 
