@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "PowerSense Renewable API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for renewable module endpoints."
+  },
+  "item": [
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Pass1234\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Renewable - Create Source",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/renewable/sources",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"sourceName\": \"Solar Roof A\",\n  \"sourceType\": \"Solar\",\n  \"capacity\": 20,\n  \"capacityUnit\": \"kW\",\n  \"installationDate\": \"2025-01-10\",\n  \"location\": \"Colombo\",\n  \"status\": \"Active\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Renewable - List Sources",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/renewable/sources"
+      }
+    },
+    {
+      "name": "Renewable - Create Record",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/renewable/records",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"source\": \"{{sourceId}}\",\n  \"recordDate\": \"2026-04-10\",\n  \"energyGenerated\": 48.6,\n  \"energyUnit\": \"kWh\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Renewable - Maintenance Summary",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/renewable/maintenance/summary"
+      }
+    },
+    {
+      "name": "Renewable - Weather Insights",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/renewable/weather-insights?location=Colombo"
+      }
+    },
+    {
+      "name": "Renewable - Admin Overview (Role Based)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/renewable/admin/overview"
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" },
+    { "key": "sourceId", "value": "" }
+  ]
+}

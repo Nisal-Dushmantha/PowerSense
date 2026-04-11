@@ -1,13 +1,17 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// JWT Secret (in production, use environment variable)
-const JWT_SECRET = process.env.JWT_SECRET || 'powersense_secret_key_2026_secure';
+const getJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV !== 'production') return 'dev_only_jwt_secret_change_me';
+  throw new Error('JWT_SECRET is not configured.');
+};
+
 const JWT_EXPIRE = '7d'; // Token expires in 7 days
 
 // Generate JWT Token
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, JWT_SECRET, {
+  return jwt.sign({ id: userId }, getJwtSecret(), {
     expiresIn: JWT_EXPIRE
   });
 };
