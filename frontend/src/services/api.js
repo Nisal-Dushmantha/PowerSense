@@ -90,6 +90,8 @@ export const renewableService = {
   getOptimizationRecommendations: () => api.get('/renewable/recommendations'),
   getGenerationForecast: (params) => api.get('/renewable/forecast', { params }),
   getForecastAccuracy: (params) => api.get('/renewable/forecast/accuracy', { params }),
+  getWeatherInsights: (params) => api.get('/renewable/weather-insights', { params }),
+  getAdminOverview: () => api.get('/renewable/admin/overview'),
   getVarianceAnalytics: (params) => api.get('/renewable/variance', { params }),
   getVarianceTrend: (params) => api.get('/renewable/variance/trend', { params }),
 
