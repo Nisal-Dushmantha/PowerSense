@@ -66,7 +66,7 @@ const register = async (req, res) => {
       firstName,
       lastName,
       email,
-      contactNumber,
+      contactNumber: normalizedPhone,
       password,
       phoneNumber: normalizedPhone,
       role: role || 'user' // Default to 'user' if not specified
@@ -108,6 +108,15 @@ const register = async (req, res) => {
 // @access  Public
 const sendWhatsAppOtp = async (req, res) => {
   try {
+    const { phoneNumber } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'phoneNumber is required'
+      });
+    }
+
     if (!isWhatsAppOtpEnabled()) {
       return res.status(503).json({
         success: false,
@@ -115,7 +124,6 @@ const sendWhatsAppOtp = async (req, res) => {
       });
     }
 
-    const { phoneNumber } = req.body;
     const result = await sendOtp(phoneNumber);
 
     if (!result.success) {

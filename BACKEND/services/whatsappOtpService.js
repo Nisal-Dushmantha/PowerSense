@@ -1,12 +1,16 @@
+const fs = require('fs');
+const path = require('path');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcodeTerminal = require('qrcode-terminal');
 
 const otpStore = new Map();
 
-let whatsappClient;
+let whatsappClient = null;
 let clientReady = false;
 let clientInitializing = false;
 let initRetryCount = 0;
+let initPromise = null;
+let hasResetAuthSession = false;
 
 const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 5);
 const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
@@ -14,14 +18,14 @@ const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 const OTP_VERIFIED_WINDOW_MINUTES = Number(process.env.OTP_VERIFIED_WINDOW_MINUTES || 15);
 const WHATSAPP_INIT_MAX_RETRIES = Number(process.env.WHATSAPP_INIT_MAX_RETRIES || 3);
 const WHATSAPP_INIT_RETRY_DELAY_MS = Number(process.env.WHATSAPP_INIT_RETRY_DELAY_MS || 5000);
+const WHATSAPP_RESET_AUTH_ON_INIT_FAIL = String(process.env.WHATSAPP_RESET_AUTH_ON_INIT_FAIL || 'true').toLowerCase() === 'true';
+const WHATSAPP_AUTH_DATA_PATH = path.resolve(process.env.WHATSAPP_AUTH_DATA_PATH || '.wwebjs_auth');
+const WHATSAPP_CLIENT_ID = process.env.WHATSAPP_CLIENT_ID || 'powersense-otp';
 
-const isWhatsAppOtpEnabled = () => process.env.WHATSAPP_WEB_ENABLED === 'true';
-const isBillNotificationEnabled = () => process.env.WHATSAPP_BILL_NOTIFICATIONS_ENABLED !== 'false';
+const isWhatsAppOtpEnabled = () => String(process.env.WHATSAPP_WEB_ENABLED ?? 'true').toLowerCase() === 'true';
+const isBillNotificationEnabled = () => String(process.env.WHATSAPP_BILL_NOTIFICATIONS_ENABLED ?? 'false').toLowerCase() === 'true';
 
-const normalizePhoneNumber = (phoneNumber) => {
-  const digitsOnly = String(phoneNumber || '').replace(/\D/g, '');
-  return digitsOnly;
-};
+const normalizePhoneNumber = (phoneNumber) => String(phoneNumber || '').replace(/\D/g, '');
 
 const validatePhoneNumber = (phoneNumber) => {
   const normalized = normalizePhoneNumber(phoneNumber);
@@ -41,6 +45,43 @@ const validatePhoneNumber = (phoneNumber) => {
 
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
+const destroyCurrentClient = async () => {
+  if (!whatsappClient) {
+    return;
+  }
+
+  try {
+    whatsappClient.removeAllListeners();
+    await whatsappClient.destroy();
+  } catch (error) {
+    // Ignore stale teardown errors.
+  } finally {
+    whatsappClient = null;
+    clientReady = false;
+  }
+};
+
+const resetAuthSession = () => {
+  if (!WHATSAPP_RESET_AUTH_ON_INIT_FAIL || hasResetAuthSession) {
+    return false;
+  }
+
+  try {
+    const sessionDir = path.join(WHATSAPP_AUTH_DATA_PATH, `session-${WHATSAPP_CLIENT_ID}`);
+    if (!fs.existsSync(sessionDir)) {
+      return false;
+    }
+
+    fs.rmSync(sessionDir, { recursive: true, force: true });
+    hasResetAuthSession = true;
+    console.warn('[WhatsApp OTP] Cleared corrupted auth session. QR relogin is required.');
+    return true;
+  } catch (error) {
+    console.warn('[WhatsApp OTP] Failed to clear auth session:', error.message);
+    return false;
+  }
+};
+
 const scheduleWhatsAppInitRetry = () => {
   if (initRetryCount >= WHATSAPP_INIT_MAX_RETRIES) {
     console.error(`[WhatsApp OTP] Max init retries reached (${WHATSAPP_INIT_MAX_RETRIES}). Keeping WhatsApp OTP unavailable.`);
@@ -52,7 +93,7 @@ const scheduleWhatsAppInitRetry = () => {
   console.warn(`[WhatsApp OTP] Retrying client initialization in ${Math.round(delay / 1000)}s (attempt ${initRetryCount}/${WHATSAPP_INIT_MAX_RETRIES}).`);
 
   setTimeout(() => {
-    initializeWhatsAppClient();
+    initializeWhatsAppClient().catch(() => null);
   }, delay);
 };
 
@@ -77,6 +118,7 @@ const attachClientEventHandlers = () => {
 
   whatsappClient.on('disconnected', (reason) => {
     clientReady = false;
+    clientInitializing = false;
     console.warn('[WhatsApp OTP] Client disconnected:', reason);
   });
 };
@@ -87,43 +129,66 @@ const initializeWhatsAppClient = async () => {
     return;
   }
 
-  if (clientReady || clientInitializing) {
+  if (clientReady) {
     return;
   }
 
-  clientInitializing = true;
-
-  if (whatsappClient) {
-    try {
-      await whatsappClient.destroy();
-    } catch (destroyError) {
-      // Ignore stale client destroy errors.
-    }
+  if (initPromise) {
+    return initPromise;
   }
 
-  whatsappClient = new Client({
-    authStrategy: new LocalAuth({ clientId: 'powersense-otp' }),
-    puppeteer: {
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+  initPromise = (async () => {
+    clientInitializing = true;
+
+    await destroyCurrentClient();
+
+    whatsappClient = new Client({
+      authStrategy: new LocalAuth({
+        clientId: WHATSAPP_CLIENT_ID,
+        dataPath: WHATSAPP_AUTH_DATA_PATH
+      }),
+      webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+      },
+      puppeteer: {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote'
+        ]
+      }
+    });
+
+    attachClientEventHandlers();
+
+    try {
+      await whatsappClient.initialize();
+    } catch (error) {
+      clientInitializing = false;
+      clientReady = false;
+      const message = error?.message || 'Unknown error';
+      const isExecutionContextIssue = /Execution context was destroyed|Target closed|Session closed|Protocol error/i.test(message);
+
+      console.error('[WhatsApp OTP] Failed to initialize client:', message);
+
+      if (isExecutionContextIssue) {
+        const cleared = resetAuthSession();
+        if (cleared) {
+          await destroyCurrentClient();
+        }
+        scheduleWhatsAppInitRetry();
+      }
     }
+  })().finally(() => {
+    initPromise = null;
   });
 
-  attachClientEventHandlers();
-
-  try {
-    await whatsappClient.initialize();
-  } catch (error) {
-    clientInitializing = false;
-    clientReady = false;
-    const message = error?.message || 'Unknown error';
-    const isExecutionContextIssue = /Execution context was destroyed|Target closed|Session closed/i.test(message);
-    console.error('[WhatsApp OTP] Failed to initialize client:', message);
-
-    if (isExecutionContextIssue) {
-      scheduleWhatsAppInitRetry();
-    }
-  }
+  return initPromise;
 };
 
 const sendWhatsAppMessage = async (phoneNumber, message) => {
@@ -133,7 +198,6 @@ const sendWhatsAppMessage = async (phoneNumber, message) => {
     throw error;
   }
 
-  // Lazy-init client on first WhatsApp operation when auto-start is disabled.
   if ((!whatsappClient || !clientReady) && !clientInitializing) {
     await initializeWhatsAppClient();
   }
