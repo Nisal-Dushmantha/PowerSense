@@ -58,7 +58,7 @@ const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   await connectDB();
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`🌐 API URL: http://localhost:${PORT}`);
 
@@ -66,6 +66,16 @@ const startServer = async () => {
     startBillReminderJob();
     startMaintenanceStatusScheduler();
     initializeWhatsAppClient();
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use.`);
+      console.error('Close the other process using this port or set a different PORT in BACKEND/.env.');
+      process.exit(1);
+    }
+
+    throw error;
   });
 };
 

@@ -16,7 +16,7 @@ import DevicesList from './components/Devices/DevicesList';
 import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
-import ConsumptionList from './components/energyConsumption/ConsumptionList';
+import EnergyConsumption from './components/energyConsumption';
 
 // Initialize auth service
 authService.init();
@@ -58,11 +58,9 @@ function App() {
             } />
             
             {/* Consumption Route */}
-            <Route path="/consumption" element={
+            <Route path="/consumption/*" element={
               <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <ConsumptionList />
-                </div>
+                <EnergyConsumption />
               </PrivateRoute>
             } />
             
