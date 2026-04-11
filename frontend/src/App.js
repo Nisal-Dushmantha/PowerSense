@@ -15,6 +15,7 @@ import RenewableAnalytics from './components/Renewable/RenewableAnalytics';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
 import DevicesList from './components/Devices/DevicesList';
+import ConsumptionList from './components/energyConsumption/ConsumptionList';
 import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import EditDevice from './components/Devices/EditDevice';
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -62,10 +63,7 @@ function App() {
             <Route path="/consumption" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Energy Consumption</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <ConsumptionList />
                 </div>
               </PrivateRoute>
             } />
@@ -111,10 +109,7 @@ function App() {
             <Route path="/devices" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Device Management</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <DevicesList />
                 </div>
               </PrivateRoute>
             } />

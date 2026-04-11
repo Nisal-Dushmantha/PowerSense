@@ -21,6 +21,8 @@ app.use('/uploads', express.static('uploads'));
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
 const authRoutes = require('./routes/auth');
+const devicesRoutes = require('./routes/devices');
+const energyConsumptionRoutes = require('./routes/energyConsumption');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
 const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
@@ -34,6 +36,9 @@ app.get('/', (req, res) => {
     endpoints: {
       bills: '/api/bills',
       auth: '/api/auth',
+      devices: '/api/devices',
+      energy: '/api/energy-consumption',
+      analytics: '/api/energy-analytics',
       renewable: '/api/renewable'
     }
   });
@@ -42,6 +47,9 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/bills', monthlyBillRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/devices', devicesRoutes);
+app.use('/api/energy-consumption', energyConsumptionRoutes);
+app.use('/api/energy-analytics', energyAnalyticsRoutes);
 app.use('/api/renewable', renewableRoutes);
 
 const PORT = process.env.PORT || 5000;

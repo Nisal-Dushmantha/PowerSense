@@ -248,38 +248,6 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="contactNumber" className="block text-sm font-semibold text-dark-charcoal mb-2">
-                Contact Number
-              </label>
-              <input
-                type="tel"
-                id="contactNumber"
-                name="contactNumber"
-                value={formData.contactNumber}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="+94771234567"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="contactNumber" className="block text-sm font-semibold text-dark-charcoal mb-2">
-                Contact Number
-              </label>
-              <input
-                type="tel"
-                id="contactNumber"
-                name="contactNumber"
-                value={formData.contactNumber}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="+94771234567"
-              />
-            </div>
-
-            <div>
               <label htmlFor="phoneNumber" className="block text-sm font-semibold text-textPrimary dark:text-gray-200 mb-2">
                 WhatsApp Number
               </label>
@@ -290,6 +258,7 @@ const Register = () => {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  required
                   className="input-field flex-1"
                   placeholder="+94771234567"
                 />
