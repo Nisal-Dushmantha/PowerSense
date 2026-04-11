@@ -1,0 +1,23 @@
+config:
+  target: "https://powersense-2-9w2e.onrender.com"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 15
+      name: Sustained load
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Public health check"
+    flow:
+      - get:
+          url: "/"
+
+  - name: "Protected analytics endpoint without token"
+    flow:
+      - get:
+          url: "/api/energy-analytics/alerts"
