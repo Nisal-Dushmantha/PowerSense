@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const {
   // Source controllers
   createSource,
@@ -28,8 +28,6 @@ const {
   getOptimizationRecommendations,
   getGenerationForecast,
   getForecastAccuracy,
-  getWeatherInsights,
-  getAdminRenewableOverview,
   createMaintenanceTask,
   getMaintenanceTasks,
   updateMaintenanceTask,
@@ -151,11 +149,6 @@ router.get('/forecast', protect, getGenerationForecast);
 // @access  Private
 router.get('/forecast/accuracy', protect, getForecastAccuracy);
 
-// @route   GET /api/renewable/weather-insights
-// @desc    Get third-party weather forecast insights for renewable planning
-// @access  Private
-router.get('/weather-insights', protect, getWeatherInsights);
-
 // ============ MAINTENANCE ROUTES ============
 
 // @route   POST /api/renewable/maintenance
@@ -192,11 +185,6 @@ router.get('/variance', protect, getVarianceAnalytics);
 // @desc    Get monthly variance trend
 // @access  Private
 router.get('/variance/trend', protect, getVarianceTrend);
-
-// @route   GET /api/renewable/admin/overview
-// @desc    Get admin-level renewable summary across all users
-// @access  Private/Admin
-router.get('/admin/overview', protect, authorize('admin'), getAdminRenewableOverview);
 
 // ============ REPORT ROUTES ============
 

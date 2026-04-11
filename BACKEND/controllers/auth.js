@@ -10,17 +10,13 @@ const {
   isWhatsAppOtpEnabled
 } = require('../services/whatsappOtpService');
 
-const getJwtSecret = () => {
-  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
-  if (process.env.NODE_ENV !== 'production') return 'dev_only_jwt_secret_change_me';
-  throw new Error('JWT_SECRET is not configured.');
-};
-
+// JWT secret must come from environment
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRE = '7d'; // Token expires in 7 days
  
 // Generate JWT Token
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, getJwtSecret(), {
+  return jwt.sign({ id: userId }, JWT_SECRET, {
     expiresIn: JWT_EXPIRE
   });
 };

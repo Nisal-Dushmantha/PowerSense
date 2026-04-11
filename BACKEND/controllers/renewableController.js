@@ -2,7 +2,6 @@ const RenewableSource = require('../models/RenewableSource');
 const RenewableEnergyRecord = require('../models/RenewableEnergyRecord');
 const RenewableMaintenanceTask = require('../models/RenewableMaintenanceTask');
 const mongoose = require('mongoose');
-const axios = require('axios');
 const { syncMaintenanceTaskStatuses } = require('../services/maintenanceScheduler');
 
 const getForecastHorizonDays = (period) => {
@@ -65,29 +64,6 @@ const getVariancePeriodDays = (period) => {
   };
 
   return map[period] || 30;
-};
-
-const mapWeatherCodeToLabel = (code) => {
-  const weatherMap = {
-    0: 'Clear sky',
-    1: 'Mainly clear',
-    2: 'Partly cloudy',
-    3: 'Overcast',
-    45: 'Fog',
-    48: 'Rime fog',
-    51: 'Light drizzle',
-    53: 'Moderate drizzle',
-    55: 'Dense drizzle',
-    61: 'Slight rain',
-    63: 'Moderate rain',
-    65: 'Heavy rain',
-    71: 'Slight snow',
-    73: 'Moderate snow',
-    75: 'Heavy snow',
-    95: 'Thunderstorm'
-  };
-
-  return weatherMap[code] || 'Unknown';
 };
 
 // ============ RENEWABLE SOURCE CONTROLLERS ============
@@ -1913,152 +1889,6 @@ const getVarianceTrend = async (req, res) => {
   }
 };
 
-// @desc    Get weather-driven renewable production insights (third-party API)
-// @route   GET /api/renewable/weather-insights
-// @access  Private
-const getWeatherInsights = async (req, res) => {
-  try {
-    const { sourceId, location, latitude, longitude } = req.query;
-
-    let locationLabel = location;
-    let lat = latitude ? Number(latitude) : null;
-    let lon = longitude ? Number(longitude) : null;
-
-    if (sourceId && mongoose.Types.ObjectId.isValid(sourceId)) {
-      const source = await RenewableSource.findOne({
-        _id: sourceId,
-        user: req.user._id
-      }).select('sourceName location');
-
-      if (!source) {
-        return res.status(404).json({
-          success: false,
-          message: 'Renewable source not found'
-        });
-      }
-
-      locationLabel = locationLabel || source.location || source.sourceName;
-    }
-
-    if ((!lat || !lon) && locationLabel) {
-      const geoResponse = await axios.get('https://geocoding-api.open-meteo.com/v1/search', {
-        params: {
-          name: locationLabel,
-          count: 1
-        },
-        timeout: 10000
-      });
-
-      const geoResult = geoResponse.data?.results?.[0];
-      if (!geoResult) {
-        return res.status(404).json({
-          success: false,
-          message: 'Unable to geocode the provided location'
-        });
-      }
-
-      lat = geoResult.latitude;
-      lon = geoResult.longitude;
-      locationLabel = `${geoResult.name}${geoResult.country ? `, ${geoResult.country}` : ''}`;
-    }
-
-    if (!lat || !lon) {
-      return res.status(400).json({
-        success: false,
-        message: 'Provide sourceId, location, or both latitude and longitude'
-      });
-    }
-
-    const weatherResponse = await axios.get('https://api.open-meteo.com/v1/forecast', {
-      params: {
-        latitude: lat,
-        longitude: lon,
-        daily: 'temperature_2m_max,temperature_2m_min,sunshine_duration,weathercode',
-        timezone: 'auto',
-        forecast_days: 5
-      },
-      timeout: 10000
-    });
-
-    const daily = weatherResponse.data?.daily;
-    if (!daily?.time?.length) {
-      return res.status(502).json({
-        success: false,
-        message: 'Weather provider returned incomplete forecast data'
-      });
-    }
-
-    const forecast = daily.time.map((date, index) => {
-      const sunshineHours = (daily.sunshine_duration?.[index] || 0) / 3600;
-      const weatherCode = daily.weathercode?.[index];
-      const productionLevel = sunshineHours >= 8 ? 'high' : sunshineHours >= 5 ? 'moderate' : 'low';
-
-      return {
-        date,
-        weather: mapWeatherCodeToLabel(weatherCode),
-        minTemp: daily.temperature_2m_min?.[index],
-        maxTemp: daily.temperature_2m_max?.[index],
-        sunshineHours: Number(sunshineHours.toFixed(2)),
-        projectedProductionLevel: productionLevel
-      };
-    });
-
-    res.status(200).json({
-      success: true,
-      data: {
-        provider: 'open-meteo',
-        location: locationLabel || `${lat},${lon}`,
-        coordinates: { latitude: lat, longitude: lon },
-        forecast
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching weather insights:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching weather insights'
-    });
-  }
-};
-
-// @desc    Admin-only renewable overview across users
-// @route   GET /api/renewable/admin/overview
-// @access  Private/Admin
-const getAdminRenewableOverview = async (req, res) => {
-  try {
-    const [sourceCount, recordCount, maintenanceCount] = await Promise.all([
-      RenewableSource.countDocuments(),
-      RenewableEnergyRecord.countDocuments(),
-      RenewableMaintenanceTask.countDocuments()
-    ]);
-
-    const totalEnergy = await RenewableEnergyRecord.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalEnergyGenerated: { $sum: '$energyGenerated' }
-        }
-      }
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        totalSources: sourceCount,
-        totalRecords: recordCount,
-        totalMaintenanceTasks: maintenanceCount,
-        totalEnergyGenerated: totalEnergy[0]?.totalEnergyGenerated || 0
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching admin renewable overview:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching admin renewable overview'
-    });
-  }
-};
-
 module.exports = {
   // Source controllers
   createSource,
@@ -2086,8 +1916,6 @@ module.exports = {
   getOptimizationRecommendations,
   getGenerationForecast,
   getForecastAccuracy,
-  getWeatherInsights,
-  getAdminRenewableOverview,
 
   // Maintenance controllers
   createMaintenanceTask,
@@ -2098,15 +1926,5 @@ module.exports = {
 
   // Variance analytics controllers
   getVarianceAnalytics,
-  getVarianceTrend,
-
-  // Expose pure helpers for unit testing
-  __testables: {
-    getForecastHorizonDays,
-    calculateMovingAverageSeries,
-    calculateLinearTrendSlope,
-    calculateStandardDeviation,
-    getVariancePeriodDays,
-    mapWeatherCodeToLabel
-  }
+  getVarianceTrend
 };
