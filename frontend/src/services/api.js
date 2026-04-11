@@ -57,7 +57,10 @@ export const billService = {
   updateBill: (id, billData) => api.put(`/bills/${id}`, billData),
   
   // Delete bill
-  deleteBill: (id) => api.delete(`/bills/${id}`)
+  deleteBill: (id) => api.delete(`/bills/${id}`),
+
+  // Send test WhatsApp reminder for an unpaid bill
+  sendTestReminder: (billId) => api.post('/bills/test-reminder', billId ? { billId } : {})
 };
 
 export const renewableService = {
@@ -130,6 +133,27 @@ export const renewableService = {
       responseType: 'blob'
     });
   }
+};
+
+export const deviceService = {
+  getAllDevices: () => api.get('/devices'),
+  getDeviceById: (id) => api.get(`/devices/${id}`),
+  createDevice: (deviceData) => api.post('/devices', deviceData),
+  updateDevice: (id, deviceData) => api.put(`/devices/${id}`, deviceData),
+  deleteDevice: (id) => api.delete(`/devices/${id}`),
+  exportDevicesPdf: () => api.get('/devices/export/pdf', { responseType: 'blob' })
+};
+
+export const dashboardService = {
+  getSummary: () => api.get('/dashboard/summary')
+};
+
+export const adminService = {
+  getSummary: () => api.get('/admin/summary'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
+  updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
+  updateUserStatus: (id, isActive) => api.put(`/admin/users/${id}/status`, { isActive })
 };
 
 export default api;

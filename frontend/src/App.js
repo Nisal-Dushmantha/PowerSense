@@ -14,6 +14,8 @@ import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
 import RenewableAnalytics from './components/Renewable/RenewableAnalytics';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
+import DevicesList from './components/Devices/DevicesList';
+import ConsumptionList from './components/energyConsumption/ConsumptionList';
 
 // Initialize auth service
 authService.init();
@@ -22,9 +24,10 @@ function App() {
   return (
     <ThemeProvider>
       <Router>
-        <div className="min-h-screen bg-background dark:bg-gray-900 transition-colors duration-300">
+        <div className="app-shell min-h-screen transition-colors duration-300">
           <Navbar />
-          <Routes>
+          <main className="relative z-10">
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -57,10 +60,7 @@ function App() {
             <Route path="/consumption" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Energy Consumption</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <ConsumptionList />
                 </div>
               </PrivateRoute>
             } />
@@ -106,14 +106,12 @@ function App() {
             <Route path="/devices" element={
               <PrivateRoute>
                 <div className="container mx-auto px-4 py-8">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-textPrimary dark:text-gray-200 mb-4">Device Management</h1>
-                    <p className="text-textSecondary dark:text-gray-400">Coming soon...</p>
-                  </div>
+                  <DevicesList />
                 </div>
               </PrivateRoute>
             } />
           </Routes>
+          </main>
         </div>
       </Router>
     </ThemeProvider>

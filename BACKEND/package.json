@@ -23,7 +23,12 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.0",
     "multer": "^2.0.2",
-    "pdfkit": "^0.17.2"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.1",
+    "pdfkit": "^0.17.2",
+    "qrcode-terminal": "^0.12.0",
+    "twilio": "^5.12.2",
+    "whatsapp-web.js": "^1.34.6"
   },
   "devDependencies": {
     "artillery": "^2.0.23",

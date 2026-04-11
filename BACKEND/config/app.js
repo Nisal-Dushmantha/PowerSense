@@ -1,16 +1,16 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
 const connectDB = async () => {
   try {
     // Set mongoose options
     mongoose.set('strictQuery', false);
-
     const mongoUri = process.env.MONGO_URI;
 
     if (!mongoUri) {
-      throw new Error('MONGO_URI is not configured. Add it to your environment variables.');
+      throw new Error('MONGO_URI is not set. Please add it to BACKEND/.env');
     }
-
+    
     const conn = await mongoose.connect(mongoUri);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
@@ -19,6 +19,13 @@ const connectDB = async () => {
   } catch (error) {
     console.error('Error connecting to MongoDB:', error.message);
     console.error('Full error:', error);
+
+    if (String(error.message || '').includes('ENOTFOUND')) {
+      console.error('DNS resolution failed for MongoDB Atlas host.');
+      console.error('Try changing your network DNS to 8.8.8.8 / 8.8.4.4 or 1.1.1.1 / 1.0.0.1, then run: ipconfig /flushdns');
+      console.error('You can verify with: nslookup ac-bscuvdd-shard-00-00.s2xc238.mongodb.net 8.8.8.8');
+    }
+
     process.exit(1);
   }
 };

@@ -34,6 +34,12 @@ export const authService = {
 
   // Register new user
   register: (userData) => authAPI.post('/auth/register', userData),
+
+  // Send WhatsApp OTP
+  sendWhatsAppOtp: (phoneNumber) => authAPI.post('/auth/send-whatsapp-otp', { phoneNumber }),
+
+  // Verify WhatsApp OTP
+  verifyWhatsAppOtp: (phoneNumber, otp) => authAPI.post('/auth/verify-whatsapp-otp', { phoneNumber, otp }),
   
   // Login user
   login: (credentials) => authAPI.post('/auth/login', credentials),
@@ -82,6 +88,14 @@ export const authService = {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
   },
+
+  // Resolve default route after authentication based on role
+  getPostAuthRedirectPath: (user) => {
+    if (user?.role === 'admin') {
+      return '/admin';
+    }
+    return '/';
+  }
 };
 
 export default authAPI;

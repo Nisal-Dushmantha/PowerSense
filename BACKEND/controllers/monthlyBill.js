@@ -1,5 +1,6 @@
 const MonthlyBill = require('../models/monthlyBill');
 const mongoose = require('mongoose');
+const { sendBillCreatedSummary, sendBillPaymentReminder } = require('../services/whatsappOtpService');
 
 // @desc    Create a new monthly bill
 // @route   POST /api/bills
@@ -12,7 +13,7 @@ const createBill = async (req, res) => {
     if (billIssueDate) {
       const issueDate = new Date(billIssueDate);
       const today = new Date();
-      today.setHours(23, 59, 59, 999); // allow today's date
+      today.setHours(23, 59, 59, 999); 
       if (isNaN(issueDate.getTime())) {
         return res.status(400).json({
           success: false,
@@ -48,13 +49,18 @@ const createBill = async (req, res) => {
       totalPaid: totalPaid || 0
     };
 
-    // Add photo path if file was uploaded
     if (req.file) {
       billData.billPhoto = req.file.filename;
     }
 
     const bill = new MonthlyBill(billData);
     const savedBill = await bill.save();
+
+    // Send a best-effort WhatsApp summary to the registered number.
+    const whatsappResult = await sendBillCreatedSummary(req.user, savedBill);
+    if (!whatsappResult.success) {
+      console.warn('[Bill WhatsApp] Summary not sent:', whatsappResult.message);
+    }
 
     res.status(201).json({
       success: true,
@@ -71,9 +77,6 @@ const createBill = async (req, res) => {
   }
 };
 
-// @desc    Get all monthly bills
-// @route   GET /api/bills
-// @access  Private
 const getAllBills = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -319,11 +322,61 @@ const deleteBill = async (req, res) => {
   }
 };
 
+// @desc    Send a test bill payment reminder via WhatsApp
+// @route   POST /api/bills/test-reminder
+// @access  Private
+const testBillReminder = async (req, res) => {
+  try {
+    const { billId } = req.body || {};
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+
+    let bill;
+    if (billId) {
+      bill = await MonthlyBill.findOne({ _id: billId, user: userId });
+    } else {
+      bill = await MonthlyBill.findOne({ user: userId, isPaid: false }).sort({ billIssueDate: -1 });
+    }
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: 'No eligible bill found to test reminder'
+      });
+    }
+
+    const result = await sendBillPaymentReminder(req.user, bill, { isTest: true });
+
+    if (!result.success) {
+      return res.status(result.status || 400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Test reminder sent successfully',
+      data: {
+        billId: bill._id,
+        billNumber: bill.billNumber
+      }
+    });
+  } catch (error) {
+    console.error('Test bill reminder error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send test reminder',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createBill,
   getAllBills,
   getBillById,
   getBillByNumber,
   updateBill,
-  deleteBill
+  deleteBill,
+  testBillReminder
 };

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { getRecommendations } from '../services/energyApi';
+import { billService } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import logo from '../assets/logo.png';
 
@@ -8,9 +11,92 @@ const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isRecommendationsOpen, setIsRecommendationsOpen] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
+  const [unreadAlertCount, setUnreadAlertCount] = useState(0);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState(null);
+  const [profileStats, setProfileStats] = useState({
+    totalRecords: 0,
+    monthlyConsumption: 0,
+    loading: false
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
+
+  const fetchProfileStats = useCallback(async () => {
+    if (!isAuthenticated) {
+      setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
+      return;
+    }
+
+    try {
+      setProfileStats(prev => ({ ...prev, loading: true }));
+      
+      // Get all bill records
+      const response = await billService.getAllBills();
+      const records = response?.data?.data?.bills || [];
+      
+      // Calculate total records
+      const totalRecords = records.length;
+      
+      // Calculate this month's consumption
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+      
+      const monthlyConsumption = records
+        .filter(record => {
+          const recordDate = new Date(record.billIssueDate);
+          return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+        })
+        .reduce((total, record) => {
+          return total + (parseFloat(record.totalKWh) || 0);
+        }, 0);
+      
+      setProfileStats({
+        totalRecords,
+        monthlyConsumption: Math.round(monthlyConsumption * 100) / 100,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching profile stats:', error);
+      setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
+    }
+  }, [isAuthenticated]);
+
+  const fetchRecommendations = useCallback(async (options = {}) => {
+    const { markAsRead = false } = options;
+
+    if (!isAuthenticated) {
+      setRecommendations([]);
+      setUnreadAlertCount(0);
+      return;
+    }
+
+    try {
+      setRecommendationsLoading(true);
+      setRecommendationsError(null);
+      const response = await getRecommendations();
+      const data = response?.data?.recommendations || [];
+      const normalizedData = Array.isArray(data) ? data : [];
+      const nextAlertCount = normalizedData.filter(
+        (item) => item?.type === 'alert' || item?.type === 'warning'
+      ).length;
+
+      setRecommendations(normalizedData);
+      setUnreadAlertCount(markAsRead ? 0 : nextAlertCount);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      setRecommendationsError('Unable to load recommendations');
+      setRecommendations([]);
+      setUnreadAlertCount(0);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -25,15 +111,66 @@ const Navbar = () => {
     checkAuth();
     // Listen for auth changes
     window.addEventListener('storage', checkAuth);
-    return () => window.removeEventListener('storage', checkAuth);
-  }, [location]);
+    
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.profile-dropdown')) {
+        setIsProfileDropdownOpen(false);
+      }
+      if (!event.target.closest('.recommendations-dropdown')) {
+        setIsRecommendationsOpen(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [location, fetchProfileStats]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchRecommendations();
+    }
+  }, [isAuthenticated, fetchRecommendations]);
 
   const handleLogout = () => {
     authService.logout();
     setIsAuthenticated(false);
     setUser(null);
     setIsMobileMenuOpen(false);
+    setIsProfileDropdownOpen(false);
+    setIsRecommendationsOpen(false);
+    setRecommendations([]);
+    setUnreadAlertCount(0);
     navigate('/login');
+  };
+
+  const toggleProfileDropdown = (e) => {
+    e.stopPropagation();
+    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+    // Refresh stats when opening dropdown
+    if (!isProfileDropdownOpen) {
+      fetchProfileStats();
+    }
+  };
+
+  const closeProfileDropdown = () => {
+    setIsProfileDropdownOpen(false);
+  };
+
+  const toggleRecommendationsDropdown = async (e) => {
+    e.stopPropagation();
+    const nextOpen = !isRecommendationsOpen;
+    setIsRecommendationsOpen(nextOpen);
+    setIsProfileDropdownOpen(false);
+
+    if (nextOpen) {
+      setUnreadAlertCount(0);
+      await fetchRecommendations({ markAsRead: true });
+    }
   };
 
   const isActivePath = (path) => {
@@ -41,27 +178,42 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 transition-colors duration-300">
+    <nav className="sticky top-0 z-40 border-b border-primary/15 dark:border-gray-700/70 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl transition-colors duration-300 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="max-w-7xl mx-auto container-padding">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20 gap-4">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
               <img 
                 src={logo} 
                 alt="PowerSense Logo" 
-                className="w-16 h-16 transform group-hover:scale-105 transition-transform"
+                className="w-12 h-12 rounded-xl transform group-hover:scale-105 transition-transform"
               />
               <div>
-                <h1 className="text-xl font-bold text-gradient">PowerSense</h1>
-                <p className="text-xs text-textSecondary dark:text-gray-400 -mt-1">Energy Management</p>
+                <h1 className="text-lg font-extrabold text-gradient leading-tight">PowerSense</h1>
+                <p className="text-[11px] text-textSecondary dark:text-gray-400 -mt-0.5">Energy Analytics</p>
               </div>
             </Link>
           </div>
 
+          {isAuthenticated && (
+            <div className="hidden lg:flex flex-1 max-w-xl">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search bills, consumption, devices..."
+                  className="w-full rounded-2xl border border-primary/15 bg-primary/5 py-2.5 pl-10 pr-4 text-sm text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                />
+                <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+                </svg>
+              </div>
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           {isAuthenticated && (
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden md:flex items-center space-x-1 rounded-2xl border border-primary/15 bg-white/80 dark:bg-gray-800/80 dark:border-gray-700 p-1">
               <Link
                 to="/"
                 className={`${
@@ -108,6 +260,17 @@ const Navbar = () => {
               >
                 Devices
               </Link>
+
+              {user?.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className={`${
+                    isActivePath('/admin') ? 'nav-link-active' : 'nav-link'
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
               
             </div>
           )}
@@ -117,7 +280,7 @@ const Navbar = () => {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+              className="p-2.5 rounded-xl bg-primary/5 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 border border-primary/15 dark:border-gray-700"
               aria-label="Toggle dark mode"
               title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -135,22 +298,181 @@ const Navbar = () => {
             </button>
 
             {isAuthenticated ? (
-              <>
-                {/* User Info - Desktop */}
-                <div className="hidden md:flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-textPrimary dark:text-gray-200">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-textSecondary dark:text-gray-400">{user?.email}</p>
-                  </div>
-                  <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {user?.firstName?.[0]}{user?.lastName?.[0]}
-                    </span>
-                  </div>
+              <>                
+                <div className="relative recommendations-dropdown">
+                  <button
+                    onClick={toggleRecommendationsDropdown}
+                    className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                    aria-label="Smart recommendations"
+                    title="Smart Recommendations"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2a7 7 0 00-7 7v4.586L3.293 15.293A1 1 0 004 17h16a1 1 0 00.707-1.707L19 13.586V9a7 7 0 00-7-7zm0 20a3 3 0 002.995-2.824L15 19h-6a3 3 0 003 3z"/>
+                    </svg>
+                    {unreadAlertCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] leading-[18px] text-center rounded-full font-bold shadow">
+                        {unreadAlertCount > 9 ? '9+' : unreadAlertCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {isRecommendationsOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-96 max-w-[95vw] bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 fade-in overflow-hidden">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-textPrimary dark:text-gray-100">Smart Recommendations</h3>
+                          <p className="text-xs text-textSecondary dark:text-gray-400">Based on your latest energy patterns</p>
+                        </div>
+                        <button
+                          onClick={fetchRecommendations}
+                          className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-textSecondary dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+
+                      <div className="max-h-96 overflow-auto">
+                        {recommendationsLoading ? (
+                          <div className="p-6 text-center text-textSecondary dark:text-gray-400">
+                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                            Loading recommendations...
+                          </div>
+                        ) : recommendationsError ? (
+                          <div className="p-6 text-center text-red-600 dark:text-red-400 text-sm">{recommendationsError}</div>
+                        ) : recommendations.length === 0 ? (
+                          <div className="p-6 text-center text-textSecondary dark:text-gray-400 text-sm">
+                            No recommendations right now. Keep tracking usage.
+                          </div>
+                        ) : (
+                          <div className="py-1">
+                            {recommendations.map((item, index) => {
+                              const levelClass =
+                                item?.type === 'alert'
+                                  ? 'border-l-red-500'
+                                  : item?.type === 'warning'
+                                  ? 'border-l-orange-500'
+                                  : item?.type === 'success'
+                                  ? 'border-l-green-500'
+                                  : 'border-l-blue-500';
+
+                              return (
+                                <div
+                                  key={item?.id || index}
+                                  className={`px-4 py-3 border-l-4 ${levelClass} hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors`}
+                                >
+                                  <div className="flex items-start space-x-3">
+                                    <div className="text-lg leading-none mt-0.5">{item?.icon || '💡'}</div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-semibold text-textPrimary dark:text-gray-100">{item?.title || 'Recommendation'}</p>
+                                      <p className="text-xs text-textSecondary dark:text-gray-400 mt-1 leading-relaxed">{item?.message || 'Review your recent consumption data for optimization opportunities.'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
+                {/* User Profile Dropdown - Desktop */}
+                <div className="hidden md:flex items-center space-x-3 relative profile-dropdown">
+                  <button
+                    onClick={toggleProfileDropdown}
+                    className="flex items-center space-x-3 p-2 rounded-2xl hover:bg-primary/5 transition-colors cursor-pointer border border-primary/15 bg-white/80 dark:bg-gray-800/80 dark:border-gray-700"
+                  >
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-textPrimary">
+                        {user?.firstName} {user?.lastName}
+                      </p>
+                      <p className="text-xs text-textSecondary">{user?.email}</p>
+                    </div>
+                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center shadow-sm">
+                      <span className="text-white font-semibold text-sm">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      </span>
+                    </div>
+                    <svg 
+                      className={`w-4 h-4 text-textSecondary transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} 
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M7 10l5 5 5-5z"/>
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-primary/15 dark:border-gray-700 py-2 z-50 fade-in">
+                      {/* User Info Header */}
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold">
+                              {user?.firstName?.[0]}{user?.lastName?.[0]}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-textPrimary">
+                              {user?.firstName} {user?.lastName}
+                            </h3>
+                            <p className="text-sm text-textSecondary">{user?.email}</p>
+                            <div className="flex items-center space-x-1 mt-1">
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              <span className="text-xs text-green-600 font-medium">Active</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Profile Stats */}
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                          <div>
+                            <div className="text-lg font-bold text-textPrimary">
+                              {profileStats.loading ? (
+                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                              ) : (
+                                profileStats.totalRecords
+                              )}
+                            </div>
+                            <div className="text-xs text-textSecondary">Records</div>
+                          </div>
+                          <div>
+                            <div className="text-lg font-bold text-textPrimary">
+                              {profileStats.loading ? (
+                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                              ) : (
+                                `${profileStats.monthlyConsumption} kWh`
+                              )}
+                            </div>
+                            <div className="text-xs text-textSecondary">This Month</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        <hr className="my-2 border-gray-100 dark:border-gray-700" />
+                        
+                        <button
+                          onClick={() => {
+                            closeProfileDropdown();
+                            handleLogout();
+                          }}
+                          className="w-full px-4 py-2 text-left hover:bg-red-50 flex items-center space-x-3 transition-colors text-red-600"
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
+                          </svg>
+                          <span className="text-sm font-medium">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {/* Logout Button - Desktop */}
                 <button
                   onClick={handleLogout}
@@ -205,6 +527,76 @@ const Navbar = () => {
         {isAuthenticated && isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200/50 dark:border-gray-700/50 py-4 fade-in">
             <div className="space-y-3">
+              {/* User Profile Card - Mobile */}
+              <div className="p-4 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl border border-primary/20">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-14 h-14 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-textPrimary text-lg">
+                      {user?.firstName} {user?.lastName}
+                    </h3>
+                    <p className="text-sm text-textSecondary">{user?.email}</p>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-xs text-green-600 font-medium">Active Account</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="bg-white/50 dark:bg-gray-700/60 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-textPrimary">
+                      {profileStats.loading ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                      ) : (
+                        profileStats.totalRecords
+                      )}
+                    </div>
+                    <div className="text-xs text-textSecondary">Records</div>
+                  </div>
+                  <div className="bg-white/50 dark:bg-gray-700/60 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-textPrimary">
+                      {profileStats.loading ? (
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                      ) : (
+                        `${profileStats.monthlyConsumption} kWh`
+                      )}
+                    </div>
+                    <div className="text-xs text-textSecondary">This Month</div>
+                  </div>
+                </div>
+                
+                {/* Profile Actions */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      navigate('/profile');
+                    }}
+                    className="btn-secondary btn-sm text-xs"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    View Profile
+                  </button>
+                  <button 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="btn-secondary btn-sm text-xs"
+                  >
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                    </svg>
+                    Settings
+                  </button>
+                </div>
+              </div>
+
               {/* User Info - Mobile */}
               <div className="flex items-center space-x-3 p-3 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl">
                 <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
@@ -294,6 +686,18 @@ const Navbar = () => {
                 >
                   Devices
                 </Link>
+
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`${
+                      isActivePath('/admin') ? 'nav-link-active' : 'nav-link'
+                    } w-full`}
+                  >
+                    Admin
+                  </Link>
+                )}
               </div>
 
               {/* Logout Button - Mobile */}

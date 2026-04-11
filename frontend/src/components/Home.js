@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { dashboardService } from '../services/api';
 
 const Home = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -13,11 +16,31 @@ const Home = () => {
       if (authenticated) {
         const userData = authService.getStoredUser();
         setUser(userData);
+      } else {
+        setSummary(null);
       }
     };
 
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      if (!isAuthenticated) return;
+
+      try {
+        setSummaryLoading(true);
+        const response = await dashboardService.getSummary();
+        setSummary(response.data?.data || null);
+      } catch (error) {
+        console.error('Failed to load dashboard summary:', error);
+      } finally {
+        setSummaryLoading(false);
+      }
+    };
+
+    fetchSummary();
+  }, [isAuthenticated]);
 
   // If user is authenticated, show dashboard-style homepage
   if (isAuthenticated) {
@@ -32,6 +55,33 @@ const Home = () => {
             <p className="text-xl text-textSecondary dark:text-gray-300 max-w-2xl mx-auto">
               Your energy management dashboard is ready. Track your bills, monitor consumption patterns, and optimize your electricity usage.
             </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div className="bg-white/70 dark:bg-gray-800/70 rounded-2xl p-5 border border-gray-200/50 dark:border-gray-600/50">
+              <p className="text-sm text-textSecondary dark:text-gray-300">This Month Usage</p>
+              <p className="text-2xl font-bold text-textPrimary dark:text-gray-100 mt-1">
+                {summaryLoading ? '...' : `${summary?.consumption?.thisMonthKwh || 0} kWh`}
+              </p>
+            </div>
+            <div className="bg-white/70 dark:bg-gray-800/70 rounded-2xl p-5 border border-gray-200/50 dark:border-gray-600/50">
+              <p className="text-sm text-textSecondary dark:text-gray-300">Registered Devices</p>
+              <p className="text-2xl font-bold text-textPrimary dark:text-gray-100 mt-1">
+                {summaryLoading ? '...' : summary?.devices?.totalDevices || 0}
+              </p>
+            </div>
+            <div className="bg-white/70 dark:bg-gray-800/70 rounded-2xl p-5 border border-gray-200/50 dark:border-gray-600/50">
+              <p className="text-sm text-textSecondary dark:text-gray-300">Pending Bills</p>
+              <p className="text-2xl font-bold text-textPrimary dark:text-gray-100 mt-1">
+                {summaryLoading ? '...' : summary?.bills?.pendingCount || 0}
+              </p>
+            </div>
+            <div className="bg-white/70 dark:bg-gray-800/70 rounded-2xl p-5 border border-gray-200/50 dark:border-gray-600/50">
+              <p className="text-sm text-textSecondary dark:text-gray-300">Renewable This Month</p>
+              <p className="text-2xl font-bold text-textPrimary dark:text-gray-100 mt-1">
+                {summaryLoading ? '...' : `${summary?.renewable?.thisMonthKwh || 0} kWh`}
+              </p>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -55,7 +105,7 @@ const Home = () => {
               className="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 dark:border-gray-600/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
             >
               <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <path d="M12 5v14m-7-7h14"/>
                 </svg>
               </div>
@@ -94,7 +144,7 @@ const Home = () => {
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-secondary/10 dark:bg-secondary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                     <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/>
                   </svg>
                 </div>
