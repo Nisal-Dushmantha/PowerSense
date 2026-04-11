@@ -1,6 +1,8 @@
 const express = require('express');
 const {
   register,
+  sendWhatsAppOtp,
+  verifyWhatsAppOtp,
   login,
   getMe,
   updateProfile,
@@ -14,6 +16,16 @@ const router = express.Router();
 // @desc    Register a new user
 // @access  Public
 router.post('/register', register);
+
+// @route   POST /api/auth/send-whatsapp-otp
+// @desc    Send WhatsApp OTP for registration
+// @access  Public
+router.post('/send-whatsapp-otp', sendWhatsAppOtp);
+
+// @route   POST /api/auth/verify-whatsapp-otp
+// @desc    Verify WhatsApp OTP for registration
+// @access  Public
+router.post('/verify-whatsapp-otp', verifyWhatsAppOtp);
 
 // @route   POST /api/auth/login
 // @desc    Login user

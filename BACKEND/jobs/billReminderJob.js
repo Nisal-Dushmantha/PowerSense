@@ -1,12 +1,11 @@
 const cron = require('node-cron');
 const MonthlyBill = require('../models/monthlyBill');
-const User = require('../models/User');
-const { sendUnpaidBillAlertViaEmailJS } = require('../services/emailjsService');
+const { sendBillPaymentReminder } = require('../services/whatsappOtpService');
 
 /**
  * Runs every day at 9:00 AM.
- * Finds all unpaid bills that were created 10+ days ago and
- * sends a WhatsApp reminder to the bill owner.
+ * Finds all unpaid bills issued 20+ days ago and
+ * sends a WhatsApp payment reminder to the bill owner.
  */
 const startBillReminderJob = () => {
   // Cron expression: "0 9 * * *" = every day at 09:00 AM
@@ -14,15 +13,15 @@ const startBillReminderJob = () => {
     console.log('[BillReminder] Running unpaid bill check...');
 
     try {
-      const tenDaysAgo = new Date();
-      tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+      const twentyDaysAgo = new Date();
+      twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
 
       // Find bills that are:
       // 1. Not paid
-      // 2. Were created at least 10 days ago
+      // 2. Have issue date at least 20 days ago
       const unpaidBills = await MonthlyBill.find({
         isPaid: false,
-        createdAt: { $lte: tenDaysAgo }
+        billIssueDate: { $lte: twentyDaysAgo }
       }).populate('user', 'firstName lastName email phoneNumber');
 
       if (unpaidBills.length === 0) {
@@ -30,14 +29,17 @@ const startBillReminderJob = () => {
         return;
       }
 
-      console.log(`[BillReminder] Found ${unpaidBills.length} overdue unpaid bill(s). Sending EmailJS alerts...`);
+      console.log(`[BillReminder] Found ${unpaidBills.length} overdue unpaid bill(s). Sending WhatsApp reminders...`);
 
-      // Send an EmailJS alert for each unpaid bill
+      // Send a WhatsApp reminder for each unpaid bill
       for (const bill of unpaidBills) {
-        if (bill.user && bill.user.email) {
-          await sendUnpaidBillAlertViaEmailJS(bill.user, bill);
+        if (bill.user && bill.user.phoneNumber) {
+          const result = await sendBillPaymentReminder(bill.user, bill);
+          if (!result.success) {
+            console.warn(`[BillReminder] WhatsApp reminder failed for bill #${bill.billNumber}: ${result.message}`);
+          }
         } else {
-          console.warn(`[BillReminder] Skipping bill #${bill.billNumber} — user has no email.`);
+          console.warn(`[BillReminder] Skipping bill #${bill.billNumber} — user has no phone number.`);
         }
       }
 
@@ -47,7 +49,7 @@ const startBillReminderJob = () => {
     }
   });
 
-  console.log('[BillReminder] Unpaid bill reminder cron job scheduled (daily at 9:00 AM).');
+  console.log('[BillReminder] Unpaid bill WhatsApp reminder cron job scheduled (daily at 9:00 AM).');
 };
 
 module.exports = { startBillReminderJob };

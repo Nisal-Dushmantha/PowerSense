@@ -29,6 +29,7 @@ const authRoutes = require('./routes/auth');
 const devicesRoutes = require('./routes/devices');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
+const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -61,6 +62,9 @@ app.listen(PORT, () => {
 
   // Start scheduled jobs
   startBillReminderJob();
+
+  // Start WhatsApp Web client for OTP
+  initializeWhatsAppClient();
 });
 
 module.exports = app;

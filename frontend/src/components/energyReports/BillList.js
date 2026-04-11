@@ -17,6 +17,7 @@ const BillList = () => {
   const [editBillData, setEditBillData] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   useEffect(() => {
     fetchBills();
@@ -362,6 +363,19 @@ const BillList = () => {
     const filename = `PowerSense_Bills_Summary_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(filename);
   };
+
+  const handleSendTestReminder = async () => {
+    try {
+      setSendingReminder(true);
+      const response = await billService.sendTestReminder();
+      alert(response?.data?.message || 'Test reminder sent successfully');
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to send test reminder');
+    } finally {
+      setSendingReminder(false);
+    }
+  };
+
   const filteredBills = bills.filter(bill => 
     bill.billNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -412,6 +426,17 @@ const BillList = () => {
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8 17v-1h8v1H8zm0-3v-1h8v1H8zm0-3V10h4v1H8z"/>
               </svg>
               Bill Summary
+            </button>
+            <button
+              onClick={handleSendTestReminder}
+              className="btn-secondary flex items-center"
+              title="Send a test WhatsApp bill payment reminder"
+              disabled={sendingReminder}
+            >
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 14a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm1-2h-2V7h2v7z"/>
+              </svg>
+              {sendingReminder ? 'Sending...' : 'Test Reminder'}
             </button>
             <button
               onClick={() => setIsInsightsModalOpen(true)}

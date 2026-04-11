@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { getEnergyRecords } from '../services/energyApi';
+import { billService } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import logo from '../assets/logo.png';
 
@@ -28,9 +28,9 @@ const Navbar = () => {
     try {
       setProfileStats(prev => ({ ...prev, loading: true }));
       
-      // Get all records
-      const response = await getEnergyRecords();
-      const records = response.data || [];
+      // Get all bill records
+      const response = await billService.getAllBills();
+      const records = response?.data?.data?.bills || [];
       
       // Calculate total records
       const totalRecords = records.length;
@@ -42,11 +42,11 @@ const Navbar = () => {
       
       const monthlyConsumption = records
         .filter(record => {
-          const recordDate = new Date(record.consumption_date);
+          const recordDate = new Date(record.billIssueDate);
           return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
         })
         .reduce((total, record) => {
-          return total + (parseFloat(record.energy_used_kwh) || 0);
+          return total + (parseFloat(record.totalKWh) || 0);
         }, 0);
       
       setProfileStats({
