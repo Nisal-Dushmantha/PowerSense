@@ -28,6 +28,7 @@ const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
 const devicesRoutes = require('./routes/devices');
 const renewableRoutes = require('./routes/renewableRoutes');
+const { startBillReminderJob } = require('./jobs/billReminderJob');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -57,6 +58,9 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
+
+  // Start scheduled jobs
+  startBillReminderJob();
 });
 
 module.exports = app;

@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 // JWT Secret (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'powersense_secret_key_2026_secure';
 const JWT_EXPIRE = '7d'; // Token expires in 7 days
-
+ 
 // Generate JWT Token
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, JWT_SECRET, {
@@ -167,7 +167,7 @@ const getMe = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, phoneNumber } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -193,6 +193,7 @@ const updateProfile = async (req, res) => {
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
     user.email = email || user.email;
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
 
     await user.save();
 

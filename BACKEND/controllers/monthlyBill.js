@@ -12,7 +12,7 @@ const createBill = async (req, res) => {
     if (billIssueDate) {
       const issueDate = new Date(billIssueDate);
       const today = new Date();
-      today.setHours(23, 59, 59, 999); // allow today's date
+      today.setHours(23, 59, 59, 999); 
       if (isNaN(issueDate.getTime())) {
         return res.status(400).json({
           success: false,
@@ -48,7 +48,6 @@ const createBill = async (req, res) => {
       totalPaid: totalPaid || 0
     };
 
-    // Add photo path if file was uploaded
     if (req.file) {
       billData.billPhoto = req.file.filename;
     }
@@ -71,9 +70,6 @@ const createBill = async (req, res) => {
   }
 };
 
-// @desc    Get all monthly bills
-// @route   GET /api/bills
-// @access  Private
 const getAllBills = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
