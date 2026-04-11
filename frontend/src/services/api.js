@@ -112,6 +112,18 @@ export const renewableService = {
   }
 };
 
+export const dashboardService = {
+  getSummary: () => api.get('/dashboard/summary')
+};
+
+export const adminService = {
+  getSummary: () => api.get('/admin/summary'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  getAuditLogs: (params) => api.get('/admin/audit-logs', { params }),
+  updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
+  updateUserStatus: (id, isActive) => api.put(`/admin/users/${id}/status`, { isActive })
+};
+
 export default api;
 
 export const deviceService = {

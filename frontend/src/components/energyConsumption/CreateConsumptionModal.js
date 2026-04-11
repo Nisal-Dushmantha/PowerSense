@@ -29,10 +29,19 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'energy_used_kwh') {
+      // Clamp: block empty-string pass-through of out-of-range values
+      if (value !== '' && (parseFloat(value) < 0.01 || parseFloat(value) > 99999)) return;
+    }
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleEnergyKeyDown = (e) => {
+    // Block minus, plus, e/E (scientific notation)
+    if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault();
   };
 
   const handleSubmit = async (e) => {
@@ -138,6 +147,7 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
                 value={formData.consumption_date}
                 onChange={handleChange}
                 required
+                max={new Date().toISOString().split('T')[0]}
                 className="input-field pl-10 py-2.5 text-sm transition-all duration-300 hover:shadow-md focus:shadow-lg border-2"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -192,11 +202,13 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
                 name="energy_used_kwh"
                 value={formData.energy_used_kwh}
                 onChange={handleChange}
+                onKeyDown={handleEnergyKeyDown}
                 required
                 step="0.01"
-                min="0"
+                min="0.01"
+                max="99999"
                 className="input-field pl-10 pr-16 py-2.5 text-lg font-semibold transition-all duration-300 hover:shadow-md focus:shadow-lg border-2"
-                placeholder="Enter value"
+                placeholder="0.01 – 99999"
               />
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">

@@ -4,6 +4,8 @@ const {
     createEnergyConsumption,
     getEnergyConsumption,
     getTotalConsumption,
+    getConsumptionSummary,
+    getConsumptionIntegration,
     updateEnergyConsumption,
     deleteEnergyConsumption
 } = require('../controllers/energyConsumptionController');
@@ -23,6 +25,14 @@ router.get('/', getEnergyConsumption);
 // @route   GET /api/energy-consumption/total
 // @access  Private
 router.get('/total', getTotalConsumption);
+
+// @route   GET /api/energy-consumption/summary
+// @access  Private
+router.get('/summary', getConsumptionSummary);
+
+// @route   GET /api/energy-consumption/integration
+// @access  Private
+router.get('/integration', getConsumptionIntegration);
 
 // @route   PUT /api/energy-consumption/:id
 // @access  Private

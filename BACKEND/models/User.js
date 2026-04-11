@@ -20,6 +20,12 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
+  contactNumber: {
+    type: String,
+    required: [function () { return this.isNew; }, 'Contact number is required'],
+    trim: true,
+    match: [/^\+?[0-9]{10,15}$/, 'Please provide a valid contact number']
+  },
   password: {
     type: String,
     required: [true, 'Password is required'],
@@ -37,6 +43,11 @@ const userSchema = new mongoose.Schema({
   },
   lastLogin: {
     type: Date
+  },
+  energyThreshold: {
+    type: Number,
+    default: null,
+    min: [0, 'Threshold cannot be negative']
   }
 }, {
   timestamps: true
