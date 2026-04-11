@@ -4,7 +4,7 @@
 
 ## Home Page Preview
 
-![PowerSense Home Page](https://image.thum.io/get/width/1400/https://power-sense-gamma.vercel.app/)
+![PowerSense Home Page](https://image.thum.io/get/width/1400/https://powersense-af.vercel.app/)
 
 | Layer | Technology |
 |------|------------|
@@ -24,8 +24,9 @@
 6. [API Documentation](#api-documentation)
 7. [Deployment](DEPLOYMENT.md)
 8. [Testing](TESTING.md)
-9. [Environment Variables](#environment-variables)
-10. [Security & Architecture Notes](#security--architecture-notes)
+9. [Submission Evidence Checklist](#submission-evidence-checklist)
+10. [Environment Variables](#environment-variables)
+11. [Security & Architecture Notes](#security--architecture-notes)
 
 ---
 
@@ -179,7 +180,7 @@ Authorization: Bearer <token>
 ---
 
 ## Live Deployment
-- Frontend: https://power-sense-gamma.vercel.app/
+- Frontend: https://powersense-af.vercel.app/
 - Backend: https://powersense-2-9w2e.onrender.com
 
 Detailed deployment instructions: [DEPLOYMENT.md](DEPLOYMENT.md)
@@ -194,6 +195,27 @@ Detailed test instructions and commands are available in [TESTING.md](TESTING.md
 - Unit: `tests/unit/energyConsumption.controller.test.js`
 - Integration: `tests/integration/energyAnalytics.routes.test.js`
 - Performance scenario: `tests/performance/energy-analytics-load-test.yml`
+
+---
+
+## Submission Evidence Checklist
+
+### Deployment Evidence
+- [x] Render dashboard live: [docs/screenshots/deployment/render-dashboard-live.png](docs/screenshots/deployment/render-dashboard-live.png)
+- [x] Vercel deployment ready: [docs/screenshots/deployment/vercel-deployment-ready.png](docs/screenshots/deployment/vercel-deployment-ready.png)
+- [x] Backend health response: [docs/screenshots/deployment/backend-health-response.png](docs/screenshots/deployment/backend-health-response.png)
+
+### Application Evidence
+- [x] Frontend homepage live: [docs/screenshots/app/frontend-homepage-live.png](docs/screenshots/app/frontend-homepage-live.png)
+- [x] Frontend login page: [docs/screenshots/app/frontend-login-page.png](docs/screenshots/app/frontend-login-page.png)
+- [x] Authenticated analytics page: [docs/screenshots/app/frontend-authenticated-analytics-page.png](docs/screenshots/app/frontend-authenticated-analytics-page.png)
+
+### Testing Evidence
+- [x] Postman login 200: [docs/screenshots/testing/postman-auth-login-200.png](docs/screenshots/testing/postman-auth-login-200.png)
+- [x] Postman alerts 200: [docs/screenshots/testing/postman-energy-alerts-200.png](docs/screenshots/testing/postman-energy-alerts-200.png)
+- [x] Unit tests pass: [docs/screenshots/testing/unit-tests-pass.png](docs/screenshots/testing/unit-tests-pass.png)
+- [x] Integration tests pass: [docs/screenshots/testing/integration-tests-pass.png](docs/screenshots/testing/integration-tests-pass.png)
+- [x] Artillery performance summary: [docs/screenshots/testing/artillery-performance-summary.png](docs/screenshots/testing/artillery-performance-summary.png)
 
 ---
 

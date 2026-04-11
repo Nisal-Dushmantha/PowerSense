@@ -10,7 +10,7 @@ PowerSense is deployed using separate cloud services for frontend and backend.
 
 ## 2. Live URLs
 - Backend API: https://powersense-2-9w2e.onrender.com
-- Frontend App: https://power-sense-gamma.vercel.app/
+- Frontend App: https://powersense-af.vercel.app/
 
 ---
 
@@ -59,7 +59,7 @@ REACT_APP_API_URL=https://powersense-2-9w2e.onrender.com/api
 ```
 
 ### Post-Deploy Verification
-1. Open: `https://power-sense-gamma.vercel.app/`
+1. Open: `https://powersense-af.vercel.app/`
 2. Verify home/login/register pages load
 3. Verify authenticated pages can reach backend API
 
