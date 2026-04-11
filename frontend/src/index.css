@@ -279,6 +279,85 @@
   z-index: 0;
 }
 
+/* Global dark-mode normalization for light-only utility usage in components */
+.dark .text-textPrimary {
+  color: rgb(243 244 246);
+}
+
+.dark .text-textSecondary {
+  color: rgb(156 163 175);
+}
+
+.dark .bg-background {
+  background-color: rgb(31 41 55);
+}
+
+.dark .bg-white {
+  background-color: rgb(31 41 55);
+}
+
+.dark .bg-white\/90 {
+  background-color: rgb(31 41 55 / 0.9);
+}
+
+.dark .bg-white\/85 {
+  background-color: rgb(31 41 55 / 0.85);
+}
+
+.dark .bg-white\/80 {
+  background-color: rgb(31 41 55 / 0.8);
+}
+
+.dark .bg-white\/75 {
+  background-color: rgb(31 41 55 / 0.75);
+}
+
+.dark .bg-white\/70 {
+  background-color: rgb(31 41 55 / 0.7);
+}
+
+.dark .bg-white\/60 {
+  background-color: rgb(31 41 55 / 0.6);
+}
+
+.dark .bg-white\/50 {
+  background-color: rgb(55 65 81 / 0.6);
+}
+
+.dark .bg-gray-50 {
+  background-color: rgb(31 41 55);
+}
+
+.dark .text-gray-900 {
+  color: rgb(243 244 246);
+}
+
+.dark .text-gray-600 {
+  color: rgb(156 163 175);
+}
+
+.dark .text-gray-500 {
+  color: rgb(156 163 175);
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: rgb(75 85 99);
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: rgb(55 65 81);
+}
+
+.dark .hover\:text-gray-900:hover {
+  color: rgb(243 244 246);
+}
+
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(75 85 99);
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

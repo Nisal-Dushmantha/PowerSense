@@ -156,7 +156,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           {isAuthenticated && (
-            <div className="hidden md:flex items-center space-x-1 rounded-2xl border border-primary/15 bg-white/80 p-1">
+            <div className="hidden md:flex items-center space-x-1 rounded-2xl border border-primary/15 bg-white/80 dark:bg-gray-800/80 dark:border-gray-700 p-1">
               <Link
                 to="/"
                 className={`${
@@ -235,7 +235,7 @@ const Navbar = () => {
                 <div className="hidden md:flex items-center space-x-3 relative profile-dropdown">
                   <button
                     onClick={toggleProfileDropdown}
-                    className="flex items-center space-x-3 p-2 rounded-2xl hover:bg-primary/5 transition-colors cursor-pointer border border-primary/15 bg-white/80"
+                    className="flex items-center space-x-3 p-2 rounded-2xl hover:bg-primary/5 transition-colors cursor-pointer border border-primary/15 bg-white/80 dark:bg-gray-800/80 dark:border-gray-700"
                   >
                     <div className="text-right">
                       <p className="text-sm font-semibold text-textPrimary">
@@ -259,9 +259,9 @@ const Navbar = () => {
 
                   {/* Dropdown Menu */}
                   {isProfileDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-primary/15 py-2 z-50 fade-in">
+                    <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-primary/15 dark:border-gray-700 py-2 z-50 fade-in">
                       {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold">
@@ -282,7 +282,7 @@ const Navbar = () => {
                       </div>
 
                       {/* Profile Stats */}
-                      <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                         <div className="grid grid-cols-2 gap-4 text-center">
                           <div>
                             <div className="text-lg font-bold text-textPrimary">
@@ -309,7 +309,7 @@ const Navbar = () => {
 
                       {/* Menu Items */}
                       <div className="py-2">
-                        <hr className="my-2 border-gray-100" />
+                        <hr className="my-2 border-gray-100 dark:border-gray-700" />
                         
                         <button
                           onClick={() => {
@@ -396,7 +396,7 @@ const Navbar = () => {
                 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-white/50 rounded-lg p-3 text-center">
+                  <div className="bg-white/50 dark:bg-gray-700/60 rounded-lg p-3 text-center">
                     <div className="text-lg font-bold text-textPrimary">
                       {profileStats.loading ? (
                         <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -406,7 +406,7 @@ const Navbar = () => {
                     </div>
                     <div className="text-xs text-textSecondary">Records</div>
                   </div>
-                  <div className="bg-white/50 rounded-lg p-3 text-center">
+                  <div className="bg-white/50 dark:bg-gray-700/60 rounded-lg p-3 text-center">
                     <div className="text-lg font-bold text-textPrimary">
                       {profileStats.loading ? (
                         <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
