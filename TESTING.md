@@ -88,6 +88,9 @@ npx artillery run tests/performance/energy-analytics-load-test.yml
 - Error percentage
 - Requests per second (throughput)
 
+### Performance Result Summary (Latest Run)
+Based on the captured Artillery run (`artillery-performance-summary.png`), the test created **2100** virtual users, completed **1985** requests, and recorded **115** failed requests (~**5.5%**). Observed latency showed strong typical performance at **p95 ≈ 133 ms**, while **p99** reached around **5.1 s** due to outlier responses (including protected endpoint checks without token), indicating good average responsiveness with some high-tail latency under mixed load conditions.
+
 ---
 
 ## Evidence Collection for Evaluation
