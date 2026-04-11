@@ -30,9 +30,11 @@ const Login = () => {
       
       // Store token and user data
       authService.storeUser(user, token);
+
+      const redirectPath = authService.getPostAuthRedirectPath(user);
       
-      // Redirect to homepage after successful login
-      navigate('/');
+      // Redirect based on role
+      navigate(redirectPath, { replace: true });
       window.location.reload(); // Reload to update navbar
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');

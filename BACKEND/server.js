@@ -6,8 +6,7 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/app');
 const { startMaintenanceStatusScheduler } = require('./services/maintenanceScheduler');
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config();
 
 // Initialize express app
 const app = express();
@@ -20,52 +19,59 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (uploaded images)
 app.use('/uploads', express.static('uploads'));
 
-// Connect to database
-connectDB();
-startMaintenanceStatusScheduler();
-
 // Import routes
 const monthlyBillRoutes = require('./routes/monthlyBill');
-const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
 const devicesRoutes = require('./routes/devices');
+const energyConsumptionRoutes = require('./routes/energyConsumption');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
 const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
 const energyAnalyticsRoutes = require('./routes/energyAnalytics');
-
 // Basic route
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'PowerSense Backend API is running!',
     status: 'Connected to MongoDB',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting',
     endpoints: {
       bills: '/api/bills',
-      energy: '/api/energy-consumption'
+      auth: '/api/auth',
+      devices: '/api/devices',
+      energy: '/api/energy-consumption',
+      analytics: '/api/energy-analytics',
+      renewable: '/api/renewable'
     }
   });
 });
 
 // API Routes
 app.use('/api/bills', monthlyBillRoutes);
-app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', devicesRoutes);
-app.use('/api/renewable', renewableRoutes);
+app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/energy-analytics', energyAnalyticsRoutes);
+app.use('/api/renewable', renewableRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}`);
+const startServer = async () => {
+  await connectDB();
 
-  // Start scheduled jobs
-  startBillReminderJob();
+  app.listen(PORT, () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`🌐 API URL: http://localhost:${PORT}`);
 
-  // Start WhatsApp Web client for OTP
-  initializeWhatsAppClient();
+    // Start scheduled jobs/services only after DB is connected.
+    startBillReminderJob();
+    startMaintenanceStatusScheduler();
+    initializeWhatsAppClient();
+  });
+};
+
+startServer().catch((error) => {
+  console.error('Failed to start server:', error.message);
+  process.exit(1);
 });
 
 module.exports = app;

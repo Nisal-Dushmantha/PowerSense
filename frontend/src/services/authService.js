@@ -88,6 +88,14 @@ export const authService = {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
   },
+
+  // Resolve default route after authentication based on role
+  getPostAuthRedirectPath: (user) => {
+    if (user?.role === 'admin') {
+      return '/admin';
+    }
+    return '/';
+  }
 };
 
 export default authAPI;

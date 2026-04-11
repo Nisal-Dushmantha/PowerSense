@@ -1,6 +1,7 @@
 const EnergyConsumption = require('../models/energyConsumption');
 const User = require('../models/User');
 const PDFDocument = require('pdfkit');
+const whatsappService = require('../services/whatsappService');
 
 const CO2_FACTOR = 0.527; // kg CO2 per kWh (Sri Lanka grid average)
 const TARIFF_RATE = 35;   // Rs. per kWh (CEB residential approximate)
@@ -258,6 +259,281 @@ exports.getRecommendations = async (req, res) => {
 
         res.json({ success: true, data: { recommendations: recs, stats: { average: parseFloat(average.toFixed(2)), peak, recent_average: parseFloat(recent5avg.toFixed(2)), total_records: records.length } } });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const buildEnergyWhatsAppMessage = ({ userName, summary, threshold }) => {
+    const trendText =
+        summary.previous30DaysKwh > 0
+            ? `${summary.trendPercent > 0 ? '+' : ''}${summary.trendPercent}% vs previous 30 days`
+            : 'No baseline for trend yet';
+
+    const thresholdLine =
+        threshold == null
+            ? 'Threshold: Not configured'
+            : `Threshold: ${threshold} kWh (${summary.aboveThresholdCount} readings above)`;
+
+    return [
+        `⚡ PowerSense Energy Update - ${userName}`,
+        '',
+        `Last 30 days total: ${summary.last30DaysKwh} kWh`,
+        `Average per reading: ${summary.avgReadingKwh} kWh`,
+        `Peak reading: ${summary.peakKwh} kWh`,
+        `Estimated cost: Rs. ${summary.estimatedCost}`,
+        `Estimated CO₂: ${summary.estimatedCo2Kg} kg`,
+        `Trend: ${trendText}`,
+        thresholdLine,
+        '',
+        'Tip: Open PowerSense → Consumption Analytics for full insights.'
+    ].join('\n');
+};
+
+const getEnergySummaryForWhatsApp = async (userId, threshold) => {
+    const now = new Date();
+    const last30Start = new Date(now);
+    last30Start.setDate(now.getDate() - 30);
+
+    const prev30Start = new Date(last30Start);
+    prev30Start.setDate(last30Start.getDate() - 30);
+
+    const [last30Records, previous30Records] = await Promise.all([
+        EnergyConsumption.find({
+            user: userId,
+            consumption_date: { $gte: last30Start, $lte: now }
+        }).select('energy_used_kwh'),
+        EnergyConsumption.find({
+            user: userId,
+            consumption_date: { $gte: prev30Start, $lt: last30Start }
+        }).select('energy_used_kwh')
+    ]);
+
+    const sumKwh = (records) => records.reduce((sum, record) => sum + (record.energy_used_kwh || 0), 0);
+
+    const last30DaysKwh = sumKwh(last30Records);
+    const previous30DaysKwh = sumKwh(previous30Records);
+    const avgReadingKwh = last30Records.length ? last30DaysKwh / last30Records.length : 0;
+    const peakKwh = last30Records.length
+        ? Math.max(...last30Records.map((record) => record.energy_used_kwh || 0))
+        : 0;
+
+    const trendPercent = previous30DaysKwh > 0
+        ? Number((((last30DaysKwh - previous30DaysKwh) / previous30DaysKwh) * 100).toFixed(1))
+        : 0;
+
+    const aboveThresholdCount = threshold == null
+        ? 0
+        : last30Records.filter((record) => (record.energy_used_kwh || 0) > threshold).length;
+
+    return {
+        last30DaysKwh: Number(last30DaysKwh.toFixed(2)),
+        previous30DaysKwh: Number(previous30DaysKwh.toFixed(2)),
+        avgReadingKwh: Number(avgReadingKwh.toFixed(2)),
+        peakKwh: Number(peakKwh.toFixed(2)),
+        trendPercent,
+        estimatedCost: Number((last30DaysKwh * TARIFF_RATE).toFixed(2)),
+        estimatedCo2Kg: Number((last30DaysKwh * CO2_FACTOR).toFixed(2)),
+        aboveThresholdCount
+    };
+};
+
+const buildThresholdAlertsWhatsAppMessage = ({ userName, threshold, count, maxExceededBy, recentAlerts }) => {
+    const alertsBlock = recentAlerts.length
+        ? recentAlerts
+            .map((alert, index) => `${index + 1}. ${alert.date} | ${alert.meterId} | ${alert.energyUsed} kWh (+${alert.exceededBy})`)
+            .join('\n')
+        : 'No exceeded readings in the selected period.';
+
+    return [
+        `🔔 PowerSense Threshold Alert - ${userName}`,
+        '',
+        `Threshold: ${threshold} kWh`,
+        `Exceeded readings (last 30 days): ${count}`,
+        `Highest exceed: +${maxExceededBy} kWh`,
+        '',
+        'Recent exceeded readings:',
+        alertsBlock,
+        '',
+        'Tip: Update your threshold from PowerSense Analytics if needed.'
+    ].join('\n');
+};
+
+const getThresholdAlertsForWhatsApp = async (userId, threshold) => {
+    const now = new Date();
+    const last30Start = new Date(now);
+    last30Start.setDate(now.getDate() - 30);
+
+    const alerts = await EnergyConsumption.find({
+        user: userId,
+        energy_used_kwh: { $gt: threshold },
+        consumption_date: { $gte: last30Start, $lte: now }
+    })
+        .sort({ consumption_date: -1 })
+        .select('meter_id consumption_date energy_used_kwh')
+        .limit(5);
+
+    const exceededValues = alerts.map((alert) => Number((alert.energy_used_kwh - threshold).toFixed(2)));
+
+    return {
+        count: alerts.length,
+        maxExceededBy: exceededValues.length ? Number(Math.max(...exceededValues).toFixed(2)) : 0,
+        recentAlerts: alerts.map((alert) => ({
+            date: new Date(alert.consumption_date).toLocaleDateString('en-GB'),
+            meterId: alert.meter_id || 'N/A',
+            energyUsed: Number((alert.energy_used_kwh || 0).toFixed(2)),
+            exceededBy: Number(((alert.energy_used_kwh || 0) - threshold).toFixed(2))
+        }))
+    };
+};
+
+exports.startWhatsAppClient = async (req, res) => {
+    try {
+        const status = await whatsappService.start();
+        res.status(200).json({
+            success: true,
+            message: 'WhatsApp client startup triggered',
+            data: status
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getWhatsAppStatus = async (req, res) => {
+    try {
+        res.status(200).json({
+            success: true,
+            data: whatsappService.getStatus()
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.getWhatsAppQr = async (req, res) => {
+    try {
+        const qrDataUrl = whatsappService.getQrDataUrl();
+
+        if (!qrDataUrl) {
+            return res.status(404).json({
+                success: false,
+                message: 'QR not available yet. Call /whatsapp/start and wait a few seconds.'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: { qrDataUrl }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.sendWhatsAppEnergySummary = async (req, res) => {
+    try {
+        const { phoneNumber } = req.body;
+
+        const user = await User.findById(req.user.id).select('firstName lastName energyThreshold contactNumber');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const targetPhone = phoneNumber || user.contactNumber;
+
+        if (!targetPhone) {
+            return res.status(400).json({
+                success: false,
+                message: 'phoneNumber is required when contact number is not saved in profile'
+            });
+        }
+
+        const summary = await getEnergySummaryForWhatsApp(req.user.id, user.energyThreshold);
+
+        const message = buildEnergyWhatsAppMessage({
+            userName: `${user.firstName} ${user.lastName}`,
+            summary,
+            threshold: user.energyThreshold
+        });
+
+        const sent = await whatsappService.sendMessage(targetPhone, message);
+
+        res.status(200).json({
+            success: true,
+            message: 'Energy summary sent to WhatsApp',
+            data: {
+                sent,
+                targetPhone,
+                summary
+            }
+        });
+    } catch (error) {
+        if (String(error.message || '').includes('not ready')) {
+            return res.status(400).json({
+                success: false,
+                message: 'WhatsApp client not ready. Call /api/energy-analytics/whatsapp/start, scan QR from /api/energy-analytics/whatsapp/qr, then retry.'
+            });
+        }
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.sendWhatsAppThresholdAlerts = async (req, res) => {
+    try {
+        const { phoneNumber } = req.body;
+
+        const user = await User.findById(req.user.id).select('firstName lastName energyThreshold contactNumber');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.energyThreshold == null) {
+            return res.status(400).json({
+                success: false,
+                message: 'Energy threshold is not configured for this user'
+            });
+        }
+
+        const targetPhone = phoneNumber || user.contactNumber;
+
+        if (!targetPhone) {
+            return res.status(400).json({
+                success: false,
+                message: 'phoneNumber is required when contact number is not saved in profile'
+            });
+        }
+
+        const alertsSummary = await getThresholdAlertsForWhatsApp(req.user.id, user.energyThreshold);
+
+        const message = buildThresholdAlertsWhatsAppMessage({
+            userName: `${user.firstName} ${user.lastName}`,
+            threshold: user.energyThreshold,
+            count: alertsSummary.count,
+            maxExceededBy: alertsSummary.maxExceededBy,
+            recentAlerts: alertsSummary.recentAlerts
+        });
+
+        const sent = await whatsappService.sendMessage(targetPhone, message);
+
+        res.status(200).json({
+            success: true,
+            message: 'Threshold alert message sent to WhatsApp',
+            data: {
+                sent,
+                targetPhone,
+                threshold: user.energyThreshold,
+                alertsSummary
+            }
+        });
+    } catch (error) {
+        if (String(error.message || '').includes('not ready')) {
+            return res.status(400).json({
+                success: false,
+                message: 'WhatsApp client not ready. Call /api/energy-analytics/whatsapp/start, scan QR from /api/energy-analytics/whatsapp/qr, then retry.'
+            });
+        }
         res.status(500).json({ success: false, message: error.message });
     }
 };

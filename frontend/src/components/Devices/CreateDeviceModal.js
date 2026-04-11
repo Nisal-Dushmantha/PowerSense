@@ -2,75 +2,59 @@ import React, { useState } from 'react';
 import Modal from '../common/Modal';
 import { deviceService } from '../../services/api';
 
+const initialFormData = {
+  deviceId: '',
+  name: '',
+  type: '',
+  powerRating: '',
+  expectedDailyUsage: ''
+};
+
 const CreateDeviceModal = ({ isOpen, onClose, onDeviceCreated }) => {
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    deviceId: '',
-    name: '',
-    type: '',
-    powerRating: '',
-    expectedDailyUsage: ''
-  });
+  const [formData, setFormData] = useState(initialFormData);
+
+  const handleClose = () => {
+    if (loading) return;
+    setError(null);
+    setFormData(initialFormData);
+    onClose();
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      deviceId: '',
-      name: '',
-      type: '',
-      powerRating: '',
-      expectedDailyUsage: ''
-    });
-    setError(null);
-  };
-
-  const handleClose = () => {
-    if (saving) return;
-    resetForm();
-    onClose();
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
+    setLoading(true);
     setError(null);
 
     try {
-      const submitData = {
+      const payload = {
         ...formData,
         powerRating: parseFloat(formData.powerRating),
         expectedDailyUsage: parseFloat(formData.expectedDailyUsage)
       };
 
-      await deviceService.createDevice(submitData);
-
-      if (onDeviceCreated) {
-        onDeviceCreated();
-      }
-
-      handleClose();
+      await deviceService.createDevice(payload);
+      setFormData(initialFormData);
+      if (onDeviceCreated) onDeviceCreated();
+      onClose();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create device');
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Add New Device"
-      size="default"
-    >
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add New Device" size="default">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl">
             {error}
           </div>
         )}
@@ -135,12 +119,12 @@ const CreateDeviceModal = ({ isOpen, onClose, onDeviceCreated }) => {
           />
         </div>
 
-        <div className="flex justify-end space-x-4">
-          <button type="button" onClick={handleClose} className="btn-ghost" disabled={saving}>
+        <div className="flex justify-end gap-3">
+          <button type="button" onClick={handleClose} className="btn-ghost" disabled={loading}>
             Cancel
           </button>
-          <button type="submit" disabled={saving} className="btn-primary min-w-[120px]">
-            {saving ? 'Saving...' : 'Create Device'}
+          <button type="submit" disabled={loading} className="btn-primary min-w-[120px]">
+            {loading ? 'Saving...' : 'Create Device'}
           </button>
         </div>
       </form>

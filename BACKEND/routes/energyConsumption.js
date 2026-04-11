@@ -1,21 +1,45 @@
 const express = require('express');
-const { protect } = require('../middleware/auth');
-const {
-  getEnergyRecords,
-  createEnergyRecord,
-  updateEnergyRecord,
-  deleteEnergyRecord,
-  getTotalConsumption
-} = require('../controllers/energyConsumptionController');
-
 const router = express.Router();
+const {
+    createEnergyConsumption,
+    getEnergyConsumption,
+    getTotalConsumption,
+    getConsumptionSummary,
+    getConsumptionIntegration,
+    updateEnergyConsumption,
+    deleteEnergyConsumption
+} = require('../controllers/energyConsumptionController');
+const { protect } = require('../middleware/auth');
 
+// Protect all routes - require authentication
 router.use(protect);
 
-router.get('/', getEnergyRecords);
-router.post('/', createEnergyRecord);
+// @route   POST /api/energy-consumption
+// @access  Private
+router.post('/', createEnergyConsumption);
+
+// @route   GET /api/energy-consumption
+// @access  Private
+router.get('/', getEnergyConsumption);
+
+// @route   GET /api/energy-consumption/total
+// @access  Private
 router.get('/total', getTotalConsumption);
-router.put('/:id', updateEnergyRecord);
-router.delete('/:id', deleteEnergyRecord);
+
+// @route   GET /api/energy-consumption/summary
+// @access  Private
+router.get('/summary', getConsumptionSummary);
+
+// @route   GET /api/energy-consumption/integration
+// @access  Private
+router.get('/integration', getConsumptionIntegration);
+
+// @route   PUT /api/energy-consumption/:id
+// @access  Private
+router.put('/:id', updateEnergyConsumption);
+
+// @route   DELETE /api/energy-consumption/:id
+// @access  Private
+router.delete('/:id', deleteEnergyConsumption);
 
 module.exports = router;

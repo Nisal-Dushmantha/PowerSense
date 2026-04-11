@@ -2,10 +2,19 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = ({ children, roles = [] }) => {
   const isAuthenticated = authService.isAuthenticated();
+  const user = authService.getStoredUser();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (roles.length > 0 && (!user || !roles.includes(user.role))) {
+    return <Navigate to="/" />;
+  }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return children;
 };
 
 export default PrivateRoute;

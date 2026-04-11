@@ -14,6 +14,11 @@ const energyConsumptionSchema = new mongoose.Schema({
         ref: 'User',
         required: [true, 'User is required']
     },
+    device: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Device',
+        required: false
+    },
     consumption_date: {
         type: Date,
         required: [true, 'Consumption date is required']
@@ -46,6 +51,7 @@ const energyConsumptionSchema = new mongoose.Schema({
 
 // Add compound index for better query performance
 energyConsumptionSchema.index({ user: 1, consumption_date: 1, period_type: 1 });
+energyConsumptionSchema.index({ user: 1, device: 1, consumption_date: -1 });
 
 // Auto-increment meter_id as MTR-001, MTR-002, ...
 energyConsumptionSchema.pre('validate', async function (next) {

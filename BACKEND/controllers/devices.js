@@ -14,13 +14,13 @@ exports.createDevice = async (req, res) => {
 			expectedDailyUsage,
 		});
 		await device.save();
-		return res.status(201).json(device);
+		return res.status(201).json({ success: true, message: 'Device created', data: device });
 	} catch (error) {
 		console.error('createDevice error:', error);
 		if (error.code === 11000) {
-			return res.status(409).json({ message: 'Device with this deviceId already exists' });
+			return res.status(409).json({ success: false, message: 'Device with this deviceId already exists' });
 		}
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
 	}
 };
 
@@ -31,7 +31,7 @@ exports.getDevices = async (req, res) => {
 		return res.json(devices);
 	} catch (error) {
 		console.error('getDevices error:', error);
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
 	}
 };
 
@@ -39,12 +39,17 @@ exports.getDevices = async (req, res) => {
 exports.getDeviceById = async (req, res) => {
 	try {
 		const { deviceId } = req.params;
-		const device = await Device.findOne({ deviceId, user: req.user.id });
+		let device = await Device.findOne({ deviceId, user: req.user.id });
+
+		if (!device && /^[a-fA-F0-9]{24}$/.test(deviceId)) {
+			device = await Device.findOne({ _id: deviceId, user: req.user.id });
+		}
+
 		if (!device) return res.status(404).json({ message: 'Device not found' });
 		return res.json(device);
 	} catch (error) {
 		console.error('getDeviceById error:', error);
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
 	}
 };
 
@@ -54,16 +59,25 @@ exports.updateDevice = async (req, res) => {
 		const { deviceId } = req.params;
 		const updates = (({ name, type, powerRating, expectedDailyUsage }) => ({ name, type, powerRating, expectedDailyUsage }))(req.body);
 
-		const device = await Device.findOneAndUpdate(
+		let device = await Device.findOneAndUpdate(
 			{ deviceId, user: req.user.id },
 			{ $set: updates },
 			{ new: true, runValidators: true }
 		);
+
+		if (!device && /^[a-fA-F0-9]{24}$/.test(deviceId)) {
+			device = await Device.findOneAndUpdate(
+				{ _id: deviceId, user: req.user.id },
+				{ $set: updates },
+				{ new: true, runValidators: true }
+			);
+		}
+
 		if (!device) return res.status(404).json({ message: 'Device not found' });
 		return res.json(device);
 	} catch (error) {
 		console.error('updateDevice error:', error);
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
 	}
 };
 
@@ -77,11 +91,11 @@ exports.deleteDevice = async (req, res) => {
 		if (!device && deviceId.match(/^[a-fA-F0-9]{24}$/)) {
 			device = await Device.findOneAndDelete({ _id: deviceId, user: req.user.id });
 		}
-		if (!device) return res.status(404).json({ message: 'Device not found' });
-		return res.json({ message: 'Device deleted' });
+		if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+		return res.json({ success: true, message: 'Device deleted' });
 	} catch (error) {
 		console.error('deleteDevice error:', error);
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
 	}
 };
 
@@ -184,6 +198,6 @@ exports.generateDevicesPDFReport = async (req, res) => {
 		
 	} catch (error) {
 		console.error('generateDevicesPDFReport error:', error);
-		return res.status(500).json({ message: 'Server error', error: error.message });
+		return res.status(500).json({ success: false, message: 'Server error', error: error.message });
 	}
 };

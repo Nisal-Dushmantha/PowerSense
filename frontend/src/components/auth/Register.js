@@ -136,9 +136,11 @@ const Register = () => {
       
       // Store token and user data
       authService.storeUser(user, token);
+
+      const redirectPath = authService.getPostAuthRedirectPath(user);
       
-      // Redirect to bills page
-      navigate('/bills');
+      // Redirect based on role
+      navigate(redirectPath, { replace: true });
       window.location.reload(); // Reload to update navbar
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
@@ -256,6 +258,7 @@ const Register = () => {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  required
                   className="input-field flex-1"
                   placeholder="+94771234567"
                 />

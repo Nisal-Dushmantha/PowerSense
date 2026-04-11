@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { getRecommendations } from '../services/energyApi';
 import { billService } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import logo from '../assets/logo.png';
@@ -10,12 +11,6 @@ const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [profileStats, setProfileStats] = useState({
-    totalRecords: 0,
-    monthlyConsumption: 0,
-    loading: false
-  });
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
@@ -61,6 +56,37 @@ const Navbar = () => {
     }
   }, [isAuthenticated]);
 
+  const fetchRecommendations = useCallback(async (options = {}) => {
+    const { markAsRead = false } = options;
+
+    if (!isAuthenticated) {
+      setRecommendations([]);
+      setUnreadAlertCount(0);
+      return;
+    }
+
+    try {
+      setRecommendationsLoading(true);
+      setRecommendationsError(null);
+      const response = await getRecommendations();
+      const data = response?.data?.recommendations || [];
+      const normalizedData = Array.isArray(data) ? data : [];
+      const nextAlertCount = normalizedData.filter(
+        (item) => item?.type === 'alert' || item?.type === 'warning'
+      ).length;
+
+      setRecommendations(normalizedData);
+      setUnreadAlertCount(markAsRead ? 0 : nextAlertCount);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      setRecommendationsError('Unable to load recommendations');
+      setRecommendations([]);
+      setUnreadAlertCount(0);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }, [isAuthenticated]);
+
   useEffect(() => {
     const checkAuth = () => {
       const authenticated = authService.isAuthenticated();
@@ -77,25 +103,37 @@ const Navbar = () => {
     return () => window.removeEventListener('storage', checkAuth);
   }, [location]);
 
-  useEffect(() => {
-    fetchProfileStats();
-  }, [fetchProfileStats]);
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setUser(null);
+    setIsMobileMenuOpen(false);
+    navigate('/login');
+  };
 
-  const toggleProfileDropdown = () => {
-    setIsProfileDropdownOpen(prev => !prev);
+  const toggleProfileDropdown = (e) => {
+    e.stopPropagation();
+    setIsProfileDropdownOpen(!isProfileDropdownOpen);
+    // Refresh stats when opening dropdown
+    if (!isProfileDropdownOpen) {
+      fetchProfileStats();
+    }
   };
 
   const closeProfileDropdown = () => {
     setIsProfileDropdownOpen(false);
   };
 
-  const handleLogout = () => {
-    authService.logout();
-    setIsAuthenticated(false);
-    setUser(null);
-    setIsMobileMenuOpen(false);
+  const toggleRecommendationsDropdown = async (e) => {
+    e.stopPropagation();
+    const nextOpen = !isRecommendationsOpen;
+    setIsRecommendationsOpen(nextOpen);
     setIsProfileDropdownOpen(false);
-    navigate('/login');
+
+    if (nextOpen) {
+      setUnreadAlertCount(0);
+      await fetchRecommendations({ markAsRead: true });
+    }
   };
 
   const isActivePath = (path) => {
@@ -185,6 +223,17 @@ const Navbar = () => {
               >
                 Devices
               </Link>
+
+              {user?.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className={`${
+                    isActivePath('/admin') ? 'nav-link-active' : 'nav-link'
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
               
             </div>
           )}
@@ -213,6 +262,84 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>                
+                <div className="relative recommendations-dropdown">
+                  <button
+                    onClick={toggleRecommendationsDropdown}
+                    className="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                    aria-label="Smart recommendations"
+                    title="Smart Recommendations"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2a7 7 0 00-7 7v4.586L3.293 15.293A1 1 0 004 17h16a1 1 0 00.707-1.707L19 13.586V9a7 7 0 00-7-7zm0 20a3 3 0 002.995-2.824L15 19h-6a3 3 0 003 3z"/>
+                    </svg>
+                    {unreadAlertCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] leading-[18px] text-center rounded-full font-bold shadow">
+                        {unreadAlertCount > 9 ? '9+' : unreadAlertCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {isRecommendationsOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-96 max-w-[95vw] bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 fade-in overflow-hidden">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold text-textPrimary dark:text-gray-100">Smart Recommendations</h3>
+                          <p className="text-xs text-textSecondary dark:text-gray-400">Based on your latest energy patterns</p>
+                        </div>
+                        <button
+                          onClick={fetchRecommendations}
+                          className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-textSecondary dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                          Refresh
+                        </button>
+                      </div>
+
+                      <div className="max-h-96 overflow-auto">
+                        {recommendationsLoading ? (
+                          <div className="p-6 text-center text-textSecondary dark:text-gray-400">
+                            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                            Loading recommendations...
+                          </div>
+                        ) : recommendationsError ? (
+                          <div className="p-6 text-center text-red-600 dark:text-red-400 text-sm">{recommendationsError}</div>
+                        ) : recommendations.length === 0 ? (
+                          <div className="p-6 text-center text-textSecondary dark:text-gray-400 text-sm">
+                            No recommendations right now. Keep tracking usage.
+                          </div>
+                        ) : (
+                          <div className="py-1">
+                            {recommendations.map((item, index) => {
+                              const levelClass =
+                                item?.type === 'alert'
+                                  ? 'border-l-red-500'
+                                  : item?.type === 'warning'
+                                  ? 'border-l-orange-500'
+                                  : item?.type === 'success'
+                                  ? 'border-l-green-500'
+                                  : 'border-l-blue-500';
+
+                              return (
+                                <div
+                                  key={item?.id || index}
+                                  className={`px-4 py-3 border-l-4 ${levelClass} hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors`}
+                                >
+                                  <div className="flex items-start space-x-3">
+                                    <div className="text-lg leading-none mt-0.5">{item?.icon || '💡'}</div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-semibold text-textPrimary dark:text-gray-100">{item?.title || 'Recommendation'}</p>
+                                      <p className="text-xs text-textSecondary dark:text-gray-400 mt-1 leading-relaxed">{item?.message || 'Review your recent consumption data for optimization opportunities.'}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* User Profile Dropdown - Desktop */}
                 <div className="hidden md:flex items-center space-x-3 relative profile-dropdown">
                   <button
@@ -522,6 +649,18 @@ const Navbar = () => {
                 >
                   Devices
                 </Link>
+
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`${
+                      isActivePath('/admin') ? 'nav-link-active' : 'nav-link'
+                    } w-full`}
+                  >
+                    Admin
+                  </Link>
+                )}
               </div>
 
               {/* Logout Button - Mobile */}

@@ -1,16 +1,27 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcodeTerminal = require('qrcode-terminal');
+const fs = require('fs');
+const path = require('path');
 
 const otpStore = new Map();
 
 let whatsappClient;
 let clientReady = false;
 let clientInitializing = false;
+let initPromise = null;
+let initRetryCount = 0;
 
 const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 5);
 const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
 const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 const OTP_VERIFIED_WINDOW_MINUTES = Number(process.env.OTP_VERIFIED_WINDOW_MINUTES || 15);
+const WHATSAPP_INIT_MAX_RETRIES = Number(process.env.WHATSAPP_INIT_MAX_RETRIES || 3);
+const WHATSAPP_INIT_RETRY_DELAY_MS = Number(process.env.WHATSAPP_INIT_RETRY_DELAY_MS || 5000);
+
+const WHATSAPP_AUTH_DATA_PATH = path.resolve(process.env.WHATSAPP_AUTH_DATA_PATH || '.wwebjs_auth');
+const WHATSAPP_CLIENT_ID = process.env.WHATSAPP_CLIENT_ID || 'powersense-otp';
+let activeClientId = WHATSAPP_CLIENT_ID;
+let hasSwitchedClientId = false;
 
 const isWhatsAppOtpEnabled = () => process.env.WHATSAPP_WEB_ENABLED === 'true';
 const isBillNotificationEnabled = () => process.env.WHATSAPP_BILL_NOTIFICATIONS_ENABLED !== 'false';
@@ -38,55 +49,115 @@ const validatePhoneNumber = (phoneNumber) => {
 
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
+const scheduleInitRetry = () => {
+  if (initRetryCount >= WHATSAPP_INIT_MAX_RETRIES) {
+    console.error(`[WhatsApp OTP] Max init retries reached (${WHATSAPP_INIT_MAX_RETRIES}).`);
+    return;
+  }
+
+  initRetryCount += 1;
+  const delayMs = WHATSAPP_INIT_RETRY_DELAY_MS * initRetryCount;
+  console.warn(`[WhatsApp OTP] Retrying client initialization in ${Math.round(delayMs / 1000)}s (attempt ${initRetryCount}/${WHATSAPP_INIT_MAX_RETRIES}).`);
+
+  setTimeout(() => {
+    initializeWhatsAppClient().catch(() => null);
+  }, delayMs);
+};
+
+const clearChromiumSingletonLocks = (clientId = activeClientId) => {
+  try {
+    const sessionDir = path.join(WHATSAPP_AUTH_DATA_PATH, `session-${clientId}`);
+    const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie'];
+
+    for (const file of lockFiles) {
+      const filePath = path.join(sessionDir, file);
+      if (fs.existsSync(filePath)) {
+        fs.rmSync(filePath, { force: true });
+      }
+    }
+  } catch (error) {
+    console.warn('[WhatsApp OTP] Failed to clear Chromium lock files:', error.message);
+  }
+};
+
 const initializeWhatsAppClient = async () => {
   if (!isWhatsAppOtpEnabled()) {
     console.log('[WhatsApp OTP] WHATSAPP_WEB_ENABLED is false. OTP sender is disabled.');
     return;
   }
 
-  if (clientReady || clientInitializing) {
+  if (clientReady) {
     return;
   }
 
-  clientInitializing = true;
-
-  whatsappClient = new Client({
-    authStrategy: new LocalAuth({ clientId: 'powersense-otp' }),
-    puppeteer: {
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    }
-  });
-
-  whatsappClient.on('qr', (qr) => {
-    console.log('[WhatsApp OTP] Scan this QR code in WhatsApp:');
-    qrcodeTerminal.generate(qr, { small: true });
-  });
-
-  whatsappClient.on('ready', () => {
-    clientReady = true;
-    clientInitializing = false;
-    console.log('[WhatsApp OTP] Client is ready.');
-  });
-
-  whatsappClient.on('auth_failure', (message) => {
-    clientReady = false;
-    clientInitializing = false;
-    console.error('[WhatsApp OTP] Authentication failure:', message);
-  });
-
-  whatsappClient.on('disconnected', (reason) => {
-    clientReady = false;
-    console.warn('[WhatsApp OTP] Client disconnected:', reason);
-  });
-
-  try {
-    await whatsappClient.initialize();
-  } catch (error) {
-    clientInitializing = false;
-    clientReady = false;
-    console.error('[WhatsApp OTP] Failed to initialize client:', error.message);
+  if (initPromise) {
+    return initPromise;
   }
+
+  initPromise = (async () => {
+    clientInitializing = true;
+
+    whatsappClient = new Client({
+      authStrategy: new LocalAuth({
+        clientId: activeClientId,
+        dataPath: WHATSAPP_AUTH_DATA_PATH
+      }),
+      puppeteer: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      }
+    });
+
+    whatsappClient.on('qr', (qr) => {
+      console.log('[WhatsApp OTP] Scan this QR code in WhatsApp:');
+      qrcodeTerminal.generate(qr, { small: true });
+    });
+
+    whatsappClient.on('ready', () => {
+      clientReady = true;
+      clientInitializing = false;
+      initRetryCount = 0;
+      console.log('[WhatsApp OTP] Client is ready.');
+    });
+
+    whatsappClient.on('auth_failure', (message) => {
+      clientReady = false;
+      clientInitializing = false;
+      console.error('[WhatsApp OTP] Authentication failure:', message);
+    });
+
+    whatsappClient.on('disconnected', (reason) => {
+      clientReady = false;
+      console.warn('[WhatsApp OTP] Client disconnected:', reason);
+    });
+
+    try {
+      await whatsappClient.initialize();
+    } catch (error) {
+      clientInitializing = false;
+      clientReady = false;
+      const message = error?.message || 'Unknown error';
+      console.error('[WhatsApp OTP] Failed to initialize client:', message);
+
+      if (/browser is already running/i.test(message)) {
+        clearChromiumSingletonLocks();
+
+        if (!hasSwitchedClientId) {
+          activeClientId = `${WHATSAPP_CLIENT_ID}-fallback`;
+          hasSwitchedClientId = true;
+          console.warn(`[WhatsApp OTP] Auth profile is locked. Switching to fallback clientId: ${activeClientId}`);
+        }
+
+        scheduleInitRetry();
+      } else if (/Execution context was destroyed|Target closed|Session closed|Protocol error/i.test(message)) {
+        scheduleInitRetry();
+      }
+    }
+  })().finally(() => {
+    initPromise = null;
+  });
+
+  return initPromise;
 };
 
 const sendWhatsAppMessage = async (phoneNumber, message) => {
