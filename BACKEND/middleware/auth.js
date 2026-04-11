@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'powersense_secret_key_2026_secure';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {

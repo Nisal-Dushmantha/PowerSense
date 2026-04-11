@@ -4,8 +4,13 @@ const connectDB = async () => {
   try {
     // Set mongoose options
     mongoose.set('strictQuery', false);
+    const mongoUri = process.env.MONGO_URI;
+
+    if (!mongoUri) {
+      throw new Error('MONGO_URI is not set. Please add it to BACKEND/.env');
+    }
     
-    const conn = await mongoose.connect('mongodb+srv://PowerSense:Powersense@cluster0.s2xc238.mongodb.net/powersense?retryWrites=true&w=majority');
+    const conn = await mongoose.connect(mongoUri);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Database Name: ${conn.connection.name}`);
