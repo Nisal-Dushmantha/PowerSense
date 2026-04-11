@@ -1,0 +1,4 @@
+2026/04/11-14:05:59.621 341c Creating DB C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\shared_proto_db\metadata since it was missing.
+2026/04/11-14:05:59.640 341c Reusing MANIFEST C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\shared_proto_db\metadata/MANIFEST-000001
+2026/04/11-14:05:59.641 341c Recovering log #3
+2026/04/11-14:05:59.641 341c Reusing old log C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\shared_proto_db\metadata/000003.log 

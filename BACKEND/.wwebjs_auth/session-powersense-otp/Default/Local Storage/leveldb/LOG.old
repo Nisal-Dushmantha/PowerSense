@@ -1,0 +1,4 @@
+2026/04/11-14:05:59.653 2d80 Creating DB C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\Local Storage\leveldb since it was missing.
+2026/04/11-14:05:59.689 2d80 Reusing MANIFEST C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\Local Storage\leveldb/MANIFEST-000001
+2026/04/11-14:05:59.691 2d80 Recovering log #4
+2026/04/11-14:05:59.696 2d80 Reusing old log C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\Local Storage\leveldb/000004.log 

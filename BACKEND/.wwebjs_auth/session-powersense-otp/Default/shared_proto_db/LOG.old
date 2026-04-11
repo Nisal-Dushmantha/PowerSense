@@ -1,0 +1,4 @@
+2026/04/11-14:05:59.644 341c Creating DB C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\shared_proto_db since it was missing.
+2026/04/11-14:05:59.665 341c Reusing MANIFEST C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\shared_proto_db/MANIFEST-000001
+2026/04/11-14:05:59.665 341c Recovering log #3
+2026/04/11-14:05:59.666 341c Reusing old log C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\shared_proto_db/000003.log 

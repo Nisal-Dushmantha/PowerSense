@@ -1,0 +1,37 @@
+2026/04/11-14:07:39.648 16f8 Reusing MANIFEST C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/04/11-14:07:39.649 16f8 Recovering log #2081
+2026/04/11-14:07:39.669 16f8 Reusing old log C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/002081.log 
+2026/04/11-14:07:39.678 7c0 Manual compaction at level-0 from '\x00\x07\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x08\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.682 7c0 Level-0 table #2083: started
+2026/04/11-14:07:39.700 7c0 Level-0 table #2083: 513720 bytes OK
+2026/04/11-14:07:39.702 7c0 Delete type=0 #2081
+2026/04/11-14:07:39.704 16f8 Manual compaction at level-0 from '\x00\x11\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x12\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.706 7c0 Manual compaction at level-0 from '\x00\x0c\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0d\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.706 7c0 Manual compaction at level-1 from '\x00\x0c\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0d\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.706 7c0 Manual compaction at level-0 from '\x00\x0e\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0f\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.707 7c0 Manual compaction at level-1 from '\x00\x0e\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0f\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.708 7c0 Manual compaction at level-0 from '\x00\x12\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x13\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.708 7c0 Manual compaction at level-1 from '\x00\x12\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x13\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.709 7c0 Level-0 table #2085: started
+2026/04/11-14:07:39.715 7c0 Level-0 table #2085: 10688 bytes OK
+2026/04/11-14:07:39.717 7c0 Delete type=0 #2082
+2026/04/11-14:07:39.718 16f8 Manual compaction at level-0 from '\x00\x10\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x11\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.718 16f8 Manual compaction at level-1 from '\x00\x10\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x11\x00\x00\x00' @ 0 : 0; will stop at '\x00\x15\x00\x00\xc8\x08\x00w\x00a\x00m\x00_\x00m\x00e\x00t\x00a' @ 6775047 : 1
+2026/04/11-14:07:39.718 16f8 Compacting 1@1 + 1@2 files
+2026/04/11-14:07:39.732 16f8 Generated table #2086@1: 3065 keys, 174383 bytes
+2026/04/11-14:07:39.732 16f8 Compacted 1@1 + 1@2 files => 174383 bytes
+2026/04/11-14:07:39.734 16f8 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/04/11-14:07:39.735 16f8 Delete type=2 #2085
+2026/04/11-14:07:39.735 16f8 Manual compaction at level-1 from '\x00\x15\x00\x00\xc8\x08\x00w\x00a\x00m\x00_\x00m\x00e\x00t\x00a' @ 6775047 : 1 .. '\x00\x11\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.737 16f8 Level-0 table #2088: started
+2026/04/11-14:07:39.751 16f8 Level-0 table #2088: 832 bytes OK
+2026/04/11-14:07:39.753 16f8 Delete type=2 #2083
+2026/04/11-14:07:39.753 16f8 Delete type=0 #2084
+2026/04/11-14:07:39.754 16f8 Manual compaction at level-0 from '\x00\x0d\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0e\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/04/11-14:07:39.754 16f8 Manual compaction at level-1 from '\x00\x0d\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0e\x00\x00\x00' @ 0 : 0; will stop at '\x00\x15\x00\x00\xc8\x11\x00w\x00o\x00r\x00k\x00e\x00r\x00_\x00w\x00a\x00m\x00_\x00e\x00v\x00e\x00n\x00t\x00s' @ 6775533 : 1
+2026/04/11-14:07:39.754 16f8 Compacting 1@1 + 1@2 files
+2026/04/11-14:07:39.762 16f8 Generated table #2089@1: 3059 keys, 174225 bytes
+2026/04/11-14:07:39.762 16f8 Compacted 1@1 + 1@2 files => 174225 bytes
+2026/04/11-14:07:39.764 16f8 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/04/11-14:07:39.764 16f8 Delete type=2 #2088
+2026/04/11-14:07:39.765 16f8 Manual compaction at level-1 from '\x00\x15\x00\x00\xc8\x11\x00w\x00o\x00r\x00k\x00e\x00r\x00_\x00w\x00a\x00m\x00_\x00e\x00v\x00e\x00n\x00t\x00s' @ 6775533 : 1 .. '\x00\x0e\x00\x00\x00' @ 0 : 0; will stop at (end)

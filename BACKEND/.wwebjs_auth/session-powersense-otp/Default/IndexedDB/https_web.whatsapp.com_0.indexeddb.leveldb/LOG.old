@@ -1,0 +1,4 @@
+2026/04/11-14:06:27.383 1f84 Creating DB C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb since it was missing.
+2026/04/11-14:06:27.391 1f84 Reusing MANIFEST C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/04/11-14:06:27.392 1f84 Recovering log #2081
+2026/04/11-14:06:27.408 1f84 Reusing old log C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/002081.log 

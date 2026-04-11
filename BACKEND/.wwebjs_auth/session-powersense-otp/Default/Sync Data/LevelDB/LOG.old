@@ -1,0 +1,4 @@
+2026/04/11-14:05:59.581 2c9c Creating DB C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\Sync Data\LevelDB since it was missing.
+2026/04/11-14:05:59.610 2c9c Reusing MANIFEST C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\Sync Data\LevelDB/MANIFEST-000001
+2026/04/11-14:05:59.610 2c9c Recovering log #3
+2026/04/11-14:05:59.611 2c9c Reusing old log C:\Users\lawan\Desktop\PowerSense\BACKEND\.wwebjs_auth\session-powersense-otp\Default\Sync Data\LevelDB/000003.log 
