@@ -8,11 +8,11 @@ module.exports = {
     extend: {
       colors: {
         // PowerSense Energy Theme
-        'energy-green': '#2ECC71',      // Primary
-        'deep-green': '#27AE60',        // Secondary
-        'solar-yellow': '#F1C40F',      // Accent
-        'light-mint': '#ECF9F1',        // Background
-        'dark-charcoal': '#2C3E50',     // Text
+        'energy-green': '#2ECC71',
+        'deep-green': '#27AE60',
+        'solar-yellow': '#F1C40F',
+        'light-mint': '#ECF9F1',
+        'dark-charcoal': '#2C3E50',
         
         // Organized by purpose
         primary: {

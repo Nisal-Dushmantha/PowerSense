@@ -1,9 +1,16 @@
 const mongoose = require('mongoose');
 
+//auto incrementing device id
 const CounterSchema = new mongoose.Schema({ _id: String, seq: Number });
 const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
 
 const DeviceSchema = new mongoose.Schema({
+	user: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		required: [true, 'User is required'],
+		index: true,
+	},
 	deviceId: {
 		type: String,
 		required: true,
@@ -36,6 +43,8 @@ const DeviceSchema = new mongoose.Schema({
 	timestamps: true,
 });
 
+DeviceSchema.index({ user: 1, createdAt: -1 });
+
 // Virtual properties for energy consumption calculations
 DeviceSchema.virtual('dailyW').get(function() {
 	return parseFloat((this.powerRating * this.expectedDailyUsage).toFixed(0));
@@ -53,7 +62,7 @@ DeviceSchema.virtual('monthlyKwh').get(function() {
 	return parseFloat((this.monthlyW / 1000).toFixed(3));
 });
 
-// Ensure virtual fields are serialized when converting to JSON
+// Ensure virtual fields are serialized when converting to JSON(ensure when API return the data)
 DeviceSchema.set('toJSON', { virtuals: true });
 DeviceSchema.set('toObject', { virtuals: true });
 

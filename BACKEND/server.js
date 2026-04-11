@@ -28,7 +28,8 @@ const energyConsumptionRoutes = require('./routes/energyConsumption');
 const authRoutes = require('./routes/auth');
 const devicesRoutes = require('./routes/devices');
 const renewableRoutes = require('./routes/renewableRoutes');
-const energyAnalyticsRoutes = require('./routes/energyAnalytics');
+const { startBillReminderJob } = require('./jobs/billReminderJob');
+const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
 
 // Basic route
 app.get('/', (req, res) => {
@@ -59,6 +60,12 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`🌐 API URL: http://localhost:${PORT}`);
+
+  // Start scheduled jobs
+  startBillReminderJob();
+
+  // Start WhatsApp Web client for OTP
+  initializeWhatsAppClient();
 });
 
 module.exports = app;

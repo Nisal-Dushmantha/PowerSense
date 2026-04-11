@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const devicesController = require('../controllers/devices');
+const { protect } = require('../middleware/auth');
+
+// Protect all routes - require authentication
+router.use(protect);
 
 // POST /api/devices  - create a device
 router.post('/', devicesController.createDevice);

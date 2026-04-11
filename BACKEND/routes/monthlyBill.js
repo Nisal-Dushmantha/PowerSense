@@ -5,7 +5,8 @@ const {
   getBillById,
   getBillByNumber,
   updateBill,
-  deleteBill
+  deleteBill,
+  testBillReminder
 } = require('../controllers/monthlyBill');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -29,6 +30,11 @@ router.get('/', getAllBills);
 // @desc    Get a single bill by ID
 // @access  Private
 router.get('/:id', getBillById);
+
+// @route   POST /api/bills/test-reminder
+// @desc    Send test bill reminder message
+// @access  Private
+router.post('/test-reminder', testBillReminder);
 
 // @route   POST /api/bills
 // @desc    Create a new bill

@@ -42,40 +42,54 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center container-padding">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center fade-in">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-textPrimary">Welcome back</h2>
-          <p className="mt-2 text-sm text-textSecondary">
-            Sign in to your PowerSense account
-          </p>
-        </div>
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-br from-[#f4fbf7] via-[#ecf9f1] to-[#f8fcf9] dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="pointer-events-none absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/18 blur-3xl animate-pulse"></div>
+      <div className="pointer-events-none absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-secondary/18 blur-3xl animate-pulse"></div>
 
-        {/* Login Form */}
-        <div className="card card-gradient scale-in">
-          <div className="card-body">
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                  <span className="text-sm text-red-700">{error}</span>
+      <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-12 lg:px-8">
+        <section className="hidden lg:flex lg:flex-col lg:justify-center slide-up">
+          <div className="max-w-lg">
+            <p className="mb-4 inline-flex items-center rounded-full border border-primary/15 bg-white/80 dark:bg-gray-800/75 dark:border-gray-700 px-4 py-1 text-xs font-semibold tracking-wide text-primary shadow-sm backdrop-blur-sm">
+              Energy Intelligence Platform
+            </p>
+            <h1 className="text-5xl font-extrabold leading-tight text-textPrimary">
+              Sign in to your
+              <span className="block text-gradient">PowerSense workspace</span>
+            </h1>
+            <p className="mt-5 text-base text-textSecondary">
+              Monitor usage patterns, manage monthly bills, and receive timely payment alerts in one place.
+            </p>
+
+            <div className="mt-8 grid grid-cols-3 gap-3">
+              {['Fast', 'Reliable', 'Insightful'].map((tag, index) => (
+                <div
+                  key={tag}
+                  className="rounded-2xl border border-primary/15 dark:border-gray-700 bg-white/75 dark:bg-gray-800/75 px-3 py-4 text-center text-sm font-semibold text-textPrimary shadow-sm backdrop-blur-sm"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
+                  {tag}
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="flex items-center justify-center scale-in">
+          <div className="w-full max-w-md rounded-3xl border border-primary/15 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 p-7 shadow-2xl backdrop-blur-md sm:p-8">
+            <div className="mb-6 text-center">
+              <h2 className="text-3xl font-bold text-textPrimary">Welcome back</h2>
+              <p className="mt-1 text-sm text-textSecondary">Sign in to continue</p>
+            </div>
+
+            {error && (
+              <div className="mb-5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300 animate-shake">
+                {error}
               </div>
             )}
 
-            <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="space-y-5">
               <div className="form-group">
-                <label htmlFor="email" className="form-label">
-                  Email address
-                </label>
+                <label htmlFor="email" className="form-label">Email address</label>
                 <input
                   type="email"
                   id="email"
@@ -84,14 +98,12 @@ const Login = () => {
                   onChange={onChange}
                   required
                   className="input-field"
-                  placeholder="Enter your email"
+                  placeholder="you@example.com"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="password" className="form-label">
-                  Password
-                </label>
+                <label htmlFor="password" className="form-label">Password</label>
                 <input
                   type="password"
                   id="password"
@@ -104,81 +116,29 @@ const Login = () => {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full btn-lg relative"
-              >
+              <button type="submit" disabled={loading} className="btn-primary w-full btn-lg">
                 {loading ? (
                   <>
-                    <div className="loading-spinner w-5 h-5 mr-3"></div>
+                    <div className="loading-spinner mr-3 h-5 w-5"></div>
                     Signing in...
                   </>
                 ) : (
-                  <>
-                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
-                    </svg>
-                    Sign in
-                  </>
+                  'Sign in'
                 )}
               </button>
             </form>
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-textSecondary">Don't have an account?</span>
-                </div>
-              </div>
+            <div className="my-6 flex items-center gap-3 text-xs text-textSecondary">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+              <span>New to PowerSense?</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+            </div>
 
-              <div className="mt-6 text-center">
-                <Link
-                  to="/register"
-                  className="btn-secondary w-full"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                    <circle cx="8.5" cy="7" r="4"/>
-                    <path d="M20 8v6M23 11h-6"/>
-                  </svg>
-                  Create new account
-                </Link>
-              </div>
-            </div>
+            <Link to="/register" className="btn-secondary w-full">
+              Create account
+            </Link>
           </div>
-        </div>
-
-        {/* Features */}
-        <div className="grid grid-cols-3 gap-4 fade-in">
-          <div className="text-center">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-              <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l9 11h-6v7h-6v-7H3l9-11z"/>
-              </svg>
-            </div>
-            <p className="text-xs text-textSecondary">Fast & Secure</p>
-          </div>
-          <div className="text-center">
-            <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-              <svg className="w-5 h-5 text-secondary" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-              </svg>
-            </div>
-            <p className="text-xs text-textSecondary">Bill Tracking</p>
-          </div>
-          <div className="text-center">
-            <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-2">
-              <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 20V10M6 20V4m12 16V8"/>
-              </svg>
-            </div>
-            <p className="text-xs text-textSecondary">Analytics</p>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );

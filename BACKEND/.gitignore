@@ -6,6 +6,10 @@ yarn-error.log*
 
 # Environment variables
 .env
+
+# whatsapp-web.js local auth sessions
+.wwebjs_auth/
+.wwebjs_cache/
 .env.local
 .env.development.local
 .env.test.local

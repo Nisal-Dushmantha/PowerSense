@@ -11,7 +11,8 @@ const Profile = () => {
   const [editForm, setEditForm] = useState({
     firstName: '',
     lastName: '',
-    email: ''
+    email: '',
+    phoneNumber: ''
   });
   const [stats, setStats] = useState({
     totalRecords: 0,
@@ -34,7 +35,8 @@ const Profile = () => {
           setEditForm({
             firstName: userData.firstName || '',
             lastName: userData.lastName || '',
-            email: userData.email || ''
+            email: userData.email || '',
+            phoneNumber: userData.phoneNumber || ''
           });
         }
 
@@ -120,7 +122,8 @@ const Profile = () => {
     setEditForm({
       firstName: user.firstName || '',
       lastName: user.lastName || '',
-      email: user.email || ''
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || ''
     });
     setMessage({ type: '', text: '' });
   };
@@ -442,6 +445,24 @@ const Profile = () => {
                   className="input-field"
                   placeholder="Enter your email address"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-textPrimary mb-2">
+                  WhatsApp Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={editForm.phoneNumber}
+                  onChange={handleEditChange}
+                  className="input-field"
+                  placeholder="+94771234567 (include country code)"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  📱 Used for unpaid bill WhatsApp reminders. Include country code (e.g. +94).
+                </p>
               </div>
 
               {/* Form Actions */}

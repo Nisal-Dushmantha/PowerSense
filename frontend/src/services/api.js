@@ -57,7 +57,10 @@ export const billService = {
   updateBill: (id, billData) => api.put(`/bills/${id}`, billData),
   
   // Delete bill
-  deleteBill: (id) => api.delete(`/bills/${id}`)
+  deleteBill: (id) => api.delete(`/bills/${id}`),
+
+  // Send test WhatsApp reminder for an unpaid bill
+  sendTestReminder: (billId) => api.post('/bills/test-reminder', billId ? { billId } : {})
 };
 
 export const renewableService = {
