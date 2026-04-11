@@ -115,6 +115,7 @@ function App() {
               </PrivateRoute>
             } />
           </Routes>
+          </main>
         </div>
       </Router>
     </ThemeProvider>
