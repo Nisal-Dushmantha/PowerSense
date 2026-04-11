@@ -80,30 +80,30 @@ const EditDeviceModal = ({ isOpen, onClose, deviceId, onDeviceUpdated }) => {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4">
+      {error && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4">
               {error}
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Device ID</label>
-            <input name="deviceId" value={formData.deviceId} disabled className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Device ID</label>
+            <input name="deviceId" value={formData.deviceId} disabled className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Device Name *</label>
-            <input name="name" value={formData.name} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Device Name *</label>
+            <input name="name" value={formData.name} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Device Type *</label>
-            <input name="type" value={formData.type} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Device Type *</label>
+            <input name="type" value={formData.type} onChange={handleChange} required className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Power Rating (W) *</label>
-            <input name="powerRating" value={formData.powerRating} onChange={handleChange} required type="number" min="0" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Power Rating (W) *</label>
+            <input name="powerRating" value={formData.powerRating} onChange={handleChange} required type="number" min="0" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Expected Daily Usage (hours) *</label>
-            <input name="expectedDailyUsage" value={formData.expectedDailyUsage} onChange={handleChange} required type="number" min="0" step="0.1" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Expected Daily Usage (hours) *</label>
+            <input name="expectedDailyUsage" value={formData.expectedDailyUsage} onChange={handleChange} required type="number" min="0" step="0.1" className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
           </div>
           <div className="flex justify-end space-x-4">
             <button type="button" onClick={onClose} className="btn-ghost">Cancel</button>

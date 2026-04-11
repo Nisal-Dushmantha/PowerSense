@@ -24,8 +24,8 @@ const energyConsumptionSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Period type is required'],
         enum: {
-            values: ['hourly', 'daily', 'monthly'],
-            message: 'Period type must be one of: hourly, daily, monthly'
+            values: ['hourly', 'daily', 'weekly', 'monthly'],
+            message: 'Period type must be one of: hourly, daily, weekly, monthly'
         }
     }
 }, {
