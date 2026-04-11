@@ -1,19 +1,28 @@
 # Dependencies
 node_modules/
+*/node_modules/
+frontend/node_modules/
+BACKEND/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # Environment variables
 .env
-
-# whatsapp-web.js local auth sessions
-.wwebjs_auth/
-.wwebjs_cache/
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+BACKEND/.env
+BACKEND/.env.local
+BACKEND/.env.development.local
+BACKEND/.env.test.local
+BACKEND/.env.production.local
 
 # Logs
 logs
@@ -34,25 +43,20 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+*/coverage/
 
 # nyc test coverage
 .nyc_output
-
-# Grunt intermediate storage
-.grunt
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons
-build/Release
+*/.nyc_output
 
 # Dependency directories
 node_modules/
 jspm_packages/
+*/jspm_packages/
 
 # Optional npm cache directory
 .npm
+*/.npm
 
 # Optional REPL history
 .node_repl_history
@@ -63,14 +67,27 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
+# Build directories
+dist/
+build/
+*/dist/
+*/build/
+frontend/build/
+BACKEND/dist/
+
+# Temporary files
+tmp/
+temp/
+*/tmp/
+*/temp/
 
 # IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
+.vscode
+.idea
 
 # OS generated files
 .DS_Store
@@ -81,10 +98,17 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
-# Build directories
-dist/
-build/
+# Backend specific
+BACKEND/uploads/
+uploads/
 
-# Temporary files
-tmp/
-temp/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+*/cache/
+.next/
+.nuxt/

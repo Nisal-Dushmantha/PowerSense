@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { getEnergyRecords } from '../services/energyApi';
+import { billService } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import logo from '../assets/logo.png';
 
@@ -9,12 +10,6 @@ const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [profileStats, setProfileStats] = useState({
-    totalRecords: 0,
-    monthlyConsumption: 0,
-    loading: true
-  });
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode, toggleTheme } = useTheme();
@@ -28,9 +23,9 @@ const Navbar = () => {
     try {
       setProfileStats(prev => ({ ...prev, loading: true }));
       
-      // Get all records
-      const response = await getEnergyRecords();
-      const records = response.data || [];
+      // Get all bill records
+      const response = await billService.getAllBills();
+      const records = response?.data?.data?.bills || [];
       
       // Calculate total records
       const totalRecords = records.length;
@@ -42,11 +37,11 @@ const Navbar = () => {
       
       const monthlyConsumption = records
         .filter(record => {
-          const recordDate = new Date(record.consumption_date);
+          const recordDate = new Date(record.billIssueDate);
           return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
         })
         .reduce((total, record) => {
-          return total + (parseFloat(record.energy_used_kwh) || 0);
+          return total + (parseFloat(record.totalKWh) || 0);
         }, 0);
       
       setProfileStats({
@@ -67,52 +62,21 @@ const Navbar = () => {
       if (authenticated) {
         const userData = authService.getStoredUser();
         setUser(userData);
-        // Fetch profile stats when user is authenticated
-        fetchProfileStats();
-      } else {
-        setProfileStats({ totalRecords: 0, monthlyConsumption: 0, loading: false });
       }
     };
 
     checkAuth();
     // Listen for auth changes
     window.addEventListener('storage', checkAuth);
-    
-    // Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.profile-dropdown')) {
-        setIsProfileDropdownOpen(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [location, fetchProfileStats]);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, [location]);
 
   const handleLogout = () => {
     authService.logout();
     setIsAuthenticated(false);
     setUser(null);
     setIsMobileMenuOpen(false);
-    setIsProfileDropdownOpen(false);
     navigate('/login');
-  };
-
-  const toggleProfileDropdown = (e) => {
-    e.stopPropagation();
-    setIsProfileDropdownOpen(!isProfileDropdownOpen);
-    // Refresh stats when opening dropdown
-    if (!isProfileDropdownOpen) {
-      fetchProfileStats();
-    }
-  };
-
-  const closeProfileDropdown = () => {
-    setIsProfileDropdownOpen(false);
   };
 
   const isActivePath = (path) => {
@@ -120,27 +84,42 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-40 transition-colors duration-300">
+    <nav className="sticky top-0 z-40 border-b border-primary/15 dark:border-gray-700/70 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl transition-colors duration-300 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="max-w-7xl mx-auto container-padding">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20 gap-4">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
               <img 
                 src={logo} 
                 alt="PowerSense Logo" 
-                className="w-16 h-16 transform group-hover:scale-105 transition-transform"
+                className="w-12 h-12 rounded-xl transform group-hover:scale-105 transition-transform"
               />
               <div>
-                <h1 className="text-xl font-bold text-gradient">PowerSense</h1>
-                <p className="text-xs text-textSecondary dark:text-gray-400 -mt-1">Energy Management</p>
+                <h1 className="text-lg font-extrabold text-gradient leading-tight">PowerSense</h1>
+                <p className="text-[11px] text-textSecondary dark:text-gray-400 -mt-0.5">Energy Analytics</p>
               </div>
             </Link>
           </div>
 
+          {isAuthenticated && (
+            <div className="hidden lg:flex flex-1 max-w-xl">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="Search bills, consumption, devices..."
+                  className="w-full rounded-2xl border border-primary/15 bg-primary/5 py-2.5 pl-10 pr-4 text-sm text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary"
+                />
+                <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" />
+                </svg>
+              </div>
+            </div>
+          )}
+
           {/* Desktop Navigation */}
           {isAuthenticated && (
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden md:flex items-center space-x-1 rounded-2xl border border-primary/15 bg-white/80 dark:bg-gray-800/80 dark:border-gray-700 p-1">
               <Link
                 to="/"
                 className={`${
@@ -196,7 +175,7 @@ const Navbar = () => {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200"
+              className="p-2.5 rounded-xl bg-primary/5 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-200 border border-primary/15 dark:border-gray-700"
               aria-label="Toggle dark mode"
               title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -219,7 +198,7 @@ const Navbar = () => {
                 <div className="hidden md:flex items-center space-x-3 relative profile-dropdown">
                   <button
                     onClick={toggleProfileDropdown}
-                    className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex items-center space-x-3 p-2 rounded-2xl hover:bg-primary/5 transition-colors cursor-pointer border border-primary/15 bg-white/80 dark:bg-gray-800/80 dark:border-gray-700"
                   >
                     <div className="text-right">
                       <p className="text-sm font-semibold text-textPrimary">
@@ -227,7 +206,7 @@ const Navbar = () => {
                       </p>
                       <p className="text-xs text-textSecondary">{user?.email}</p>
                     </div>
-                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center shadow-sm">
                       <span className="text-white font-semibold text-sm">
                         {user?.firstName?.[0]}{user?.lastName?.[0]}
                       </span>
@@ -243,9 +222,9 @@ const Navbar = () => {
 
                   {/* Dropdown Menu */}
                   {isProfileDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 fade-in">
+                    <div className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-primary/15 dark:border-gray-700 py-2 z-50 fade-in">
                       {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                         <div className="flex items-center space-x-3">
                           <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
                             <span className="text-white font-semibold">
@@ -264,9 +243,24 @@ const Navbar = () => {
                           </div>
                         </div>
                       </div>
+              <>
+                {/* User Info - Desktop */}
+                <div className="hidden md:flex items-center space-x-3">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-textPrimary dark:text-gray-200">
+                      {user?.firstName} {user?.lastName}
+                    </p>
+                    <p className="text-xs text-textSecondary dark:text-gray-400">{user?.email}</p>
+                  </div>
+                  <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </span>
+                  </div>
+                </div>
 
                       {/* Profile Stats */}
-                      <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                         <div className="grid grid-cols-2 gap-4 text-center">
                           <div>
                             <div className="text-lg font-bold text-textPrimary">
@@ -293,40 +287,7 @@ const Navbar = () => {
 
                       {/* Menu Items */}
                       <div className="py-2">
-                        <button
-                          onClick={() => {
-                            closeProfileDropdown();
-                            navigate('/profile');
-                          }}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
-                        >
-                          <svg className="w-5 h-5 text-textSecondary" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                          </svg>
-                          <span className="text-sm font-medium text-textPrimary">View Profile</span>
-                        </button>
-                        
-                        <button
-                          onClick={closeProfileDropdown}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
-                        >
-                          <svg className="w-5 h-5 text-textSecondary" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-                          </svg>
-                          <span className="text-sm font-medium text-textPrimary">Settings</span>
-                        </button>
-                        
-                        <button 
-                          onClick={closeProfileDropdown}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors"
-                        >
-                          <svg className="w-5 h-5 text-textSecondary" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                          </svg>
-                          <span className="text-sm font-medium text-textPrimary">Help & Support</span>
-                        </button>
-
-                        <hr className="my-2 border-gray-100" />
+                        <hr className="my-2 border-gray-100 dark:border-gray-700" />
                         
                         <button
                           onClick={() => {
@@ -344,13 +305,20 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
+                {/* Logout Button - Desktop */}
+                <button
+                  onClick={handleLogout}
+                  className="hidden md:flex btn-ghost btn-sm"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M16 17l5-5-5-5M19.8 12H9M10 3H6a2 2 0 00-2 2v14a2 2 0 002 2h4"/>
+                  </svg>
+                  Logout
+                </button>
 
                 {/* Mobile Menu Button */}
                 <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(!isMobileMenuOpen);
-                    setIsProfileDropdownOpen(false);
-                  }}
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
                   aria-label="Toggle menu"
                 >
@@ -413,7 +381,7 @@ const Navbar = () => {
                 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-white/50 rounded-lg p-3 text-center">
+                  <div className="bg-white/50 dark:bg-gray-700/60 rounded-lg p-3 text-center">
                     <div className="text-lg font-bold text-textPrimary">
                       {profileStats.loading ? (
                         <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
@@ -423,7 +391,7 @@ const Navbar = () => {
                     </div>
                     <div className="text-xs text-textSecondary">Records</div>
                   </div>
-                  <div className="bg-white/50 rounded-lg p-3 text-center">
+                  <div className="bg-white/50 dark:bg-gray-700/60 rounded-lg p-3 text-center">
                     <div className="text-lg font-bold text-textPrimary">
                       {profileStats.loading ? (
                         <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>

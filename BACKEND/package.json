@@ -11,15 +11,20 @@
   "license": "ISC",
   "description": "Backend for PowerSense MERN application",
   "dependencies": {
+    "@emailjs/nodejs": "^5.0.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.0",
     "multer": "^2.0.2",
-    "pdfkit": "^0.17.2"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.1",
+    "pdfkit": "^0.17.2",
+    "qrcode-terminal": "^0.12.0",
+    "twilio": "^5.12.2",
+    "whatsapp-web.js": "^1.34.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

@@ -57,7 +57,10 @@ export const billService = {
   updateBill: (id, billData) => api.put(`/bills/${id}`, billData),
   
   // Delete bill
-  deleteBill: (id) => api.delete(`/bills/${id}`)
+  deleteBill: (id) => api.delete(`/bills/${id}`),
+
+  // Send test WhatsApp reminder for an unpaid bill
+  sendTestReminder: (billId) => api.post('/bills/test-reminder', billId ? { billId } : {})
 };
 
 export const renewableService = {
@@ -78,6 +81,24 @@ export const renewableService = {
   // Statistics
   getStatistics: (params) => api.get('/renewable/stats', { params }),
   getDashboard: () => api.get('/renewable/dashboard'),
+  
+  // Advanced Analytics
+  getGenerationMeters: (params) => api.get('/renewable/meters', { params }),
+  getPeakGeneration: (params) => api.get('/renewable/peak-detection', { params }),
+  getProductionAlerts: (params) => api.get('/renewable/alerts', { params }),
+  getEnergyIndependence: (params) => api.get('/renewable/independence', { params }),
+  getOptimizationRecommendations: () => api.get('/renewable/recommendations'),
+  getGenerationForecast: (params) => api.get('/renewable/forecast', { params }),
+  getForecastAccuracy: (params) => api.get('/renewable/forecast/accuracy', { params }),
+  getVarianceAnalytics: (params) => api.get('/renewable/variance', { params }),
+  getVarianceTrend: (params) => api.get('/renewable/variance/trend', { params }),
+
+  // Maintenance Planner
+  createMaintenanceTask: (taskData) => api.post('/renewable/maintenance', taskData),
+  getMaintenanceTasks: (params) => api.get('/renewable/maintenance', { params }),
+  updateMaintenanceTask: (id, taskData) => api.put(`/renewable/maintenance/${id}`, taskData),
+  deleteMaintenanceTask: (id) => api.delete(`/renewable/maintenance/${id}`),
+  getMaintenanceSummary: () => api.get('/renewable/maintenance/summary'),
   
   // Report Generation
   generateRecordsPDF: (params) => {
@@ -113,11 +134,3 @@ export const renewableService = {
 };
 
 export default api;
-
-export const deviceService = {
-  getAllDevices: () => api.get('/devices'),
-  getDeviceById: (id) => api.get(`/devices/${id}`),
-  createDevice: (data) => api.post('/devices', data),
-  updateDevice: (id, data) => api.put(`/devices/${id}`, data),
-  deleteDevice: (id) => api.delete(`/devices/${id}`),
-};

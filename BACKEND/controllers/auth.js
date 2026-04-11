@@ -1,10 +1,19 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const {
+  sendOtp,
+  verifyOtp,
+  normalizePhoneNumber,
+  validatePhoneNumber,
+  isPhoneVerified,
+  consumePhoneVerification,
+  isWhatsAppOtpEnabled
+} = require('../services/whatsappOtpService');
 
-// JWT Secret (in production, use environment variable)
-const JWT_SECRET = process.env.JWT_SECRET || 'powersense_secret_key_2026_secure';
+// JWT secret must come from environment
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRE = '7d'; // Token expires in 7 days
-
+ 
 // Generate JWT Token
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, JWT_SECRET, {
@@ -17,7 +26,31 @@ const generateToken = (userId) => {
 // @access  Public
 const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role, phoneNumber } = req.body;
+
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'WhatsApp number is required'
+      });
+    }
+
+    const phoneValidation = validatePhoneNumber(phoneNumber);
+    if (!phoneValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: phoneValidation.message
+      });
+    }
+
+    const normalizedPhone = phoneValidation.normalized;
+
+    if (!isPhoneVerified(normalizedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please verify your WhatsApp number with OTP before registering'
+      });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -34,10 +67,12 @@ const register = async (req, res) => {
       lastName,
       email,
       password,
+      phoneNumber: normalizedPhone,
       role: role || 'user' // Default to 'user' if not specified
     });
 
     await user.save();
+    consumePhoneVerification(normalizedPhone);
 
     // Generate token
     const token = generateToken(user._id);
@@ -62,6 +97,75 @@ const register = async (req, res) => {
       success: false,
       message: 'Server error during registration',
       error: error.message
+    });
+  }
+};
+
+// @desc    Send WhatsApp OTP for registration
+// @route   POST /api/auth/send-whatsapp-otp
+// @access  Public
+const sendWhatsAppOtp = async (req, res) => {
+  try {
+    if (!isWhatsAppOtpEnabled()) {
+      return res.status(503).json({
+        success: false,
+        message: 'WhatsApp OTP is disabled on server'
+      });
+    }
+
+    const { phoneNumber } = req.body;
+    const result = await sendOtp(phoneNumber);
+
+    if (!result.success) {
+      return res.status(result.status || 400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: result.message,
+      data: {
+        phoneNumber: result.normalized
+      }
+    });
+  } catch (error) {
+    console.error('Send WhatsApp OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to send OTP'
+    });
+  }
+};
+
+// @desc    Verify WhatsApp OTP for registration
+// @route   POST /api/auth/verify-whatsapp-otp
+// @access  Public
+const verifyWhatsAppOtp = async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+    const result = verifyOtp(phoneNumber, otp);
+
+    if (!result.success) {
+      return res.status(result.status || 400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: result.message,
+      data: {
+        phoneNumber: normalizePhoneNumber(phoneNumber)
+      }
+    });
+  } catch (error) {
+    console.error('Verify WhatsApp OTP error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify OTP'
     });
   }
 };
@@ -167,7 +271,7 @@ const getMe = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, email } = req.body;
+    const { firstName, lastName, email, phoneNumber } = req.body;
 
     const user = await User.findById(req.user.id);
 
@@ -193,6 +297,7 @@ const updateProfile = async (req, res) => {
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
     user.email = email || user.email;
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
 
     await user.save();
 
@@ -286,6 +391,8 @@ const updateThreshold = async (req, res) => {
 
 module.exports = {
   register,
+  sendWhatsAppOtp,
+  verifyWhatsAppOtp,
   login,
   getMe,
   updateProfile,

@@ -55,7 +55,7 @@ const Home = () => {
               className="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-3xl p-8 border border-gray-200/50 dark:border-gray-600/50 hover:bg-white dark:hover:bg-gray-800 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
             >
               <div className="w-16 h-16 bg-gradient-to-r from-accent to-primary rounded-2xl flex items-center justify-center mb-6 transform group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                   <path d="M12 5v14m-7-7h14"/>
                 </svg>
               </div>
@@ -94,7 +94,7 @@ const Home = () => {
               </div>
               <div className="text-center">
                 <div className="w-12 h-12 bg-secondary/10 dark:bg-secondary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-secondary" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-secondary" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                     <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/>
                   </svg>
                 </div>

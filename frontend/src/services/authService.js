@@ -34,15 +34,18 @@ export const authService = {
 
   // Register new user
   register: (userData) => authAPI.post('/auth/register', userData),
+
+  // Send WhatsApp OTP
+  sendWhatsAppOtp: (phoneNumber) => authAPI.post('/auth/send-whatsapp-otp', { phoneNumber }),
+
+  // Verify WhatsApp OTP
+  verifyWhatsAppOtp: (phoneNumber, otp) => authAPI.post('/auth/verify-whatsapp-otp', { phoneNumber, otp }),
   
   // Login user
   login: (credentials) => authAPI.post('/auth/login', credentials),
   
   // Get current user
   getCurrentUser: () => authAPI.get('/auth/me'),
-  
-  // Update user profile
-  updateProfile: (userData) => authAPI.put('/auth/profile', userData),
   
   // Logout (clear local storage)
   logout: () => {
