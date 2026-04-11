@@ -12,16 +12,11 @@ import RenewableDashboard from './components/Renewable/RenewableDashboard';
 import RenewableSource from './components/Renewable/RenewableSource';
 import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
 import RenewableAnalytics from './components/Renewable/RenewableAnalytics';
-import EnergyConsumption from './components/energyConsumption';
 import DevicesList from './components/Devices/DevicesList';
 import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
-import DevicesList from './components/Devices/DevicesList';
 import ConsumptionList from './components/energyConsumption/ConsumptionList';
-import DeviceChartsPage from './components/Devices/DeviceChartsPage';
-import EditDevice from './components/Devices/EditDevice';
-import AdminDashboard from './components/admin/AdminDashboard';
 
 // Initialize auth service
 authService.init();

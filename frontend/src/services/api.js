@@ -63,14 +63,6 @@ export const billService = {
   sendTestReminder: (billId) => api.post('/bills/test-reminder', billId ? { billId } : {})
 };
 
-export const deviceService = {
-  getAllDevices: () => api.get('/devices'),
-  getDeviceById: (id) => api.get(`/devices/${id}`),
-  createDevice: (deviceData) => api.post('/devices', deviceData),
-  updateDevice: (id, deviceData) => api.put(`/devices/${id}`, deviceData),
-  deleteDevice: (id) => api.delete(`/devices/${id}`)
-};
-
 export const renewableService = {
   // Source operations
   createSource: (sourceData) => api.post('/renewable/sources', sourceData),
