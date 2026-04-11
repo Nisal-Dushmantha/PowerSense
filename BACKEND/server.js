@@ -61,15 +61,10 @@ const startServer = async () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`🌐 API URL: http://localhost:${PORT}`);
 
+    // Start scheduled jobs/services only after DB is connected.
     startBillReminderJob();
     startMaintenanceStatusScheduler();
-
-    // Initialize WhatsApp client only when explicitly requested.
-    if (process.env.WHATSAPP_WEB_AUTO_START === 'true') {
-      initializeWhatsAppClient();
-    } else {
-      console.log('[WhatsApp OTP] Auto-start disabled. Client will initialize when OTP/WhatsApp send is requested.');
-    }
+    initializeWhatsAppClient();
   });
 };
 
