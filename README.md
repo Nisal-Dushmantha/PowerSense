@@ -2,6 +2,10 @@
 
 > A full-stack MERN-style application for electricity usage tracking, bill management, analytics, renewable integration, and role-based administration.
 
+## Home Page Preview
+
+![PowerSense Home Page](https://image.thum.io/get/width/1400/https://power-sense-gamma.vercel.app/)
+
 | Layer | Technology |
 |------|------------|
 | Frontend | React, React Router, Axios, Tailwind CSS |
@@ -12,15 +16,16 @@
 ---
 
 ## Table of Contents
-1. [Project Overview](#project-overview)
-2. [Core Components](#core-components)
-3. [Project Structure](#project-structure)
-4. [Setup Instructions](#setup-instructions)
-5. [API Documentation](#api-documentation)
-6. [Deployment](DEPLOYMENT.md)
-7. [Testing](TESTING.md)
-8. [Environment Variables](#environment-variables)
-9. [Security & Architecture Notes](#security--architecture-notes)
+1. [Home Page Preview](#home-page-preview)
+2. [Project Overview](#project-overview)
+3. [Core Components](#core-components)
+4. [Project Structure](#project-structure)
+5. [Setup Instructions](#setup-instructions)
+6. [API Documentation](#api-documentation)
+7. [Deployment](DEPLOYMENT.md)
+8. [Testing](TESTING.md)
+9. [Environment Variables](#environment-variables)
+10. [Security & Architecture Notes](#security--architecture-notes)
 
 ---
 
