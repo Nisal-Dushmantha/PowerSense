@@ -35,12 +35,14 @@ projects:
         value: "8"
       - key: WHATSAPP_INIT_RETRY_DELAY_MS
         value: "4000"
+      - key: PUPPETEER_CACHE_DIR
+        value: "/opt/render/project/.cache/puppeteer"
       - key: GENERATE_SOURCEMAP
         sync: false
       - key: MONGO_URI
         sync: false
       region: singapore
-      buildCommand: npm install
+      buildCommand: npm install; npx puppeteer browsers install chrome
       startCommand: npm start
       autoDeployTrigger: commit
       rootDir: BACKEND
