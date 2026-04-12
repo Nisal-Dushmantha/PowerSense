@@ -10,11 +10,31 @@ projects:
       runtime: node
       repo: https://github.com/Nisal-Dushmantha/PowerSense
       plan: free
+      disks:
+      - name: powersense-whatsapp-auth
+        mountPath: /var/data/powersense_wwebjs_auth
+        sizeGB: 1
       envVars:
       - key: JWT_SECRET
         sync: false
+      - key: WHATSAPP_ENABLED
+        value: "true"
       - key: WHATSAPP_WEB_ENABLED
         value: "true"
+      - key: WHATSAPP_SHARE_CLIENT
+        value: "true"
+      - key: WHATSAPP_SESSION_NAME
+        value: "powersense-notifier"
+      - key: WHATSAPP_CLIENT_ID
+        value: "powersense-otp"
+      - key: WHATSAPP_AUTH_PATH
+        value: "/var/data/powersense_wwebjs_auth"
+      - key: WHATSAPP_AUTH_DATA_PATH
+        value: "/var/data/powersense_wwebjs_auth"
+      - key: WHATSAPP_INIT_MAX_RETRIES
+        value: "8"
+      - key: WHATSAPP_INIT_RETRY_DELAY_MS
+        value: "4000"
       - key: GENERATE_SOURCEMAP
         sync: false
       - key: MONGO_URI
