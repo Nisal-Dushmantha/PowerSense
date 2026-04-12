@@ -27,7 +27,9 @@ const energyConsumptionRoutes = require('./routes/energyConsumption');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
 const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
+const { initWhatsAppClient } = require('./services/whatsappService');
 const energyAnalyticsRoutes = require('./routes/energyAnalytics');
+const notificationRoutes = require('./routes/notificationRoutes');
 // Basic route
 app.get('/', (req, res) => {
   res.json({
@@ -52,6 +54,7 @@ app.use('/api/devices', devicesRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/energy-analytics', energyAnalyticsRoutes);
 app.use('/api/renewable', renewableRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const PORT = process.env.PORT || 5000;
 
@@ -66,6 +69,9 @@ const startServer = async () => {
     startBillReminderJob();
     startMaintenanceStatusScheduler();
     initializeWhatsAppClient();
+    if (String(process.env.WHATSAPP_ENABLED || 'true').toLowerCase() === 'true') {
+      initWhatsAppClient();
+    }
   });
 
   server.on('error', (error) => {
