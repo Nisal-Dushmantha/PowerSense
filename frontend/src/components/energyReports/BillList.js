@@ -6,7 +6,30 @@ import InsightsModal from './InsightsModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const API_ROOT_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+const API_ROOT_URL = (process.env.REACT_APP_API_URL || 'https://powersense-2-9w2e.onrender.com/api').replace(/\/api\/?$/, '');
+
+const getBillPhotoUrl = (photoValue) => {
+  if (!photoValue) return '';
+
+  if (/^https?:\/\//i.test(photoValue)) {
+    try {
+      const parsed = new URL(photoValue);
+      if (/(^|\.)localhost$/.test(parsed.hostname) || parsed.hostname === '127.0.0.1') {
+        return `${API_ROOT_URL}${parsed.pathname}`;
+      }
+      return photoValue;
+    } catch {
+      return photoValue;
+    }
+  }
+
+  const normalized = String(photoValue).replace(/^\/+/, '');
+  if (normalized.startsWith('uploads/')) {
+    return `${API_ROOT_URL}/${normalized}`;
+  }
+
+  return `${API_ROOT_URL}/uploads/bills/${normalized}`;
+};
 
 const BillList = () => {
   const [bills, setBills] = useState([]);
@@ -729,7 +752,7 @@ const BillList = () => {
                 </h3>
                 <div className="mt-2">
                   <img
-                    src={`${API_ROOT_URL}/uploads/bills/${selectedPhoto}`}
+                    src={getBillPhotoUrl(selectedPhoto)}
                     alt="Bill"
                     className="max-w-full max-h-[70vh] mx-auto rounded-lg shadow-lg"
                     onError={(e) => {
