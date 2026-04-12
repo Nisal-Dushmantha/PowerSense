@@ -10,10 +10,6 @@ projects:
       runtime: node
       repo: https://github.com/Nisal-Dushmantha/PowerSense
       plan: free
-      disks:
-      - name: powersense-whatsapp-auth
-        mountPath: /var/data/powersense_wwebjs_auth
-        sizeGB: 1
       envVars:
       - key: JWT_SECRET
         sync: false
@@ -28,9 +24,9 @@ projects:
       - key: WHATSAPP_CLIENT_ID
         value: "powersense-otp"
       - key: WHATSAPP_AUTH_PATH
-        value: "/var/data/powersense_wwebjs_auth"
+        value: "/opt/render/project/.cache/powersense_wwebjs_auth"
       - key: WHATSAPP_AUTH_DATA_PATH
-        value: "/var/data/powersense_wwebjs_auth"
+        value: "/opt/render/project/.cache/powersense_wwebjs_auth"
       - key: WHATSAPP_INIT_MAX_RETRIES
         value: "8"
       - key: WHATSAPP_INIT_RETRY_DELAY_MS
@@ -43,6 +39,6 @@ projects:
         sync: false
       region: singapore
       buildCommand: npm install; npx -y @puppeteer/browsers install chrome@146.0.7680.153 --path /opt/render/project/.cache/puppeteer
-      startCommand: mkdir -p /opt/render/project/.cache/puppeteer /var/data/powersense_wwebjs_auth; export CHROMIUM_PATH=$(find /opt/render/project/.cache/puppeteer -type f -path '*/chrome-linux64/chrome' | head -n 1); if [ -z "$CHROMIUM_PATH" ]; then export CHROMIUM_PATH=/usr/bin/chromium-browser; fi; echo "Using CHROMIUM_PATH=$CHROMIUM_PATH"; npm start
+      startCommand: mkdir -p /opt/render/project/.cache/puppeteer /opt/render/project/.cache/powersense_wwebjs_auth; export CHROMIUM_PATH=$(find /opt/render/project/.cache/puppeteer -type f -path '*/chrome-linux64/chrome' | head -n 1); if [ -z "$CHROMIUM_PATH" ]; then export CHROMIUM_PATH=/usr/bin/chromium-browser; fi; echo "Using CHROMIUM_PATH=$CHROMIUM_PATH"; npm start
       autoDeployTrigger: commit
       rootDir: BACKEND
