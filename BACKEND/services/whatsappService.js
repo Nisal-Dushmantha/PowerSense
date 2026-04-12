@@ -4,15 +4,13 @@ const qrcodeTerminal = require('qrcode-terminal');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 
 let client;
+let initialized = false;
 let initializing = false;
 let ready = false;
 let lastError = null;
 let latestQrText = null;
-let reconnectAttempts = 0;
 
 const isWhatsAppEnabled = () => String(process.env.WHATSAPP_ENABLED || 'true').toLowerCase() === 'true';
-const WHATSAPP_INIT_MAX_RETRIES = Number(process.env.WHATSAPP_INIT_MAX_RETRIES || 8);
-const WHATSAPP_INIT_RETRY_DELAY_MS = Number(process.env.WHATSAPP_INIT_RETRY_DELAY_MS || 4000);
 
 const normalizeToE164 = (value) => {
   if (!value) return null;
@@ -31,55 +29,10 @@ const normalizeToE164 = (value) => {
 };
 
 const resolveChromiumPath = () => {
-  if (process.env.CHROMIUM_PATH && fs.existsSync(process.env.CHROMIUM_PATH)) return process.env.CHROMIUM_PATH;
-  if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
-    return process.env.PUPPETEER_EXECUTABLE_PATH;
-  }
+  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
 
-  const candidates = [
-    '/usr/bin/chromium-browser',
-    '/usr/bin/chromium',
-    '/opt/render/project/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
-    'C:/Program Files/Google/Chrome/Application/chrome.exe'
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate.includes('*')) {
-      const base = candidate.split('*')[0];
-      if (!fs.existsSync(base)) continue;
-      try {
-        const entries = fs.readdirSync(base, { withFileTypes: true });
-        const dir = entries.find((entry) => entry.isDirectory() && entry.name.startsWith('linux-'));
-        if (!dir) continue;
-        const nested = path.join(base, dir.name, 'chrome-linux64', 'chrome');
-        if (fs.existsSync(nested)) return nested;
-      } catch (error) {
-        continue;
-      }
-      continue;
-    }
-
-    if (fs.existsSync(candidate)) return candidate;
-  }
-
-  return undefined;
-};
-
-const scheduleReinitialize = () => {
-  if (!isWhatsAppEnabled()) return;
-  if (initializing) return;
-  if (reconnectAttempts >= WHATSAPP_INIT_MAX_RETRIES) {
-    console.error(`[WhatsApp] Max reconnect attempts reached (${WHATSAPP_INIT_MAX_RETRIES}).`);
-    return;
-  }
-
-  reconnectAttempts += 1;
-  const delayMs = reconnectAttempts * WHATSAPP_INIT_RETRY_DELAY_MS;
-  console.warn(`[WhatsApp] Scheduling reconnect in ${Math.round(delayMs / 1000)}s (attempt ${reconnectAttempts}/${WHATSAPP_INIT_MAX_RETRIES}).`);
-
-  setTimeout(() => {
-    initWhatsAppClient();
-  }, delayMs);
+  const candidates = ['/usr/bin/chromium-browser', '/usr/bin/chromium', 'C:/Program Files/Google/Chrome/Application/chrome.exe'];
+  return candidates.find((candidate) => fs.existsSync(candidate));
 };
 
 const clearStaleChromiumLocks = (authPath) => {
@@ -115,15 +68,13 @@ const clearStaleChromiumLocks = (authPath) => {
 
 const initWhatsAppClient = () => {
   if (!isWhatsAppEnabled()) return;
-  if (initializing) return;
-  if (client && ready) return;
+  if (initialized || initializing) return;
 
+  initialized = true;
   initializing = true;
-  ready = false;
 
   const sessionName = process.env.WHATSAPP_SESSION_NAME || 'powersense-notifier';
   const authPath = process.env.WHATSAPP_AUTH_PATH || path.join(process.cwd(), '.wwebjs_auth_notifications');
-  fs.mkdirSync(authPath, { recursive: true });
   clearStaleChromiumLocks(authPath);
 
   client = new Client({
@@ -131,13 +82,15 @@ const initWhatsAppClient = () => {
       clientId: sessionName,
       dataPath: authPath
     }),
-    webVersionCache: { type: 'local' },
+    webVersionCache: {
+      type: 'none'
+    },
     authTimeoutMs: 90000,
     qrMaxRetries: 20,
     puppeteer: {
       headless: true,
       executablePath: resolveChromiumPath(),
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     }
   });
 
@@ -152,7 +105,6 @@ const initWhatsAppClient = () => {
   client.on('ready', () => {
     ready = true;
     initializing = false;
-    reconnectAttempts = 0;
     latestQrText = null;
     lastError = null;
     console.log('[WhatsApp] Client is ready.');
@@ -163,7 +115,6 @@ const initWhatsAppClient = () => {
     initializing = false;
     lastError = `Authentication failed: ${message}`;
     console.error('[WhatsApp] Authentication failed:', message);
-    scheduleReinitialize();
   });
 
   client.on('disconnected', (reason) => {
@@ -171,7 +122,6 @@ const initWhatsAppClient = () => {
     initializing = false;
     lastError = `Disconnected: ${reason}`;
     console.warn('[WhatsApp] Client disconnected:', reason);
-    scheduleReinitialize();
   });
 
   client.initialize().catch((error) => {
@@ -179,7 +129,6 @@ const initWhatsAppClient = () => {
     initializing = false;
     lastError = error.message;
     console.error('[WhatsApp] Initialization failed:', error.message);
-    scheduleReinitialize();
   });
 };
 

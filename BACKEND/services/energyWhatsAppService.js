@@ -1,7 +1,5 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const fs = require('fs');
-const path = require('path');
 
 const state = {
   client: null,
@@ -11,13 +9,10 @@ const state = {
   lastError: null,
   lastSendAt: null,
   lastSendSuccess: null,
-  lastSentMessage: null,
-  reconnectAttempts: 0
+  lastSentMessage: null
 };
 
 const isEnabled = () => String(process.env.WHATSAPP_ENABLED || 'true').toLowerCase() === 'true';
-const WHATSAPP_INIT_MAX_RETRIES = Number(process.env.WHATSAPP_INIT_MAX_RETRIES || 8);
-const WHATSAPP_INIT_RETRY_DELAY_MS = Number(process.env.WHATSAPP_INIT_RETRY_DELAY_MS || 4000);
 
 const normalizePhone = (phoneNumber) => {
   if (!phoneNumber) return null;
@@ -28,51 +23,14 @@ const normalizePhone = (phoneNumber) => {
 
 const buildClient = () => {
   const sessionName = process.env.WHATSAPP_SESSION_NAME || 'powersense-energy';
-  const authPath = process.env.WHATSAPP_AUTH_PATH || path.join(process.cwd(), '.wwebjs_auth_energy');
-  fs.mkdirSync(authPath, { recursive: true });
-
-  const chromiumPath = (() => {
-    if (process.env.CHROMIUM_PATH && fs.existsSync(process.env.CHROMIUM_PATH)) return process.env.CHROMIUM_PATH;
-    if (process.env.PUPPETEER_EXECUTABLE_PATH && fs.existsSync(process.env.PUPPETEER_EXECUTABLE_PATH)) {
-      return process.env.PUPPETEER_EXECUTABLE_PATH;
-    }
-
-    const candidates = [
-      '/usr/bin/chromium-browser',
-      '/usr/bin/chromium',
-      'C:/Program Files/Google/Chrome/Application/chrome.exe'
-    ];
-
-    return candidates.find((candidate) => fs.existsSync(candidate));
-  })();
 
   return new Client({
-    authStrategy: new LocalAuth({ clientId: sessionName, dataPath: authPath }),
-    webVersionCache: { type: 'local' },
-    authTimeoutMs: 90000,
-    qrMaxRetries: 20,
+    authStrategy: new LocalAuth({ clientId: sessionName }),
     puppeteer: {
       headless: true,
-      executablePath: chromiumPath,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
   });
-};
-
-const scheduleReconnect = () => {
-  if (!isEnabled()) return;
-  if (state.initializing) return;
-  if (state.reconnectAttempts >= WHATSAPP_INIT_MAX_RETRIES) {
-    state.lastError = `Max reconnect attempts reached (${WHATSAPP_INIT_MAX_RETRIES})`;
-    return;
-  }
-
-  state.reconnectAttempts += 1;
-  const delayMs = state.reconnectAttempts * WHATSAPP_INIT_RETRY_DELAY_MS;
-
-  setTimeout(() => {
-    start().catch(() => null);
-  }, delayMs);
 };
 
 const start = async () => {
@@ -108,21 +66,18 @@ const start = async () => {
       state.initializing = false;
       state.lastError = null;
       state.qrDataUrl = null;
-      state.reconnectAttempts = 0;
     });
 
     state.client.on('auth_failure', (msg) => {
       state.ready = false;
       state.initializing = false;
       state.lastError = msg || 'WhatsApp authentication failed';
-      scheduleReconnect();
     });
 
     state.client.on('disconnected', (reason) => {
       state.ready = false;
       state.initializing = false;
       state.lastError = reason || 'WhatsApp client disconnected';
-      scheduleReconnect();
     });
   }
 
@@ -132,7 +87,6 @@ const start = async () => {
     state.initializing = false;
     state.ready = false;
     state.lastError = error.message;
-    scheduleReconnect();
     throw error;
   }
 
