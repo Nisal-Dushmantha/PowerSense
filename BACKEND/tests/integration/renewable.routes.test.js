@@ -17,12 +17,21 @@ let integrationReady = false;
 
 const buildAuthHeader = () => `Bearer ${authToken}`;
 const withTimeout = (promise, ms, label) =>
-  Promise.race([
-    promise,
-    new Promise((_, reject) => {
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
-    })
-  ]);
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
 
 describe('renewable routes integration', () => {
   jest.setTimeout(180000);
@@ -54,6 +63,7 @@ describe('renewable routes integration', () => {
         firstName: 'Test',
         lastName: 'User',
         email: 'renewable.test@example.com',
+        contactNumber: '+94771234567',
         password: 'Pass1234',
         role: 'user'
       });
