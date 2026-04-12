@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { billService } from '../../services/api';
 import Modal from '../common/Modal';
 
+const API_ROOT_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
 const EditBillModal = ({ isOpen, onClose, billData, onBillUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -284,7 +286,7 @@ const EditBillModal = ({ isOpen, onClose, billData, onBillUpdated }) => {
                 <div className="mt-2">
                   <div className="relative">
                     <img
-                      src={`http://localhost:5000/uploads/bills/${currentPhoto}`}
+                      src={`${API_ROOT_URL}/uploads/bills/${currentPhoto}`}
                       alt="Current bill"
                       className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-600"
                     />

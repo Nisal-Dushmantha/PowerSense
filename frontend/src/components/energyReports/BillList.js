@@ -6,6 +6,8 @@ import InsightsModal from './InsightsModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+const API_ROOT_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/api\/?$/, '');
+
 const BillList = () => {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -727,7 +729,7 @@ const BillList = () => {
                 </h3>
                 <div className="mt-2">
                   <img
-                    src={`http://localhost:5000/uploads/bills/${selectedPhoto}`}
+                    src={`${API_ROOT_URL}/uploads/bills/${selectedPhoto}`}
                     alt="Bill"
                     className="max-w-full max-h-[70vh] mx-auto rounded-lg shadow-lg"
                     onError={(e) => {
