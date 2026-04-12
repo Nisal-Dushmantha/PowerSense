@@ -18,6 +18,18 @@ const getNotificationWhatsAppStatus = (req, res) => {
 const getNotificationWhatsAppQr = async (req, res) => {
   try {
     initWhatsAppClient();
+    const status = getWhatsAppStatus();
+
+    if (status.ready) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          linked: true,
+          message: 'WhatsApp is already linked and ready'
+        }
+      });
+    }
+
     const qrDataUrl = await getWhatsAppQrDataUrl();
 
     if (!qrDataUrl) {
@@ -47,6 +59,10 @@ const getNotificationWhatsAppQrView = async (req, res) => {
 
     if (!status.enabled) {
       return res.status(200).send('<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense WhatsApp QR</h2><p>WhatsApp is disabled. Set <strong>WHATSAPP_ENABLED=true</strong> and restart backend.</p></body></html>');
+    }
+
+    if (status.ready) {
+      return res.status(200).send('<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense WhatsApp QR</h2><p style="color:#0a7f32;font-weight:600;">✅ WhatsApp linked successfully.</p><p>You can close this page now and continue using PowerSense.</p></body></html>');
     }
 
     if (!qrDataUrl) {

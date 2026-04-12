@@ -412,6 +412,18 @@ exports.getWhatsAppStatus = async (req, res) => {
 
 exports.getWhatsAppQr = async (req, res) => {
     try {
+        const status = whatsappService.getStatus();
+
+        if (status.ready) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    linked: true,
+                    message: 'WhatsApp client is already linked and ready'
+                }
+            });
+        }
+
         const qrDataUrl = whatsappService.getQrDataUrl();
 
         if (!qrDataUrl) {
