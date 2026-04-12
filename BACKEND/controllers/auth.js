@@ -1,6 +1,9 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const {
+  initializeWhatsAppClient,
+  getWhatsAppOtpStatus,
+  getWhatsAppOtpQrDataUrl,
   sendOtp,
   verifyOtp,
   normalizePhoneNumber,
@@ -177,6 +180,67 @@ const verifyWhatsAppOtp = async (req, res) => {
       success: false,
       message: 'Failed to verify OTP'
     });
+  }
+};
+
+const startWhatsAppOtpClient = async (req, res) => {
+  try {
+    if (!isWhatsAppOtpEnabled()) {
+      return res.status(503).json({ success: false, message: 'WhatsApp OTP is disabled on server' });
+    }
+
+    await initializeWhatsAppClient();
+    return res.status(200).json({
+      success: true,
+      message: 'WhatsApp OTP startup triggered',
+      data: getWhatsAppOtpStatus()
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Failed to start WhatsApp OTP client' });
+  }
+};
+
+const getWhatsAppOtpStatusController = (req, res) => {
+  try {
+    initializeWhatsAppClient();
+    return res.status(200).json({ success: true, data: getWhatsAppOtpStatus() });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Failed to get WhatsApp OTP status' });
+  }
+};
+
+const getWhatsAppOtpQrController = async (req, res) => {
+  try {
+    initializeWhatsAppClient();
+    const qrDataUrl = await getWhatsAppOtpQrDataUrl();
+
+    if (!qrDataUrl) {
+      return res.status(404).json({ success: false, message: 'QR not available yet. Call /api/auth/whatsapp/start and wait a few seconds.' });
+    }
+
+    return res.status(200).json({ success: true, data: { qrDataUrl } });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || 'Failed to get WhatsApp OTP QR' });
+  }
+};
+
+const getWhatsAppOtpQrView = async (req, res) => {
+  try {
+    initializeWhatsAppClient();
+    const status = getWhatsAppOtpStatus();
+    const qrDataUrl = await getWhatsAppOtpQrDataUrl();
+
+    if (!status.enabled) {
+      return res.status(200).send('<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense OTP WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense OTP WhatsApp QR</h2><p>OTP WhatsApp is disabled. Set <strong>WHATSAPP_WEB_ENABLED=true</strong>.</p></body></html>');
+    }
+
+    if (!qrDataUrl) {
+      return res.status(200).send(`<!doctype html><html><head><meta charset="utf-8"/><meta http-equiv="refresh" content="5"/><title>PowerSense OTP WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense OTP WhatsApp QR</h2><p>QR not ready yet. Refreshing every 5 seconds...</p><p>Status: ${status.message || 'Waiting for OTP client'}</p></body></html>`);
+    }
+
+    return res.status(200).send(`<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense OTP WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense OTP WhatsApp QR</h2><p>Scan with WhatsApp → Linked Devices → Link a Device.</p><img src="${qrDataUrl}" alt="OTP WhatsApp QR" style="width:360px;height:360px;border:1px solid #ddd;border-radius:8px;"/></body></html>`);
+  } catch (error) {
+    return res.status(500).send(`<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense OTP WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense OTP WhatsApp QR</h2><p>Failed to render QR page: ${error.message || 'Unknown error'}</p></body></html>`);
   }
 };
 
@@ -404,6 +468,10 @@ module.exports = {
   register,
   sendWhatsAppOtp,
   verifyWhatsAppOtp,
+  startWhatsAppOtpClient,
+  getWhatsAppOtpStatusController,
+  getWhatsAppOtpQrController,
+  getWhatsAppOtpQrView,
   login,
   getMe,
   updateProfile,
