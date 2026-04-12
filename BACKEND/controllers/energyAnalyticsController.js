@@ -1,7 +1,7 @@
 const EnergyConsumption = require('../models/energyConsumption');
 const User = require('../models/User');
 const PDFDocument = require('pdfkit');
-const whatsappService = require('../services/whatsappService');
+const whatsappService = require('../services/energyWhatsAppService');
 
 const CO2_FACTOR = 0.527; // kg CO2 per kWh (Sri Lanka grid average)
 const TARIFF_RATE = 35;   // Rs. per kWh (CEB residential approximate)

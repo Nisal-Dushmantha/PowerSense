@@ -1,0 +1,26 @@
+# Exported from Render on 2026-04-11T20:31:09Z
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: PowerSense-api
+      runtime: node
+      repo: https://github.com/Nisal-Dushmantha/PowerSense
+      plan: free
+      envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: WHATSAPP_WEB_ENABLED
+        value: "true"
+      - key: GENERATE_SOURCEMAP
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      region: singapore
+      buildCommand: npm install
+      startCommand: npm start
+      autoDeployTrigger: commit
+      rootDir: BACKEND

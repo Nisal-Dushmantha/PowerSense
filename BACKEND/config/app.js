@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
+const path = require('path');
+const dns = require('dns');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const connectDB = async () => {
   try {
@@ -11,7 +13,23 @@ const connectDB = async () => {
       throw new Error('MONGO_URI is not set. Please add it to BACKEND/.env');
     }
     
-    const conn = await mongoose.connect(mongoUri);
+    let conn;
+
+    try {
+      conn = await mongoose.connect(mongoUri);
+    } catch (error) {
+      const isSrvLookupFailure =
+        String(error.code || '') === 'ENOTFOUND' && String(error.syscall || '') === 'querySrv';
+      const usesSrvUri = String(mongoUri).startsWith('mongodb+srv://');
+
+      if (!isSrvLookupFailure || !usesSrvUri) {
+        throw error;
+      }
+
+      console.error('Initial SRV DNS lookup failed on local resolver. Retrying with public DNS servers...');
+      dns.setServers(['8.8.8.8', '1.1.1.1']);
+      conn = await mongoose.connect(mongoUri);
+    }
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Database Name: ${conn.connection.name}`);

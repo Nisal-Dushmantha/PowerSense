@@ -200,19 +200,26 @@ const Home = () => {
                   <svg className="w-4 h-4 text-primary mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
                   </svg>
-                  <span className="text-sm font-medium text-primary">POWER AND EFFICIENCY TODAY</span>
+                  <span className="text-sm font-medium text-primary">Built for Sri Lankan Energy Management</span>
                 </div>
                 
                 <h1 className="text-5xl lg:text-7xl font-bold text-textPrimary leading-tight">
-                  WE MANAGE
+                  Energy Intelligence
                   <br />
-                  <span className="text-gradient">ENERGY TOGETHER</span>
+                  <span className="text-gradient">for Everyday Homes</span>
                 </h1>
                 
                 <p className="text-xl text-textSecondary leading-relaxed max-w-lg">
-                  Take control of your electricity consumption with our intelligent bill management system. 
-                  Track, analyze, and optimize your energy usage for a sustainable future.
+                  Track bills, monitor consumption, and uncover savings opportunities with a single platform 
+                  designed for real household usage patterns in Sri Lanka.
                 </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <span className="px-3 py-1 rounded-full bg-white border border-gray-200 text-sm text-textSecondary">Bill Tracking</span>
+                <span className="px-3 py-1 rounded-full bg-white border border-gray-200 text-sm text-textSecondary">Usage Analytics</span>
+                <span className="px-3 py-1 rounded-full bg-white border border-gray-200 text-sm text-textSecondary">Threshold Alerts</span>
+                <span className="px-3 py-1 rounded-full bg-white border border-gray-200 text-sm text-textSecondary">Renewable Insights</span>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -220,7 +227,7 @@ const Home = () => {
                   to="/register" 
                   className="btn-primary btn-lg group"
                 >
-                  <span>GET STARTED</span>
+                  <span>Get Started Free</span>
                   <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14 6l6 6-6 6M4 12h16"/>
                   </svg>
@@ -230,7 +237,7 @@ const Home = () => {
                   to="/login" 
                   className="btn-secondary btn-lg"
                 >
-                  Sign In
+                  Open Dashboard
                 </Link>
               </div>
 
@@ -238,15 +245,15 @@ const Home = () => {
               <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">
                 <div>
                   <div className="text-3xl font-bold text-primary">500+</div>
-                  <div className="text-sm text-textSecondary">Active Users</div>
+                  <div className="text-sm text-textSecondary">Active Households</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-secondary">₹2.5M+</div>
-                  <div className="text-sm text-textSecondary">Bills Managed</div>
+                  <div className="text-3xl font-bold text-secondary">LKR 2.5M+</div>
+                  <div className="text-sm text-textSecondary">Monthly Spend Tracked</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-accent">98%</div>
-                  <div className="text-sm text-textSecondary">Accuracy Rate</div>
+                  <div className="text-sm text-textSecondary">Forecast Accuracy</div>
                 </div>
               </div>
             </div>
@@ -259,7 +266,7 @@ const Home = () => {
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg"></div>
-                      <span className="font-semibold text-textPrimary">Dashboard</span>
+                      <span className="font-semibold text-textPrimary">PowerSense Dashboard</span>
                     </div>
                     <div className="flex space-x-2">
                       <div className="w-3 h-3 bg-red-400 rounded-full"></div>
@@ -271,7 +278,7 @@ const Home = () => {
                   {/* Mock Chart */}
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-textSecondary">Monthly Usage</span>
+                      <span className="text-textSecondary">Monthly Usage Trend</span>
                       <span className="font-semibold text-primary">1,248 kWh</span>
                     </div>
                     
@@ -293,17 +300,17 @@ const Home = () => {
                       <div className="flex justify-between items-center p-3 bg-background rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-sm font-medium">January 2026</span>
+                          <span className="text-sm font-medium">January 2026 Bill</span>
                         </div>
-                        <span className="text-sm font-semibold text-green-600">₹2,450</span>
+                        <span className="text-sm font-semibold text-green-600">LKR 2,450</span>
                       </div>
                       
                       <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                         <div className="flex items-center space-x-3">
                           <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                          <span className="text-sm font-medium">February 2026</span>
+                          <span className="text-sm font-medium">February 2026 Bill</span>
                         </div>
-                        <span className="text-sm font-semibold text-yellow-600">₹3,120</span>
+                        <span className="text-sm font-semibold text-yellow-600">LKR 3,120</span>
                       </div>
                     </div>
                   </div>
@@ -326,7 +333,7 @@ const Home = () => {
               Why Choose PowerSense?
             </h2>
             <p className="text-xl text-textSecondary max-w-3xl mx-auto">
-              Our comprehensive energy management platform provides everything you need to take control of your electricity usage and costs.
+              A practical platform for households and teams to manage energy costs with clear data, actionable insights, and reliable tracking.
             </p>
           </div>
 
@@ -344,7 +351,7 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-textPrimary mb-3">Smart Bill Tracking</h3>
                 <p className="text-textSecondary">
-                  Automatically organize and track all your electricity bills with intelligent categorization and payment reminders.
+                  Keep all electricity bills in one place with payment status tracking and organized monthly history.
                 </p>
               </div>
             </div>
@@ -360,7 +367,7 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-textPrimary mb-3">Usage Analytics</h3>
                 <p className="text-textSecondary">
-                  Get detailed insights into your energy consumption patterns with interactive charts and trend analysis.
+                  Analyze consumption trends with visual insights that help identify inefficiencies early.
                 </p>
               </div>
             </div>
@@ -375,7 +382,7 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-textPrimary mb-3">Cost Optimization</h3>
                 <p className="text-textSecondary">
-                  Receive personalized recommendations to reduce your electricity costs and improve energy efficiency.
+                  Use recommendation-driven insights to reduce waste and improve monthly savings.
                 </p>
               </div>
             </div>
@@ -405,7 +412,7 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-textPrimary mb-3">Easy Integration</h3>
                 <p className="text-textSecondary">
-                  Simple setup process with automatic bill import from major electricity providers across the country.
+                  Quick onboarding with clean workflows for devices, bills, and consumption records.
                 </p>
               </div>
             </div>
@@ -422,9 +429,40 @@ const Home = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-textPrimary mb-3">24/7 Support</h3>
                 <p className="text-textSecondary">
-                  Get help whenever you need it with our dedicated customer support team available around the clock.
+                  Access support and guidance whenever you need help with your energy monitoring workflow.
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-background/40">
+        <div className="max-w-7xl mx-auto container-padding">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl font-bold text-textPrimary mb-4">How PowerSense Works</h2>
+            <p className="text-xl text-textSecondary max-w-3xl mx-auto">
+              A simple three-step flow designed for real-world daily usage.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-2xl border border-gray-200 p-7 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold mb-4">1</div>
+              <h3 className="text-xl font-semibold text-textPrimary mb-2">Connect Your Data</h3>
+              <p className="text-textSecondary">Add bills, devices, and consumption entries to build your baseline.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-7 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center font-bold mb-4">2</div>
+              <h3 className="text-xl font-semibold text-textPrimary mb-2">Track Performance</h3>
+              <p className="text-textSecondary">Monitor trends, compare periods, and detect unusually high usage quickly.</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-7 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-accent/20 text-textPrimary flex items-center justify-center font-bold mb-4">3</div>
+              <h3 className="text-xl font-semibold text-textPrimary mb-2">Act on Insights</h3>
+              <p className="text-textSecondary">Use recommendations and alerts to reduce costs and improve efficiency.</p>
             </div>
           </div>
         </div>
@@ -438,20 +476,20 @@ const Home = () => {
             Ready to Take Control of Your Energy?
           </h2>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join thousands of users who are already saving money and reducing their environmental impact with PowerSense.
+            Start with your next bill and build a smarter, more efficient energy routine from today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/register" 
               className="btn bg-white text-primary hover:bg-gray-100 btn-lg"
             >
-              Start Free Trial
+              Create Free Account
             </Link>
             <Link 
               to="/login" 
               className="btn bg-transparent text-white border-2 border-white hover:bg-white hover:text-primary btn-lg"
             >
-              Learn More
+              Sign In
             </Link>
           </div>
         </div>

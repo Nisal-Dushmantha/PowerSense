@@ -12,10 +12,11 @@ import RenewableDashboard from './components/Renewable/RenewableDashboard';
 import RenewableSource from './components/Renewable/RenewableSource';
 import RenewableEnergyForm from './components/Renewable/RenewableEnergyForm';
 import RenewableAnalytics from './components/Renewable/RenewableAnalytics';
+import DevicesList from './components/Devices/DevicesList';
+import DeviceChartsPage from './components/Devices/DeviceChartsPage';
 import { authService } from './services/authService';
 import { ThemeProvider } from './contexts/ThemeContext';
-import DevicesList from './components/Devices/DevicesList';
-import ConsumptionList from './components/energyConsumption/ConsumptionList';
+import EnergyConsumption from './components/energyConsumption';
 
 // Initialize auth service
 authService.init();
@@ -57,11 +58,9 @@ function App() {
             } />
             
             {/* Consumption Route */}
-            <Route path="/consumption" element={
+            <Route path="/consumption/*" element={
               <PrivateRoute>
-                <div className="container mx-auto px-4 py-8">
-                  <ConsumptionList />
-                </div>
+                <EnergyConsumption />
               </PrivateRoute>
             } />
             
@@ -108,6 +107,11 @@ function App() {
                 <div className="container mx-auto px-4 py-8">
                   <DevicesList />
                 </div>
+              </PrivateRoute>
+            } />
+            <Route path="/devices/charts" element={
+              <PrivateRoute>
+                <DeviceChartsPage />
               </PrivateRoute>
             } />
           </Routes>
