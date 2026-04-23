@@ -2,6 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { billService } from '../../services/api';
 import Modal from '../common/Modal';
 
+const API_ROOT_URL = (process.env.REACT_APP_API_URL || 'https://powersense-2-9w2e.onrender.com/api').replace(/\/api\/?$/, '');
+
+const getBillPhotoUrl = (photoValue) => {
+  if (!photoValue) return '';
+
+  if (/^https?:\/\//i.test(photoValue)) {
+    try {
+      const parsed = new URL(photoValue);
+      if (/(^|\.)localhost$/.test(parsed.hostname) || parsed.hostname === '127.0.0.1') {
+        return `${API_ROOT_URL}${parsed.pathname}`;
+      }
+      return photoValue;
+    } catch {
+      return photoValue;
+    }
+  }
+
+  const normalized = String(photoValue).replace(/^\/+/, '');
+  if (normalized.startsWith('uploads/')) {
+    return `${API_ROOT_URL}/${normalized}`;
+  }
+
+  return `${API_ROOT_URL}/uploads/bills/${normalized}`;
+};
+
 const EditBillModal = ({ isOpen, onClose, billData, onBillUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -284,7 +309,7 @@ const EditBillModal = ({ isOpen, onClose, billData, onBillUpdated }) => {
                 <div className="mt-2">
                   <div className="relative">
                     <img
-                      src={`http://localhost:5000/uploads/bills/${currentPhoto}`}
+                      src={getBillPhotoUrl(currentPhoto)}
                       alt="Current bill"
                       className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-600"
                     />
