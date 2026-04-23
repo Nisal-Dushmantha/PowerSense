@@ -212,6 +212,18 @@ const getWhatsAppOtpStatusController = (req, res) => {
 const getWhatsAppOtpQrController = async (req, res) => {
   try {
     initializeWhatsAppClient();
+    const status = getWhatsAppOtpStatus();
+
+    if (status.ready) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          linked: true,
+          message: 'WhatsApp OTP client is already linked and ready'
+        }
+      });
+    }
+
     const qrDataUrl = await getWhatsAppOtpQrDataUrl();
 
     if (!qrDataUrl) {
@@ -232,6 +244,10 @@ const getWhatsAppOtpQrView = async (req, res) => {
 
     if (!status.enabled) {
       return res.status(200).send('<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense OTP WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense OTP WhatsApp QR</h2><p>OTP WhatsApp is disabled. Set <strong>WHATSAPP_WEB_ENABLED=true</strong>.</p></body></html>');
+    }
+
+    if (status.ready) {
+      return res.status(200).send('<!doctype html><html><head><meta charset="utf-8"/><title>PowerSense OTP WhatsApp QR</title></head><body style="font-family:Arial,sans-serif;padding:24px;"><h2>PowerSense OTP WhatsApp QR</h2><p style="color:#0a7f32;font-weight:600;">✅ WhatsApp OTP linked successfully.</p><p>You can close this page and continue registration/login flow.</p></body></html>');
     }
 
     if (!qrDataUrl) {
