@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://powersense-2-9w2e.onrender.com/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '/api');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

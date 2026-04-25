@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { billService } from '../../services/api';
 import Modal from '../common/Modal';
 
-const API_ROOT_URL = (process.env.REACT_APP_API_URL || 'https://powersense-2-9w2e.onrender.com/api').replace(/\/api\/?$/, '');
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '/api');
+const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 const getBillPhotoUrl = (photoValue) => {
   if (!photoValue) return '';
