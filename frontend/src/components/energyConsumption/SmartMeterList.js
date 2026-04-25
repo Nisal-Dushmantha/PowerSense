@@ -1,3 +1,5 @@
+// Smart Meter List
+// Primary energy monitoring view: reading cards, filters, quick analytics, and charts.
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getEnergyRecords, deleteEnergyRecord, getConsumptionIntegration } from '../../services/energyApi';
@@ -26,6 +28,7 @@ const ConsumptionList = () => {
   const [integrationData, setIntegrationData] = useState(null);
 
   const fetchIntegration = useCallback(async () => {
+    // Pull cross-module metrics (devices/renewable/bills) for summary panel.
     try {
       const response = await getConsumptionIntegration();
       setIntegrationData(response.data || null);
@@ -36,6 +39,7 @@ const ConsumptionList = () => {
   }, []);
 
   const fetchRecords = useCallback(async () => {
+    // Build backend query from current UI filters.
     try {
       setLoading(true);
       const queryParams = {};
@@ -47,7 +51,7 @@ const ConsumptionList = () => {
 
       const response = await getEnergyRecords(queryParams);
       
-      // Mark all records as updating for animation
+      // Trigger temporary visual pulse to emphasize refreshed values.
       const newRecords = response.data || [];
       const newUpdatingIds = new Set(newRecords.map(record => record._id));
       setUpdatingIds(newUpdatingIds);
@@ -55,7 +59,7 @@ const ConsumptionList = () => {
       setRecords(newRecords);
       setError(null);
       
-      // Remove updating animation after delay
+      // Remove animation markers after a short delay.
       setTimeout(() => {
         setUpdatingIds(new Set());
       }, 800);
@@ -90,6 +94,7 @@ const ConsumptionList = () => {
   };
 
   // Smart meter utility functions
+  // Used for visual severity levels and gauge calculations.
   const getUsageLevel = (consumption) => {
     if (consumption <= 50) return 'low';
     if (consumption <= 150) return 'moderate';
@@ -142,7 +147,7 @@ const ConsumptionList = () => {
     setSelectedRecordId(null);
   };
 
-  // Smart Meter Card Component
+  // Presentation component for each reading card.
   const SmartMeterCard = ({ record, onEdit, onDelete }) => {
     const usageLevel = getUsageLevel(record.energy_used_kwh);
     const dialAngle = getMeterDialAngle(record.energy_used_kwh);
@@ -328,6 +333,7 @@ const ConsumptionList = () => {
   }
 
   // ── Summary computations ──────────────────────────────────────────
+  // Recomputed from currently selected summary tab.
   const summaryRecords = activeSummaryTab === 'all'
     ? records
     : records.filter(r => r.period_type === activeSummaryTab);

@@ -1,3 +1,6 @@
+// Energy Analytics Dashboard
+// Consolidates peak usage, threshold alerts, carbon footprint, comparisons,
+// recommendations, and PDF export for the energy monitoring module.
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -66,19 +69,23 @@ const BarChart = ({ data, maxVal }) => {
   );
 };
 
+// Utility: normalize a YYYY-MM-DD value to a local Date object at midnight.
 const toDateOnly = (value) => new Date(`${value}T00:00:00`);
 
+// Utility: convert Date to timezone-safe YYYY-MM-DD string.
 const toIsoDate = (date) => {
   const fixed = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return fixed.toISOString().split('T')[0];
 };
 
+// Utility: used to compare periods fairly using inclusive day counts.
 const getDaysInclusive = (start, end) => {
   if (!start || !end) return 0;
   const diff = end.getTime() - start.getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
 };
 
+// Utility: summarizes a record slice into KPI fields used by comparison UI.
 const summarizePeriod = (records, startDate, endDate) => {
   const totalKwh = records.reduce((sum, record) => sum + (record.energy_used_kwh || 0), 0);
   const days = getDaysInclusive(startDate, endDate);
@@ -137,7 +144,8 @@ const EnergyAnalytics = () => {
   const [pdfYear, setPdfYear]             = useState(today.getFullYear());
   const [pdfLoading, setPdfLoading]       = useState(false);
 
-  // ── Loaders ──
+  // ── Data Loaders ──
+  // Each loader is section-scoped to reduce unnecessary network calls.
   const loadPeak = useCallback(async () => {
     setLoading(true); setError(null);
     try {
@@ -292,7 +300,7 @@ const EnergyAnalytics = () => {
     else if (activeSection === 'recs')    loadRecs();
   }, [activeSection, loadPeak, loadAlerts, loadCarbon, loadComparison, loadRecs]);
 
-  // ── Threshold save ──
+  // Persist user threshold and refresh alerts after update.
   const handleSaveThreshold = async () => {
     setThresholdSaving(true); setThresholdMsg(null);
     try {
@@ -303,7 +311,7 @@ const EnergyAnalytics = () => {
     finally { setThresholdSaving(false); }
   };
 
-  // ── PDF download (client-side jsPDF) ──
+  // Generate a branded PDF report client-side from monthly reading data.
   const handleDownloadPdf = async () => {
     setPdfLoading(true);
     try {

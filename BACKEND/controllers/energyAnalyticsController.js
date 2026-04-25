@@ -1,3 +1,6 @@
+// Energy Analytics Controller
+// Produces actionable analytics (peak/alerts/carbon/comparison/recommendations),
+// PDF reporting, and WhatsApp delivery helpers for summaries/threshold alerts.
 const EnergyConsumption = require('../models/energyConsumption');
 const User = require('../models/User');
 const PDFDocument = require('pdfkit');
@@ -263,6 +266,7 @@ exports.getRecommendations = async (req, res) => {
     }
 };
 
+// Builds the message body used for periodic WhatsApp energy summaries.
 const buildEnergyWhatsAppMessage = ({ userName, summary, threshold }) => {
     const trendText =
         summary.previous30DaysKwh > 0
@@ -289,6 +293,7 @@ const buildEnergyWhatsAppMessage = ({ userName, summary, threshold }) => {
     ].join('\n');
 };
 
+// Computes 30-day and previous-30-day summary values for WhatsApp messaging.
 const getEnergySummaryForWhatsApp = async (userId, threshold) => {
     const now = new Date();
     const last30Start = new Date(now);
@@ -337,6 +342,7 @@ const getEnergySummaryForWhatsApp = async (userId, threshold) => {
     };
 };
 
+// Builds threshold-specific WhatsApp message with recent exceeded readings.
 const buildThresholdAlertsWhatsAppMessage = ({ userName, threshold, count, maxExceededBy, recentAlerts }) => {
     const alertsBlock = recentAlerts.length
         ? recentAlerts
@@ -358,6 +364,7 @@ const buildThresholdAlertsWhatsAppMessage = ({ userName, threshold, count, maxEx
     ].join('\n');
 };
 
+// Collects threshold-alert data points from the last 30 days.
 const getThresholdAlertsForWhatsApp = async (userId, threshold) => {
     const now = new Date();
     const last30Start = new Date(now);

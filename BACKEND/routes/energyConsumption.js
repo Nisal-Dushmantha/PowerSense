@@ -1,3 +1,5 @@
+// Energy Consumption Route Layer
+// This router maps authenticated CRUD and summary endpoints to controller actions.
 const express = require('express');
 const router = express.Router();
 const {
@@ -11,7 +13,7 @@ const {
 } = require('../controllers/energyConsumptionController');
 const { protect } = require('../middleware/auth');
 
-// Protect all routes - require authentication
+// Apply JWT protection to all consumption endpoints.
 router.use(protect);
 
 // @route   POST /api/energy-consumption

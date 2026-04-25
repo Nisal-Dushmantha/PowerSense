@@ -1,3 +1,5 @@
+// Create Consumption Modal
+// Captures and validates a new energy reading, then posts it to backend.
 import React, { useState } from 'react';
 import { createEnergyRecord } from '../../services/energyApi';
 import Modal from '../common/Modal';
@@ -13,6 +15,7 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
   });
 
   const resetForm = () => {
+    // Reset local state so each open starts with a clean form.
     setFormData({
       consumption_date: '',
       consumption_time: '',
@@ -55,6 +58,7 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
         energy_used_kwh: parseFloat(formData.energy_used_kwh)
       };
 
+      // Normalize browser HH:MM to backend HH:MM:SS requirement.
       if (formData.consumption_time) {
         submitData.consumption_time = formData.consumption_time.includes(':') && formData.consumption_time.split(':').length === 2
           ? formData.consumption_time + ':00'
@@ -63,7 +67,7 @@ const CreateConsumptionModal = ({ isOpen, onClose, onRecordCreated }) => {
 
       const response = await createEnergyRecord(submitData);
       
-      // Notify parent component about the new record
+      // Notify parent so list and summary widgets can update immediately.
       if (onRecordCreated) {
         onRecordCreated(response.data);
       }

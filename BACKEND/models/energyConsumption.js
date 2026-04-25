@@ -1,39 +1,48 @@
+// Energy Consumption Model
+// Stores user-owned meter readings with period granularity and optional device linkage.
 const mongoose = require('mongoose');
 
 const CounterSchema = new mongoose.Schema({ _id: String, seq: Number });
 const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
 
 const energyConsumptionSchema = new mongoose.Schema({
+    // Human-friendly auto-generated meter reading identifier (MTR-###).
     meter_id: {
         type: String,
         unique: true,
         index: true,
     },
+    // Owner of the reading (required for data isolation per user).
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: [true, 'User is required']
     },
+    // Optional linked device to support cross-module integration analytics.
     device: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Device',
         required: false
     },
+    // Reading date captured from user input.
     consumption_date: {
         type: Date,
         required: [true, 'Consumption date is required']
     },
+    // Reading time (mandatory only when period_type is hourly).
     consumption_time: {
         type: String,
         required: false,
         match: [/^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/, 'Please provide a valid time in HH:MM:SS format']
     },
+    // Main reading value measured in kWh.
     energy_used_kwh: {
         type: Number,
         required: [true, 'Energy consumption in kWh is required'],
         min: [0.01, 'Energy consumption must be at least 0.01 kWh'],
         max: [99999, 'Energy consumption cannot exceed 99,999 kWh']
     },
+    // Aggregation granularity selected by user.
     period_type: {
         type: String,
         required: [true, 'Period type is required'],

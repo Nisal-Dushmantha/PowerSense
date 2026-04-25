@@ -1,3 +1,5 @@
+// Consumption Statistics
+// Presents filtered totals, averages, peak metrics, and a tabular breakdown.
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useCallback } from 'react';
 import { getTotalConsumption } from '../../services/energyApi';
@@ -18,6 +20,7 @@ const ConsumptionStats = () => {
   });
 
   const fetchStats = useCallback(async () => {
+    // Guard against incomplete filter ranges.
     if (!filters.startDate || !filters.endDate) return;
 
     setLoading(true);
@@ -33,7 +36,7 @@ const ConsumptionStats = () => {
       const payload = response?.data || {};
       const data = Array.isArray(payload.data) ? payload.data : [];
       
-      // Calculate peak consumption
+      // Derive peak reading client-side from returned data points.
       const peakConsumption = data.length > 0 
         ? Math.max(...data.map(item => item.energy_used_kwh || 0))
         : 0;
@@ -57,6 +60,7 @@ const ConsumptionStats = () => {
   }, [filters, fetchStats]);
 
   const handleFilterChange = (field, value) => {
+    // Local filter state automatically retriggers data load via effect.
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 

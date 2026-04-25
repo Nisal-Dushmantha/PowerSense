@@ -1,3 +1,5 @@
+// Energy Consumption Controller
+// Handles reading lifecycle (CRUD), summary metrics, and cross-module integration KPIs.
 const EnergyConsumption = require('../models/energyConsumption');
 const mongoose = require('mongoose');
 const Device = require('../models/devices');
@@ -6,6 +8,7 @@ const RenewableEnergyRecord = require('../models/RenewableEnergyRecord');
 const User = require('../models/User');
 const whatsappService = require('../services/energyWhatsAppService');
 
+// Sends an automatic WhatsApp alert when a newly created reading exceeds user threshold.
 const triggerAutoThresholdWhatsAppAlert = async ({ userId, record }) => {
     try {
         const user = await User.findById(userId).select('firstName lastName contactNumber energyThreshold');
@@ -86,7 +89,7 @@ exports.createEnergyConsumption = async (req, res) => {
             }
         }
 
-        // Create new record with user ID from authentication
+        // Build the record using authenticated user context (never trust client user IDs).
         const newRecord = new EnergyConsumption({
             user: req.user.id,
             device: linkedDevice?._id,
@@ -96,6 +99,7 @@ exports.createEnergyConsumption = async (req, res) => {
             period_type
         });
 
+        // Persist first, then trigger best-effort alert side-effect.
         const savedRecord = await newRecord.save();
         const alertStatus = await triggerAutoThresholdWhatsAppAlert({ userId: req.user.id, record: savedRecord });
 
@@ -149,6 +153,7 @@ exports.getEnergyConsumption = async (req, res) => {
         const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 1000);
         const skip = (safePage - 1) * safeLimit;
 
+        // Fetch paginated result and total count in parallel for UI pagination controls.
         const [records, total] = await Promise.all([
             EnergyConsumption.find(query)
                 .populate('device', 'deviceId name type powerRating expectedDailyUsage')
@@ -202,7 +207,7 @@ exports.getTotalConsumption = async (req, res) => {
             };
         }
 
-        // Aggregate pipeline to calculate total consumption
+        // Aggregate totals and averages for selected period/date filter.
         const result = await EnergyConsumption.aggregate([
             { $match: matchQuery },
             {
@@ -215,7 +220,7 @@ exports.getTotalConsumption = async (req, res) => {
             }
         ]);
 
-        // Get individual records for the chart data
+        // Also return ordered raw readings for charting in frontend dashboards.
         const records = await EnergyConsumption.find(matchQuery)
             .sort({ consumption_date: 1 })
             .select('consumption_date energy_used_kwh period_type meter_id device')
@@ -352,6 +357,7 @@ exports.getConsumptionIntegration = async (req, res) => {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
+        // Combine consumption, devices, renewable, and billing signals for integration dashboard.
         const [
             linkedByDevice,
             devices,
@@ -511,7 +517,7 @@ exports.updateEnergyConsumption = async (req, res) => {
         const { id } = req.params;
         const updateData = { ...req.body };
 
-        // Prevent meter_id from being changed
+        // Meter IDs are system-generated and immutable after creation.
         delete updateData.meter_id;
 
         // Ensure the user can only update their own records

@@ -1,3 +1,5 @@
+// Edit Consumption Modal
+// Loads a selected reading and submits validated updates to backend.
 import React, { useState, useEffect } from 'react';
 import { updateEnergyRecord, getEnergyRecords } from '../../services/energyApi';
 import Modal from '../common/Modal';
@@ -14,6 +16,7 @@ const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) =>
   });
 
   const resetForm = () => {
+    // Reset state when modal closes or record changes.
     setFormData({
       consumption_date: '',
       consumption_time: '',
@@ -29,6 +32,7 @@ const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) =>
   };
 
   const fetchRecord = async (id) => {
+    // Read by id via filtered list endpoint (existing backend contract).
     if (!id) return;
     
     setFetchLoading(true);
@@ -86,7 +90,7 @@ const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) =>
         energy_used_kwh: parseFloat(formData.energy_used_kwh)
       };
 
-      // Convert time from HH:MM to HH:MM:SS format if provided
+      // Normalize time for backend HH:MM:SS validator.
       if (formData.consumption_time) {
         submitData.consumption_time = formData.consumption_time.includes(':') && formData.consumption_time.split(':').length === 2
           ? formData.consumption_time + ':00'
@@ -95,7 +99,7 @@ const EditConsumptionModal = ({ isOpen, onClose, onRecordUpdated, recordId }) =>
 
       const response = await updateEnergyRecord(recordId, submitData);
       
-      // Notify parent component about the updated record
+      // Notify parent so list/summary can refresh.
       if (onRecordUpdated) {
         onRecordUpdated(response.data);
       }

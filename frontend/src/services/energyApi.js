@@ -1,5 +1,8 @@
+// Energy API Client
+// Centralized frontend wrapper for energy-consumption and analytics backend endpoints.
 import api from './api';
 
+// Base paths for this module.
 const ENERGY_URL    = '/energy-consumption';
 const ANALYTICS_URL = '/energy-analytics';
 
@@ -44,6 +47,7 @@ export const deleteEnergyRecord = async (id) => {
 };
 
 // ── Analytics API ──────────────────────────────────────────
+// These methods feed the Energy Analytics UI with insights and report actions.
 
 export const getPeakUsage = async (params = {}) => {
   const response = await api.get(`${ANALYTICS_URL}/peak`, { params });

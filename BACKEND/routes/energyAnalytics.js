@@ -1,3 +1,5 @@
+// Energy Analytics Route Layer
+// Exposes analytical insights, reports, and WhatsApp actions for energy monitoring.
 const express = require('express');
 const { protect } = require('../middleware/auth');
 const {
@@ -16,7 +18,7 @@ const {
 
 const router = express.Router();
 
-// All routes protected
+// Apply JWT protection to every analytics endpoint.
 router.use(protect);
 
 router.get('/peak',            getPeakUsage);

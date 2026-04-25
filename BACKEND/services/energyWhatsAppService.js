@@ -1,6 +1,9 @@
+// Energy WhatsApp Service
+// Manages WhatsApp Web client lifecycle and outbound energy notification delivery.
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 
+// In-memory runtime state for WhatsApp client and last send diagnostics.
 const state = {
   client: null,
   initializing: false,
@@ -12,8 +15,10 @@ const state = {
   lastSentMessage: null
 };
 
+// Feature flag to enable/disable energy WhatsApp without removing code paths.
 const isEnabled = () => String(process.env.WHATSAPP_ENABLED || 'true').toLowerCase() === 'true';
 
+// Convert user-entered number into WhatsApp chat id format.
 const normalizePhone = (phoneNumber) => {
   if (!phoneNumber) return null;
   const digits = String(phoneNumber).replace(/[^\d]/g, '');
@@ -21,6 +26,7 @@ const normalizePhone = (phoneNumber) => {
   return `${digits}@c.us`;
 };
 
+// Build client instance with LocalAuth session persistence.
 const buildClient = () => {
   const sessionName = process.env.WHATSAPP_SESSION_NAME || 'powersense-energy';
 
@@ -33,6 +39,7 @@ const buildClient = () => {
   });
 };
 
+// Initialize client and subscribe to lifecycle events.
 const start = async () => {
   if (!isEnabled()) {
     return {
@@ -93,6 +100,7 @@ const start = async () => {
   return getStatus();
 };
 
+// Expose status snapshot for APIs/UI polling.
 const getStatus = () => ({
   enabled: isEnabled(),
   initializing: state.initializing,
@@ -106,6 +114,7 @@ const getStatus = () => ({
 
 const getQrDataUrl = () => state.qrDataUrl;
 
+// Send a plain text WhatsApp message and update last-send diagnostics.
 const sendMessage = async (phoneNumber, message) => {
   if (!isEnabled()) {
     throw new Error('WhatsApp is disabled by server configuration');

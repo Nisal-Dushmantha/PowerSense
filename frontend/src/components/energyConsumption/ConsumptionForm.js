@@ -1,3 +1,5 @@
+// Consumption Form
+// Reusable create/edit form for a single energy reading.
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -21,6 +23,7 @@ const ConsumptionForm = () => {
   });
 
   useEffect(() => {
+    // If route contains an id, switch to edit mode and preload the selected reading.
     if (id) {
       setIsEditMode(true);
       fetchRecord(id);
@@ -28,6 +31,7 @@ const ConsumptionForm = () => {
   }, [id]);
 
   const fetchRecord = async (recordId) => {
+    // Backend returns a list response even when filtering by id.
     setLoading(true);
     try {
       const response = await getEnergyRecords({ id: recordId });
@@ -68,7 +72,7 @@ const ConsumptionForm = () => {
         energy_used_kwh: parseFloat(formData.energy_used_kwh)
       };
 
-      // Convert time from HH:MM to HH:MM:SS format if provided
+      // Normalize time format for backend validation when user enters HH:MM.
       if (formData.consumption_time) {
         submitData.consumption_time = formData.consumption_time.includes(':') && formData.consumption_time.split(':').length === 2
           ? formData.consumption_time + ':00'
