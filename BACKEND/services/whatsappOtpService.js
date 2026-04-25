@@ -2,6 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcodeTerminal = require('qrcode-terminal');
 const fs = require('fs');
 const path = require('path');
+const notificationWhatsAppService = require('./whatsappService');
 
 const otpStore = new Map();
 
@@ -21,13 +22,23 @@ const WHATSAPP_INIT_MAX_RETRIES = Number(process.env.WHATSAPP_INIT_MAX_RETRIES |
 const WHATSAPP_INIT_RETRY_DELAY_MS = Number(process.env.WHATSAPP_INIT_RETRY_DELAY_MS || 5000);
 const WHATSAPP_QR_MAX_RETRIES = Number(process.env.WHATSAPP_QR_MAX_RETRIES || 10);
 
-const WHATSAPP_AUTH_DATA_PATH = path.resolve(process.env.WHATSAPP_AUTH_DATA_PATH || '.wwebjs_auth');
+const WHATSAPP_AUTH_DATA_PATH = path.resolve(process.env.WHATSAPP_AUTH_DATA_PATH || '.wwebjs_auth_otp');
 const WHATSAPP_CLIENT_ID = process.env.WHATSAPP_CLIENT_ID || 'powersense-otp';
 let activeClientId = WHATSAPP_CLIENT_ID;
 let hasSwitchedClientId = false;
 
 const isWhatsAppOtpEnabled = () => process.env.WHATSAPP_WEB_ENABLED === 'true';
 const isBillNotificationEnabled = () => process.env.WHATSAPP_BILL_NOTIFICATIONS_ENABLED !== 'false';
+const useSharedWhatsAppClient = () => String(process.env.WHATSAPP_SHARE_CLIENT || 'true').toLowerCase() === 'true';
+
+const resolveChromiumPath = () => {
+  if (process.env.CHROMIUM_PATH) {
+    return process.env.CHROMIUM_PATH;
+  }
+
+  const candidates = ['/usr/bin/chromium-browser', '/usr/bin/chromium', 'C:/Program Files/Google/Chrome/Application/chrome.exe'];
+  return candidates.find((candidate) => fs.existsSync(candidate));
+};
 
 const normalizePhoneNumber = (phoneNumber) => {
   const digitsOnly = String(phoneNumber || '').replace(/\D/g, '');
@@ -129,7 +140,12 @@ const restartWhatsAppClient = async ({ immediate = false, reason = 'Unknown' } =
 const initializeWhatsAppClient = async () => {
   if (!isWhatsAppOtpEnabled()) {
     console.log('[WhatsApp OTP] WHATSAPP_WEB_ENABLED is false. OTP sender is disabled.');
-    return;
+    return getWhatsAppOtpStatus();
+  }
+
+  if (useSharedWhatsAppClient()) {
+    notificationWhatsAppService.initWhatsAppClient();
+    return getWhatsAppOtpStatus();
   }
 
   if (clientReady) {
@@ -151,6 +167,7 @@ const initializeWhatsAppClient = async () => {
       qrMaxRetries: WHATSAPP_QR_MAX_RETRIES,
       puppeteer: {
         headless: true,
+        executablePath: resolveChromiumPath(),
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
       }
     });
@@ -190,6 +207,7 @@ const initializeWhatsAppClient = async () => {
 
       clientReady = false;
       clientInitializing = false;
+      lastError = `Authentication failed: ${message}`;
       console.error('[WhatsApp OTP] Authentication failure:', message);
     });
 
@@ -222,6 +240,7 @@ const initializeWhatsAppClient = async () => {
       clientInitializing = false;
       clientReady = false;
       const message = error?.message || 'Unknown error';
+      lastError = message;
       console.error('[WhatsApp OTP] Failed to initialize client:', message);
 
       if (/browser is already running/i.test(message)) {
@@ -245,11 +264,72 @@ const initializeWhatsAppClient = async () => {
   return initPromise;
 };
 
+const getWhatsAppOtpStatus = () => {
+  if (!isWhatsAppOtpEnabled()) {
+    return {
+      enabled: false,
+      ready: false,
+      initializing: false,
+      hasQr: false,
+      message: 'WhatsApp OTP is disabled'
+    };
+  }
+
+  if (useSharedWhatsAppClient()) {
+    const sharedStatus = notificationWhatsAppService.getWhatsAppStatus();
+    return {
+      enabled: Boolean(sharedStatus.enabled),
+      ready: Boolean(sharedStatus.ready),
+      initializing: !sharedStatus.ready,
+      hasQr: Boolean(sharedStatus.hasQr),
+      message: sharedStatus.message || 'WhatsApp shared client not ready'
+    };
+  }
+
+  return {
+    enabled: true,
+    ready: clientReady,
+    initializing: clientInitializing,
+    hasQr: Boolean(latestQrText),
+    message: lastError || (clientReady ? 'WhatsApp OTP client is ready' : 'WhatsApp OTP client not ready. Scan QR to connect')
+  };
+};
+
+const getWhatsAppOtpQrDataUrl = async () => {
+  if (useSharedWhatsAppClient()) {
+    return notificationWhatsAppService.getWhatsAppQrDataUrl();
+  }
+
+  if (!latestQrText) {
+    return null;
+  }
+
+  return `https://api.qrserver.com/v1/create-qr-code/?size=360x360&data=${encodeURIComponent(latestQrText)}`;
+};
+
 const sendWhatsAppMessage = async (phoneNumber, message) => {
   if (!isWhatsAppOtpEnabled()) {
     const error = new Error('WhatsApp OTP is disabled on this server');
     error.status = 503;
     throw error;
+  }
+
+  if (!whatsappClient || !clientReady) {
+    await initializeWhatsAppClient();
+  }
+
+  if (useSharedWhatsAppClient()) {
+    const result = await notificationWhatsAppService.sendWhatsApp({
+      to: phoneNumber,
+      body: message
+    });
+
+    if (!result.sent) {
+      const error = new Error(result.message || 'WhatsApp shared client failed to send message');
+      error.status = result.message && result.message.toLowerCase().includes('invalid') ? 400 : 503;
+      throw error;
+    }
+    return;
   }
 
   if (!whatsappClient || !clientReady) {
@@ -470,6 +550,8 @@ const sendBillPaymentReminder = async (user, bill, options = {}) => {
 
 module.exports = {
   initializeWhatsAppClient,
+  getWhatsAppOtpStatus,
+  getWhatsAppOtpQrDataUrl,
   sendOtp,
   verifyOtp,
   normalizePhoneNumber,

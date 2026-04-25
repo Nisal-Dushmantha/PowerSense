@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const dotenv = require('dotenv');
 const connectDB = require('./config/app');
 const { startMaintenanceStatusScheduler } = require('./services/maintenanceScheduler');
@@ -26,7 +27,9 @@ const energyConsumptionRoutes = require('./routes/energyConsumption');
 const renewableRoutes = require('./routes/renewableRoutes');
 const { startBillReminderJob } = require('./jobs/billReminderJob');
 const { initializeWhatsAppClient } = require('./services/whatsappOtpService');
+const { initWhatsAppClient } = require('./services/whatsappService');
 const energyAnalyticsRoutes = require('./routes/energyAnalytics');
+const notificationRoutes = require('./routes/notificationRoutes');
 // Basic route
 app.get('/', (req, res) => {
   res.json({
@@ -51,13 +54,14 @@ app.use('/api/devices', devicesRoutes);
 app.use('/api/energy-consumption', energyConsumptionRoutes);
 app.use('/api/energy-analytics', energyAnalyticsRoutes);
 app.use('/api/renewable', renewableRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
   await connectDB();
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     console.log(`🌐 API URL: http://localhost:${PORT}`);
 
@@ -65,6 +69,19 @@ const startServer = async () => {
     startBillReminderJob();
     startMaintenanceStatusScheduler();
     initializeWhatsAppClient();
+    if (String(process.env.WHATSAPP_ENABLED || 'true').toLowerCase() === 'true') {
+      initWhatsAppClient();
+    }
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use.`);
+      console.error('Close the other process using this port or set a different PORT in BACKEND/.env.');
+      process.exit(1);
+    }
+
+    throw error;
   });
 };
 

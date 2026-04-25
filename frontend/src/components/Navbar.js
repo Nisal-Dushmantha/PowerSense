@@ -111,40 +111,14 @@ const Navbar = () => {
     checkAuth();
     // Listen for auth changes
     window.addEventListener('storage', checkAuth);
-    
-    // Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.profile-dropdown')) {
-        setIsProfileDropdownOpen(false);
-      }
-      if (!event.target.closest('.recommendations-dropdown')) {
-        setIsRecommendationsOpen(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [location, fetchProfileStats]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchRecommendations();
-    }
-  }, [isAuthenticated, fetchRecommendations]);
+    return () => window.removeEventListener('storage', checkAuth);
+  }, [location]);
 
   const handleLogout = () => {
     authService.logout();
     setIsAuthenticated(false);
     setUser(null);
     setIsMobileMenuOpen(false);
-    setIsProfileDropdownOpen(false);
-    setIsRecommendationsOpen(false);
-    setRecommendations([]);
-    setUnreadAlertCount(0);
     navigate('/login');
   };
 

@@ -112,3 +112,7 @@ uploads/
 */cache/
 .next/
 .nuxt/
+
+# WhatsApp Web runtime session/cache
+.wwebjs_auth/
+.wwebjs_cache/

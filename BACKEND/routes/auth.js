@@ -3,6 +3,10 @@ const {
   register,
   sendWhatsAppOtp,
   verifyWhatsAppOtp,
+  startWhatsAppOtpClient,
+  getWhatsAppOtpStatusController,
+  getWhatsAppOtpQrController,
+  getWhatsAppOtpQrView,
   login,
   getMe,
   updateProfile,
@@ -27,6 +31,10 @@ router.post('/send-whatsapp-otp', sendWhatsAppOtp);
 // @desc    Verify WhatsApp OTP for registration
 // @access  Public
 router.post('/verify-whatsapp-otp', verifyWhatsAppOtp);
+router.post('/whatsapp/start', startWhatsAppOtpClient);
+router.get('/whatsapp/status', getWhatsAppOtpStatusController);
+router.get('/whatsapp/qr', getWhatsAppOtpQrController);
+router.get('/whatsapp/qr-view', getWhatsAppOtpQrView);
 
 // @route   POST /api/auth/login
 // @desc    Login user

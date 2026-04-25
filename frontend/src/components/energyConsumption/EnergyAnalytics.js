@@ -143,7 +143,7 @@ const EnergyAnalytics = () => {
     try {
       const res = await getPeakUsage({ limit: 10, period_type: peakFilter || undefined });
       setPeakData(res.data);
-    } catch { setError('Failed to load peak data'); }
+    } catch (err) { setError(err?.response?.data?.message || 'Failed to load peak data'); }
     finally { setLoading(false); }
   }, [peakFilter]);
 
@@ -153,7 +153,7 @@ const EnergyAnalytics = () => {
       const res = await getThresholdAlerts();
       setAlertData(res.data);
       if (res.data.threshold != null) setThreshold(String(res.data.threshold));
-    } catch { setError('Failed to load alerts'); }
+    } catch (err) { setError(err?.response?.data?.message || 'Failed to load alerts'); }
     finally { setLoading(false); }
   }, []);
 
@@ -162,7 +162,7 @@ const EnergyAnalytics = () => {
     try {
       const res = await getCarbonFootprint(carbonFilter);
       setCarbonData(res.data);
-    } catch { setError('Failed to load carbon data'); }
+    } catch (err) { setError(err?.response?.data?.message || 'Failed to load carbon data'); }
     finally { setLoading(false); }
   }, [carbonFilter]);
 
@@ -280,7 +280,7 @@ const EnergyAnalytics = () => {
     try {
       const res = await getRecommendations();
       setRecData(res.data);
-    } catch { setError('Failed to load recommendations'); }
+    } catch (err) { setError(err?.response?.data?.message || 'Failed to load recommendations'); }
     finally { setLoading(false); }
   }, []);
 
@@ -299,7 +299,7 @@ const EnergyAnalytics = () => {
       await updateEnergyThreshold(threshold === '' ? null : parseFloat(threshold));
       setThresholdMsg({ type: 'success', text: 'Threshold saved! Refreshing alerts…' });
       await loadAlerts();
-    } catch { setThresholdMsg({ type: 'error', text: 'Failed to save threshold.' }); }
+    } catch (err) { setThresholdMsg({ type: 'error', text: err?.response?.data?.message || 'Failed to save threshold.' }); }
     finally { setThresholdSaving(false); }
   };
 
