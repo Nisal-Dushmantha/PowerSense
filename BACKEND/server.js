@@ -56,7 +56,7 @@ app.use('/api/energy-analytics', energyAnalyticsRoutes);
 app.use('/api/renewable', renewableRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
   await connectDB();

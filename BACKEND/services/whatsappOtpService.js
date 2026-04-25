@@ -11,8 +11,8 @@ let clientReady = false;
 let clientInitializing = false;
 let initPromise = null;
 let initRetryCount = 0;
-let latestQrText = null;
-let lastError = null;
+let isRestartingClient = false;
+let retryTimeoutHandle = null;
 
 const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 5);
 const OTP_RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 60);
@@ -20,6 +20,7 @@ const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 const OTP_VERIFIED_WINDOW_MINUTES = Number(process.env.OTP_VERIFIED_WINDOW_MINUTES || 15);
 const WHATSAPP_INIT_MAX_RETRIES = Number(process.env.WHATSAPP_INIT_MAX_RETRIES || 3);
 const WHATSAPP_INIT_RETRY_DELAY_MS = Number(process.env.WHATSAPP_INIT_RETRY_DELAY_MS || 5000);
+const WHATSAPP_QR_MAX_RETRIES = Number(process.env.WHATSAPP_QR_MAX_RETRIES || 10);
 
 const WHATSAPP_AUTH_DATA_PATH = path.resolve(process.env.WHATSAPP_AUTH_DATA_PATH || '.wwebjs_auth_otp');
 const WHATSAPP_CLIENT_ID = process.env.WHATSAPP_CLIENT_ID || 'powersense-otp';
@@ -63,6 +64,11 @@ const validatePhoneNumber = (phoneNumber) => {
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const scheduleInitRetry = () => {
+  if (retryTimeoutHandle) {
+    clearTimeout(retryTimeoutHandle);
+    retryTimeoutHandle = null;
+  }
+
   if (initRetryCount >= WHATSAPP_INIT_MAX_RETRIES) {
     console.error(`[WhatsApp OTP] Max init retries reached (${WHATSAPP_INIT_MAX_RETRIES}).`);
     return;
@@ -72,7 +78,8 @@ const scheduleInitRetry = () => {
   const delayMs = WHATSAPP_INIT_RETRY_DELAY_MS * initRetryCount;
   console.warn(`[WhatsApp OTP] Retrying client initialization in ${Math.round(delayMs / 1000)}s (attempt ${initRetryCount}/${WHATSAPP_INIT_MAX_RETRIES}).`);
 
-  setTimeout(() => {
+  retryTimeoutHandle = setTimeout(() => {
+    retryTimeoutHandle = null;
     initializeWhatsAppClient().catch(() => null);
   }, delayMs);
 };
@@ -91,6 +98,43 @@ const clearChromiumSingletonLocks = (clientId = activeClientId) => {
   } catch (error) {
     console.warn('[WhatsApp OTP] Failed to clear Chromium lock files:', error.message);
   }
+};
+
+const restartWhatsAppClient = async ({ immediate = false, reason = 'Unknown' } = {}) => {
+  if (isRestartingClient) {
+    return;
+  }
+
+  isRestartingClient = true;
+  clientReady = false;
+  clientInitializing = false;
+  initPromise = null;
+
+  if (retryTimeoutHandle) {
+    clearTimeout(retryTimeoutHandle);
+    retryTimeoutHandle = null;
+  }
+
+  const clientToDestroy = whatsappClient;
+  whatsappClient = null;
+
+  try {
+    if (clientToDestroy) {
+      clientToDestroy.removeAllListeners();
+      await clientToDestroy.destroy().catch(() => null);
+    }
+  } finally {
+    isRestartingClient = false;
+  }
+
+  if (immediate) {
+    console.warn(`[WhatsApp OTP] Restarting client immediately (${reason}).`);
+    initializeWhatsAppClient().catch(() => null);
+    return;
+  }
+
+  console.warn(`[WhatsApp OTP] Scheduling client restart (${reason}).`);
+  scheduleInitRetry();
 };
 
 const initializeWhatsAppClient = async () => {
@@ -115,16 +159,12 @@ const initializeWhatsAppClient = async () => {
   initPromise = (async () => {
     clientInitializing = true;
 
-    whatsappClient = new Client({
+    const clientInstance = new Client({
       authStrategy: new LocalAuth({
         clientId: activeClientId,
         dataPath: WHATSAPP_AUTH_DATA_PATH
       }),
-      webVersionCache: {
-        type: 'none'
-      },
-      authTimeoutMs: 90000,
-      qrMaxRetries: 20,
+      qrMaxRetries: WHATSAPP_QR_MAX_RETRIES,
       puppeteer: {
         headless: true,
         executablePath: resolveChromiumPath(),
@@ -132,40 +172,71 @@ const initializeWhatsAppClient = async () => {
       }
     });
 
-    whatsappClient.on('qr', (qr) => {
-      clientReady = false;
-      latestQrText = qr;
-      lastError = null;
+    whatsappClient = clientInstance;
+
+    clientInstance.on('qr', (qr) => {
+      if (whatsappClient !== clientInstance) {
+        return;
+      }
+
       console.log('[WhatsApp OTP] Scan this QR code in WhatsApp:');
       qrcodeTerminal.generate(qr, { small: true });
     });
 
-    whatsappClient.on('ready', () => {
+    clientInstance.on('ready', () => {
+      if (whatsappClient !== clientInstance) {
+        return;
+      }
+
       clientReady = true;
       clientInitializing = false;
       initRetryCount = 0;
-      latestQrText = null;
-      lastError = null;
+
+      if (retryTimeoutHandle) {
+        clearTimeout(retryTimeoutHandle);
+        retryTimeoutHandle = null;
+      }
+
       console.log('[WhatsApp OTP] Client is ready.');
     });
 
-    whatsappClient.on('auth_failure', (message) => {
+    clientInstance.on('auth_failure', (message) => {
+      if (whatsappClient !== clientInstance) {
+        return;
+      }
+
       clientReady = false;
       clientInitializing = false;
       lastError = `Authentication failed: ${message}`;
       console.error('[WhatsApp OTP] Authentication failure:', message);
     });
 
-    whatsappClient.on('disconnected', (reason) => {
+    clientInstance.on('disconnected', (reason) => {
+      if (whatsappClient !== clientInstance) {
+        console.warn('[WhatsApp OTP] Ignoring disconnected event from stale client:', reason);
+        return;
+      }
+
       clientReady = false;
       clientInitializing = false;
-      lastError = `Disconnected: ${reason}`;
       console.warn('[WhatsApp OTP] Client disconnected:', reason);
+
+      const reasonText = String(reason || '');
+      if (/Max qrcode retries reached/i.test(reasonText)) {
+        restartWhatsAppClient({ immediate: true, reason: reasonText });
+        return;
+      }
+
+      restartWhatsAppClient({ immediate: false, reason: reasonText });
     });
 
     try {
-      await whatsappClient.initialize();
+      await clientInstance.initialize();
     } catch (error) {
+      if (whatsappClient !== clientInstance) {
+        return;
+      }
+
       clientInitializing = false;
       clientReady = false;
       const message = error?.message || 'Unknown error';

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getApiBaseUrl } from './runtimeApiBase';
 
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://powersense-2-9w2e.onrender.com/api';
 
 const authAPI = axios.create({
   baseURL: API_BASE_URL,
