@@ -1,0 +1,28 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: warmup
+    - duration: 60
+      arrivalRate: 20
+      name: sustained
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: Renewable dashboard and analytics read load
+    flow:
+      - get:
+          url: "/api/renewable/dashboard"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/renewable/stats"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/renewable/maintenance/summary"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"

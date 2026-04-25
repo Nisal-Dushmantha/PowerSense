@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { billService } from '../../services/api';
-import { getApiRootUrl } from '../../services/runtimeApiBase';
 import CreateBillModal from './CreateBillModal';
 import EditBillModal from './EditBill';
 import InsightsModal from './InsightsModal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const API_ROOT_URL = getApiRootUrl();
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '/api');
+const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 const getBillPhotoUrl = (photoValue) => {
   if (!photoValue) return '';
