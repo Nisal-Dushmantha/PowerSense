@@ -8,7 +8,8 @@
     "test": "cross-env NODE_ENV=test JWT_SECRET=test-secret WHATSAPP_BILL_NOTIFICATIONS_ENABLED=false jest --silent --runInBand",
     "test:unit": "cross-env NODE_ENV=test JWT_SECRET=test-secret WHATSAPP_BILL_NOTIFICATIONS_ENABLED=false jest --silent --runInBand tests/unit",
     "test:integration": "cross-env NODE_ENV=test JWT_SECRET=test-secret WHATSAPP_BILL_NOTIFICATIONS_ENABLED=false jest --silent --runInBand tests/integration",
-    "test:coverage": "cross-env NODE_ENV=test JWT_SECRET=test-secret WHATSAPP_BILL_NOTIFICATIONS_ENABLED=false jest --silent --coverage --runInBand"
+    "test:coverage": "cross-env NODE_ENV=test JWT_SECRET=test-secret WHATSAPP_BILL_NOTIFICATIONS_ENABLED=false jest --silent --coverage --runInBand",
+    "test:performance": "npx artillery run tests/performance/energy-analytics-load-test.yml"
   },
   "author": "",
   "license": "ISC",

@@ -50,6 +50,29 @@ const calculateStandardDeviation = (values) => {
   return Math.sqrt(variance);
 };
 
+const mapWeatherCodeToLabel = (code) => {
+  const weatherCodeMap = {
+    0: 'Clear sky',
+    1: 'Mainly clear',
+    2: 'Partly cloudy',
+    3: 'Overcast',
+    45: 'Fog',
+    48: 'Depositing rime fog',
+    51: 'Light drizzle',
+    53: 'Moderate drizzle',
+    55: 'Dense drizzle',
+    61: 'Slight rain',
+    63: 'Moderate rain',
+    65: 'Heavy rain',
+    71: 'Slight snow',
+    73: 'Moderate snow',
+    75: 'Heavy snow',
+    95: 'Thunderstorm'
+  };
+
+  return weatherCodeMap[code] || 'Unknown';
+};
+
 const getStartOfToday = () => {
   const date = new Date();
   date.setHours(0, 0, 0, 0);
@@ -1926,5 +1949,14 @@ module.exports = {
 
   // Variance analytics controllers
   getVarianceAnalytics,
-  getVarianceTrend
+  getVarianceTrend,
+
+  // Test-only exports
+  __testables: {
+    getForecastHorizonDays,
+    calculateMovingAverageSeries,
+    calculateLinearTrendSlope,
+    calculateStandardDeviation,
+    mapWeatherCodeToLabel
+  }
 };
