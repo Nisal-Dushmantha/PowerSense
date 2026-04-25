@@ -58,7 +58,7 @@ const createBill = async (req, res) => {
 
     // Send a best-effort WhatsApp summary to the registered number.
     const whatsappResult = await sendBillCreatedSummary(req.user, savedBill);
-    if (!whatsappResult.success) {
+    if (!whatsappResult.success && whatsappResult.message !== 'Bill notifications disabled') {
       console.warn('[Bill WhatsApp] Summary not sent:', whatsappResult.message);
     }
 
@@ -149,13 +149,14 @@ const getBillById = async (req, res) => {
       data: bill
     });
   } catch (error) {
-    console.error('Get bill error:', error);
     if (error.name === 'CastError') {
       return res.status(400).json({
         success: false,
         message: 'Invalid bill ID'
       });
     }
+
+    console.error('Get bill error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error while retrieving bill',
