@@ -3,10 +3,7 @@ import { billService } from '../../services/api';
 import { getApiRootUrl } from '../../services/runtimeApiBase';
 import Modal from '../common/Modal';
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '/api');
-const API_ROOT_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+const API_ROOT_URL = getApiRootUrl();
 
 const getBillPhotoUrl = (photoValue) => {
   if (!photoValue) return '';
