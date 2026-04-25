@@ -1,0 +1,28 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: warmup
+    - duration: 60
+      arrivalRate: 20
+      name: sustained
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: Bills module read load
+    flow:
+      - get:
+          url: "/api/bills?page=1&limit=10"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/bills?isPaid=false&page=1&limit=10"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/bills?billNumber=BILL&page=1&limit=5"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"

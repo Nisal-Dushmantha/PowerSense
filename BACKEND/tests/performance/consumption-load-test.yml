@@ -1,0 +1,32 @@
+config:
+  target: "http://localhost:5000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: warmup
+    - duration: 60
+      arrivalRate: 20
+      name: sustained
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: Energy consumption module read load
+    flow:
+      - get:
+          url: "/api/energy-consumption?page=1&limit=100"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/energy-consumption/total"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/energy-consumption/summary"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
+      - get:
+          url: "/api/energy-consumption/integration"
+          headers:
+            Authorization: "Bearer {{ $processEnvironment.PERF_TEST_TOKEN }}"
